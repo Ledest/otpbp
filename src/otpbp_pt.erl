@@ -130,6 +130,11 @@ parse_transform(Forms, _Options) -> parse_trans:plain_transform(fun do_transform
 ?TRFM(erlang, otpbp_erlang, get_keys, 0);
 ?TLFM(otpbp_erlang, get_keys, 0);
 ?TRFUNM(erlang, otpbp_erlang, get_keys, 0);
+?TLFUNM(get_keys, otpbp_erlang, 0);
+?TRFM(erlang, otpbp_erlang, delete_element, 2);
+?TRFUNM(erlang, otpbp_erlang, delete_element, 2);
+?TRFM(erlang, otpbp_erlang, insert_element, 3);
+?TRFUNM(erlang, otpbp_erlang, insert_element, 3);
 do_transform(_) -> continue.
 
 do_parse_args(Args) when is_list(Args) -> [hd(parse_trans:plain_transform(fun do_transform/1, [E])) || E <- Args].
