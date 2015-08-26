@@ -5,5 +5,5 @@
 -endif.
 
 -ifndef(HAVE_edlin__current_chars_1).
-current_chars({line, _, {Bef, Aft}, _}) -> reverse(Bef, Aft).
+current_chars({line, _, {Bef, Aft}, _}) -> lists:reverse(Bef, Aft).
 -endif.
