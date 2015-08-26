@@ -1,0 +1,11 @@
+.rebar
+*.beam
+deps/*
+*~
+*.swp
+*.state
+/ebin
+/doc
+.project
+.settings/
+erl_crash.dump

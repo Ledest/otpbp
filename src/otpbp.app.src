@@ -1,0 +1,6 @@
+{application, otpbp, [{description, "OTP backports"},
+                    {vsn, "0.1.0"},
+                    {registered, []},
+                    {applications, [kernel, stdlib]},
+                    {modules, []},
+                    {env, []}]}.
