@@ -5,5 +5,5 @@
 -endif.
 
 -ifndef(HAVE_dict__is_empty_1).
-is_empty(Dict) -> dict:size(dict) =:= 0.
+is_empty(Dict) -> dict:size(Dict) =:= 0.
 -endif.
