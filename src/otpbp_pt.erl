@@ -18,6 +18,7 @@
 -define(TLFUN(ON, M, NN, A), do_transform(?LFUN(ON, A)) -> ?RFUN(M, NN, A)).
 -define(TRFUNM(OM, NM, N, A), ?TRFUN(OM, N, NM, N, A)).
 -define(TRFUNN(M, ON, NN, A), ?TRFUN(M, ON, M, NN, A)).
+-define(TLFUNM(N, M, A), ?TLFUN(N, M, N, A)).
 
 parse_transform(Forms, _Options) -> parse_trans:plain_transform(fun do_transform/1, Forms).
 
@@ -93,21 +94,27 @@ parse_transform(Forms, _Options) -> parse_trans:plain_transform(fun do_transform
 ?TRFM(erlang, otpbp_erlang, integer_to_binary, 1);
 ?TLFM(otpbp_erlang, integer_to_binary, 1);
 ?TRFUNM(erlang, otpbp_erlang, integer_to_binary, 1);
+?TLFUNM(integer_to_binary, otpbp_erlang, 1);
 ?TRFM(erlang, otpbp_erlang, integer_to_binary, 2);
 ?TLFM(otpbp_erlang, integer_to_binary, 2);
 ?TRFUNM(erlang, otpbp_erlang, integer_to_binary, 2);
+?TLFUNM(integer_to_binary, otpbp_erlang, 2);
 ?TRFM(erlang, otpbp_erlang, float_to_binary, 1);
 ?TLFM(otpbp_erlang, float_to_binary, 1);
 ?TRFUNM(erlang, otpbp_erlang, float_to_binary, 1);
+?TLFUNM(float_to_binary, otpbp_erlang, 1);
 ?TRFM(erlang, otpbp_erlang, binary_to_integer, 1);
 ?TLFM(otpbp_erlang, binary_to_integer, 1);
 ?TRFUNM(erlang, otpbp_erlang, binary_to_integer, 1);
+?TLFUNM(binary_to_integer, otpbp_erlang, 1);
 ?TRFM(erlang, otpbp_erlang, binary_to_integer, 2);
 ?TLFM(otpbp_erlang, binary_to_integer, 2);
 ?TRFUNM(erlang, otpbp_erlang, binary_to_integer, 2);
+?TLFUNM(binary_to_integer, otpbp_erlang, 2);
 ?TRFM(erlang, otpbp_erlang, binary_to_float, 1);
 ?TLFM(otpbp_erlang, binary_to_float, 1);
 ?TRFUNM(erlang, otpbp_erlang, binary_to_float, 1);
+?TLFUNM(binary_to_float, otpbp_erlang, 1);
 %?TRCALL(erlang, integer_to_binary, 1) -> ?RCALLA(erlang, list_to_binary, [?RCALL(erlang, integer_to_list)]);
 %?TLCALL(integer_to_binary, 1) -> ?LCALLA(integer_to_binary, [?LCALL(integer_to_list)]);
 %?TRCALL(erlang, integer_to_binary, 2) -> ?RCALLA(erlang, list_to_binary, [?RCALL(erlang, integer_to_list)]);
