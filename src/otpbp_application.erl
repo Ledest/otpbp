@@ -17,14 +17,6 @@
 -endif.
 
 -ifndef(HAVE_application__ensure_started_1).
-ensure_started(Application) ->
-    case application:start(Application) of
-        {error, {already_started, Application}} -> ok;
-        R -> R
-    end.
--endif.
-
--ifndef(HAVE_application__ensure_started_1).
 -ifndef(HAVE_application__ensure_started_2).
 ensure_started(Application) -> ensure_started(Application, temporary).
 -else.
