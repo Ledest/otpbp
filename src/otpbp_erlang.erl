@@ -67,5 +67,5 @@ insert_element(Index, Tuple, Term) when is_integer(Index), Index > 0, Index =< t
 -endif.
 
 -ifndef(HAVE_erlang__get_keys_0).
-get_keys() -> [Key || {Key, _} <- get()].
+get_keys() -> proplists:get_keys(get()).
 -endif.
