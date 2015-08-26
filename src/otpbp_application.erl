@@ -13,7 +13,7 @@
 -export([ensure_all_started/2]).
 -endif.
 -ifndef(HAVE_application__get_env_3).
--export([get_env/2]).
+-export([get_env/3]).
 -endif.
 
 -ifndef(HAVE_application__ensure_started_1).
