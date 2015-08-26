@@ -54,16 +54,24 @@ float_to_binary(Float) -> list_to_binary(float_to_list(Float)).
 
 -ifndef(HAVE_erlang__delete_element_2).
 delete_element(Index, Tuple) when is_integer(Index), Index > 0, Index =< tuple_size(Tuple) ->
-    {H, [_|T]} = lists:split(Index - 1, tuple_to_list(Tuple)),
-    list_to_tuple(H ++ T).
+    delete_element(Index, Tuple, [], tuple_size(Tuple));
+delete_element(Index, Tuple) -> error(badarg).
+
+delete_element(_, _, List, 0) -> list_to_tuple(List);
+delete_element(Index, Tuple, List, Index) -> delete_element(Index, Tuple, List, Index - 1);
+delete_element(Index, Tuple, List, I) -> delete_element(Index, Tuple, [element(I, Tuple)|List], I - 1).
 -endif.
 
 -ifndef(HAVE_erlang__insert_element_3).
-insert_element(1, Tuple, Term) when is_tuple(Tuple) -> list_to_tuple([Term|tuple_to_list(Tuple)]);
 insert_element(Index, Tuple, Term) when Index =:= tuple_size(Tuple) + 1 -> erlang:append_element(Tuple, Term);
 insert_element(Index, Tuple, Term) when is_integer(Index), Index > 0, Index =< tuple_size(Tuple) ->
-    {H, T} = lists:split(Index - 1, tuple_to_list(Tuple)),
-    list_to_tuple(H ++ [Term|T]).
+    insert_element(Index, Tuple, Term, [], tuple_size(Tuple));
+insert_element(Index, Tuple, Term) -> error(badarg).
+
+insert_element(_, _, _, List, 0) -> list_to_tuple(List);
+insert_element(Index, Tuple, Term, List, Index) ->
+    insert_element(Index, Tuple, Term, [Term, element(Index, Tuple)|List], Index - 1);
+insert_element(Index, Tuple, Term, List, I) -> insert_element(Index, Tuple, Term, [element(I, Tuple)|List], I - 1).
 -endif.
 
 -ifndef(HAVE_erlang__get_keys_0).
