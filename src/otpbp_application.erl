@@ -46,7 +46,7 @@ ensure_all_started(Application, Type) ->
     case ensure_all_started(Application, Type, []) of
         {ok, Started} -> {ok, lists:reverse(Started)};
         {error, Reason, Started} ->
-            lists:foreach(fun(App) -> catch stop(App) end, Started),
+            lists:foreach(fun application:stop/1, Started),
             {error, Reason}
     end.
 
@@ -64,8 +64,8 @@ ensure_all_started(Application, Type, Started) ->
 -endif.
 
 -ifndef(HAVE_application__get_env_3).
-get_env(Par, Def) ->
-    case application:get_env(rmt, Par) of
+get_env(Application, Par, Def) ->
+    case application:get_env(Application, Par) of
         {ok, Val} -> Val;
         undefined -> Def
     end.
