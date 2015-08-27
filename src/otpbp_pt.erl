@@ -62,10 +62,10 @@ parse_transform(Forms, _Options) -> parse_trans:plain_transform(fun do_transform
 %?TRFUNM(inet, otpbp_inet, parse_ipv6strict_address, 1);
 ?TRF(inet, parse_ipv6strict_address, inet_parse, ipv6strict_address, 1);
 ?TRFUN(inet, parse_ipv6strict_address, inet_parse, ipv6strict_address, 1);
-?TRFM(inet, otpbp_inet, parse_strict_address, 1);
-?TRFUNM(inet, otpbp_inet, parse_strict_address, 1);
-?TRFM(inet_parse, otpbp_inet, strict_address, 1);
-?TRFUNM(inet_parse, otpbp_inet, strict_address, 1);
+?TRF(inet, parse_strict_address, otpbp_inet_parse, strict_address, 1);
+?TRFUN(inet, parse_strict_address, otpbp_inet_parse, strict_address, 1);
+?TRFM(inet_parse, otpbp_inet_parse, strict_address, 1);
+?TRFUNM(inet_parse, otpbp_inet_parse, strict_address, 1);
 ?TRFM(edlin, otpbp_edlin, current_chars, 1);
 ?TRFUNM(edlin, otpbp_edlin, current_chars, 1);
 
