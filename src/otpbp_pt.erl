@@ -54,6 +54,7 @@ parse_transform(Forms, _Options) ->
                         {{io_lib, deep_latin1_char_list, 1}, {io_lib, deep_char_list}},
                         {{io_lib, latin1_char_list, 1}, {io_lib, char_list}},
                         {{io_lib, printable_latin1_list, 1}, {io_lib, printable_list}},
+                        {{io_lib, write_latin1_sring, 1}, {io_lib, write_string}},
                         {{io_lib, write_string_as_latin1, 1}, {io_lib, write_string}},
                         {{io_lib, write_string_as_latin1, 2}, {io_lib, write_string}},
                         {{lists, droplast, 1}, otpbp_lists},
