@@ -40,6 +40,7 @@ parse_transform(Forms, _Options) ->
                         {{erl_scan, location, 1}, otpbp_erl_scan},
                         {{erl_scan, symbol, 1}, otpbp_erl_scan},
                         {{erl_scan, text, 1}, otpbp_erl_scan},
+                        {{epp, parse_file, 2}, otpbp_epp},
                         {{dict, is_empty, 1}, otpbp_dict},
                         {{lists, droplast, 1}, otpbp_lists},
                         {{lists, filtermap, 2}, {lists, zf}},
