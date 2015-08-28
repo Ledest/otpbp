@@ -42,6 +42,7 @@ parse_transform(Forms, _Options) ->
                         {{erl_scan, location, 1}, otpbp_erl_scan},
                         {{erl_scan, symbol, 1}, otpbp_erl_scan},
                         {{erl_scan, text, 1}, otpbp_erl_scan},
+                        {{erl_scan, continuation_location, 1}, otpbp_erl_scan},
                         {{epp, parse_file, 2}, otpbp_epp},
                         {{dict, is_empty, 1}, otpbp_dict},
                         {{gen_event, system_get_state, 1}, otpbp_gen_event},
