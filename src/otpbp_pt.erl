@@ -47,6 +47,8 @@ parse_transform(Forms, _Options) ->
                         {{gen_event, system_replace_state, 2}, otpbp_gen_event},
                         {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
                         {{gen_fsm, system_replace_state, 2}, otpbp_gen_fsm},
+                        {{gen_server, system_get_state, 1}, otpbp_gen_fsm},
+                        {{gen_server, system_replace_state, 2}, otpbp_gen_fsm},
                         {{lists, droplast, 1}, otpbp_lists},
                         {{lists, filtermap, 2}, {lists, zf}},
                         {{orddict, is_empty, 1}, otpbp_orddict},
