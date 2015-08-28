@@ -5,5 +5,5 @@
 -endif.
 
 -ifndef(HAVE_orddict__is_empty_1).
-is_empty(Dict) -> orddict:size(dict) =:= 0.
+is_empty(Dict) -> orddict:size(Dict) =:= 0.
 -endif.
