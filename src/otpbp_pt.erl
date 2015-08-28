@@ -34,6 +34,7 @@ parse_transform(Forms, _Options) ->
                         {{inet, parse_strict_address, 1}, otpbp_inet},
                         {{inet_parse, strict_address, 1}, otpbp_inet},
                         {{edlin, current_chars, 1}, otpbp_edlin},
+                        {{edlin, start, 2}, otpbp_edlin},
                         {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
                         {{erl_scan, category, 1}, otpbp_erl_scan},
                         {{erl_scan, column, 1}, otpbp_erl_scan},
