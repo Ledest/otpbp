@@ -16,6 +16,8 @@ parse_transform(Forms, _Options) ->
                         {{binary_to_float, 1}, otpbp_erlang},
                         {{integer_to_binary, 1}, otpbp_erlang},
                         {{float_to_binary, 1}, otpbp_erlang},
+                        {{float_to_binary, 2}, otpbp_erlang},
+                        {{float_to_list, 2}, otpbp_erlang},
                         {{delete_element, 2}, otpbp_erlang},
                         {{insert_element, 3}, otpbp_erlang}]).
 -define(TRANSFORM_FUN, [{{erlang, integer_to_binary, 2}, otpbp_erlang},

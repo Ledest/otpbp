@@ -18,6 +18,12 @@
 -ifndef(HAVE_erlang__float_to_binary_1).
 -export([float_to_binary/1]).
 -endif.
+-ifndef(HAVE_erlang__float_to_list_2).
+-export([float_to_list/2]).
+-endif.
+-ifndef(HAVE_erlang__float_to_binary_2).
+-export([float_to_binary/2]).
+-endif.
 -ifndef(HAVE_erlang__delete_element_2).
 -export([delete_element/2]).
 -endif.
@@ -50,6 +56,50 @@ integer_to_binary(Integer, Base) -> list_to_binary(integer_to_list(Integer, Base
 
 -ifndef(HAVE_erlang__float_to_binary_1).
 float_to_binary(Float) -> list_to_binary(float_to_list(Float)).
+-endif.
+
+-ifndef(HAVE_erlang__float_to_binary_2).
+-ifdef(HAVE_erlang__float_to_binary_1).
+float_to_binary(Float, []) -> erlang:float_to_binary(Float);
+float_to_binary(Float, Options) -> list_to_binary(float_to_list(Float, Options)).
+-ifndef(NEED_erlang__float_to_list_2).
+-define(NEED_erlang__float_to_list_2, true).
+-endif.
+-else.
+float_to_binary(Float, Options) -> list_to_binary(float_to_list(Float, Options)).
+-endif.
+-endif.
+
+-ifndef(HAVE_erlang__float_to_list_2).
+-ifndef(NEED_erlang__float_to_list_2).
+-define(NEED_erlang__float_to_list_2, true).
+-endif.
+-endif.
+
+-ifdef(NEED_erlang__float_to_list_2).
+float_to_list(Float, []) -> erlang:float_to_list(Float);
+float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
+    case lists:foldl(fun(compact, {Format, Dec, _}) -> {Format, Dec, true};
+                        ({decimals, D}, {_, _, Compact}) when is_integer(D), D >= 0, D =< 253 -> {decimals, D, Compact};
+                        ({scientific, D}, {_, _, Compact}) when is_integer(D), D >= 0, D =< 249 ->
+                         {scientific, D, Compact};
+                        (_, _) -> error(badarg)
+                     end, {none, 0, false}, Options) of
+        {scientific, D, _} ->
+            S = lists:flatten(io_lib:format("~.*e", [D + 1, Float])),
+            case lists:reverse(S) of
+                [C, Sign|M] when Sign =:= $+ orelse Sign =:= $- -> lists:reverse([C, $0, Sign|M]);
+                _ -> S
+            end;
+        {decimals, D, C} ->
+            S = lists:flatten(io_lib:format("~.*f", [D, Float])),
+            if
+                C -> string:strip(S, right, $0);
+                true -> S
+            end;
+        {none, _, _} -> erlang:float_to_list(Float)
+    end;
+float_to_list(_, _) -> error(badarg).
 -endif.
 
 -ifndef(HAVE_erlang__delete_element_2).
