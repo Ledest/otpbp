@@ -7,6 +7,11 @@
 -export([system_replace_state/2]).
 -endif.
 
+-record(handler, {module             :: atom(),
+                  id = false,
+                  state,
+                  supervised = false :: 'false' | pid()}).
+
 -ifndef(HAVE_gen_event__system_get_state_1).
 system_get_state([_ServerName, MSL, _Hib]) ->
     {ok, [{Mod, Id, State} || #handler{module = Mod, id = Id, state = State} <- MSL]}.
