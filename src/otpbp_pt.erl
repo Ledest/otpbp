@@ -1,11 +1,14 @@
 -module(otpbp_pt).
 -export([parse_transform/2]).
 
+-import(erl_syntax, [type/1, get_pos/1, set_pos/2]).
+
 parse_transform(Forms, _Options) ->
-    transform_list(),
-    case get() of
+    case transform_list() of
         [] -> Forms;
-        _ -> parse_trans:plain_transform(fun do_transform/1, Forms)
+        L -> lists:map(fun(Tree) ->
+                           erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree))
+                       end, Forms)
     end.
 
 -define(TRANSFORM_BIF, [{{binary_to_integer, 1}, otpbp_erlang},
@@ -65,35 +68,117 @@ parse_transform(Forms, _Options) ->
                         {{os, system_time, 1}, otpbp_os},
                         {{os, getenv, 2}, otpbp_os}]).
 
+-ifdef(MODULE).
 transform_list() ->
-    lists:foreach(fun({{F, A}, S}) -> erlang:is_builtin(erlang, F, A) orelse put({erlang, F, A}, S) end, ?TRANSFORM_BIF),
-    lists:foreach(fun({{M, F, A} = MFA, S}) ->
-                      erlang:is_builtin(M, F, A) orelse
-                          (catch lists:member({F, A}, M:module_info(exports))) =:= true orelse
-                              put(MFA, S)
-                  end, ?TRANSFORM_FUN).
+    dict:from_list(lists:foldl(fun({{F, A}, S}, Acc) ->
+                                   case erlang:is_builtin(erlang, F, A) of
+                                       true -> Acc;
+                                       _ -> [{{erlang, F, A}, S}|Acc]
+                                   end
+                               end,
+                               lists:filter(fun({{M, F, A}, _}) ->
+                                                not (erlang:is_builtin(M, F, A) orelse
+                                                    (catch lists:member({F, A}, M:module_info(exports))) =:= true)
+                                            end, ?TRANSFORM_FUN),
+                               ?TRANSFORM_BIF)).
+-else.
+transform_list() ->
+    dict:from_list(lists:foldl(fun({{F, A}, S}, Acc) -> [{{erlang, F, A}, S}|Acc] end, ?TRANSFORM_FUN, ?TRANSFORM_BIF)).
+-endif.
 
-do_transform({call, L, {remote, _, {atom, _, M}, {atom, _, N}}, A}) -> try_transform(M, N, length(A), L, make_call);
-
-do_transform({call, L, {atom, _, N}, A}) -> do_transform(make_call(N, A, L));
-
-do_transform({'fun', L, {function, {atom, _, M}, {atom, _, N}, {integer, _, A}}}) -> try_transform(M, N, A, L, make_fun);
-
-do_transform({'fun', L, {function, N, A}}) -> do_transform(make_fun(N, A, L));
-
-do_transform(_) -> continue.
-
-make_mn(M, N) when is_atom(M) -> {M, N};
-make_mn(MN, _) when tuple_size(MN) =:= 2 -> MN.
-
-make_fun({M, N}, A, L) -> {'fun', L, {function, {atom, L, M}, {atom, L, N}, {integer, L, A}}};
-make_fun(N, A, L) -> make_fun({erlang, N}, A, L).
-
-make_call({M, N}, A, L) -> {call, L, {remote, L, {atom, L, M}, {atom, L, N}}, A};
-make_call(N, A, L) -> make_call({erlang, N}, A, L).
-
-try_transform(M, N, A, L, F) ->
-    case get({M, N, A}) of
-        undefined -> continue;
-        MN -> F(make_mn(MN, N), A, L)
+do_transform(L, Node) ->
+    case type(Node) of
+        application -> application_transform(L, Node);
+        implicit_fun -> implicit_fun_transform(L, Node);
+        _ -> Node
     end.
+
+application_transform(L, Node) ->
+    O = erl_syntax:application_operator(Node),
+    case erl_syntax_lib:analyze_application(Node) of
+        {Name, Arity} when is_atom(Name), is_integer(Arity), Arity >= 0 ->
+            Pos = get_pos(O),
+            application_transform(L, Node, {erlang, Pos}, {Name, Pos}, Arity);
+        {Module, {Name, Arity}} when is_atom(Module), is_atom(Name), is_integer(Arity), Arity >= 0 ->
+            application_transform(L, Node,
+                                  atom_pos(Module, erl_syntax:module_qualifier_argument(O)),
+                                  atom_pos(Name, erl_syntax:module_qualifier_body(O)),
+                                  Arity);
+        _ -> Node
+    end.
+
+application_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
+    case dict:find({Module, Name, Arity}, L) of
+        {ok, MN} ->
+            {M, N} = if
+                         is_atom(MN) -> {MN, Name};
+                         true -> MN
+                     end,
+            erl_syntax:application(atom_pos(M, ML), atom_pos(N, NL), erl_syntax:application_arguments(Node));
+        error -> Node
+    end.
+
+-ifndef(MODULE).
+implicit_fun_transform(L, Node) ->
+    N = erl_syntax:implicit_fun_name(Node),
+    case erl_syntax_lib:analyze_implicit_fun(Node) of
+        {Name, Arity} when is_atom(Name), is_integer(Arity), Arity >= 0 ->
+            NL = get_pos(erl_syntax:arity_qualifier_body(N)),
+            implicit_fun_transform(L, Node, {erlang, NL}, {Name, NL}, N);
+        {Module, {Name, Arity}} when is_atom(Module), is_atom(Name), is_integer(Arity), Arity >= 0 ->
+            B = erl_syntax:module_qualifier_body(N),
+            implicit_fun_transform(L, Node,
+                                  atom_pos(Module, erl_syntax:module_qualifier_argument(N)),
+                                  atom_pos(Name, erl_syntax:arity_qualifier_body(B)),
+                                  B);
+        _ -> Node
+    end.
+-else.
+implicit_fun_transform(L, Node) ->
+    N = erl_syntax:implicit_fun_name(Node),
+    case type(N) of
+        arity_qualifier ->
+            Name = erl_syntax:arity_qualifier_body(N),
+            case type(Name) of
+                atom ->
+                    NL = get_pos(Name),
+                    implicit_fun_transform(L, Node, {erlang, NL}, {erl_syntax:atom_value(Name), NL}, N);
+                _ -> Node
+            end;
+        module_qualifier ->
+            Module = erl_syntax:module_qualifier_argument(N),
+            case type(Module) of
+                atom ->
+                    Arity = erl_syntax:module_qualifier_body(N),
+                    case type(Arity) of
+                        arity_qualifier ->
+                            Name = erl_syntax:arity_qualifier_body(Arity),
+                            case type(Name) =:= atom andalso type(erl_syntax:arity_qualifier_argument(Arity)) of
+                                integer -> implicit_fun_transform(L, Node, atom_pos(Module), atom_pos(Name), Arity);
+                                _ -> Node
+                            end;
+                        _ -> Node
+                    end;
+                _ -> Node
+            end;
+        _ -> Node
+    end.
+-endif.
+
+implicit_fun_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
+    A = erl_syntax:arity_qualifier_argument(Arity),
+    case dict:find({Module, Name, erl_syntax:integer_value(A)}, L) of
+        {ok, MN} ->
+            {M, N} = if
+                         is_atom(MN) -> {MN, Name};
+                         true -> MN
+                     end,
+            erl_syntax:implicit_fun(atom_pos(M, ML), atom_pos(N, NL), A);
+        error -> Node
+    end.
+
+atom_pos(Atom, Pos) when is_tuple(Atom), is_tuple(Pos) -> {erl_syntax:atom_value(Atom), get_pos(Pos)};
+atom_pos(Atom, Pos) when is_atom(Atom), is_tuple(Pos) -> {Atom, get_pos(Pos)};
+atom_pos(Atom, Pos) when is_tuple(Atom), is_integer(Pos) -> set_pos(erl_syntax:atom(Atom), Pos).
+
+atom_pos(Atom) when is_tuple(Atom) -> atom_pos(Atom, Atom).
