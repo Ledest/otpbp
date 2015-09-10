@@ -181,6 +181,6 @@ implicit_fun_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
 
 atom_pos(Atom, Pos) when is_tuple(Atom), is_tuple(Pos) -> {erl_syntax:atom_value(Atom), get_pos(Pos)};
 atom_pos(Atom, Pos) when is_atom(Atom), is_tuple(Pos) -> {Atom, get_pos(Pos)};
-atom_pos(Atom, Pos) when is_tuple(Atom), is_integer(Pos) -> set_pos(erl_syntax:atom(Atom), Pos).
+atom_pos(Atom, Pos) when is_atom(Atom), is_integer(Pos) -> set_pos(erl_syntax:atom(Atom), Pos).
 
 atom_pos(Atom) when is_tuple(Atom) -> atom_pos(Atom, Atom).
