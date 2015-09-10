@@ -6,9 +6,8 @@
 parse_transform(Forms, _Options) ->
     case transform_list() of
         [] -> Forms;
-        L -> lists:map(fun(Tree) ->
-                           erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree))
-                       end, Forms)
+        L -> lists:map(fun(Tree) -> erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) end,
+                       Forms)
     end.
 
 -define(TRANSFORM_BIF, [{{binary_to_integer, 1}, otpbp_erlang},
@@ -116,26 +115,31 @@ application_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
                          is_atom(MN) -> {MN, Name};
                          true -> MN
                      end,
-            erl_syntax:application(atom_pos(M, ML), atom_pos(N, NL), erl_syntax:application_arguments(Node));
+            set_pos(erl_syntax:application(atom_pos(M, ML), atom_pos(N, NL), erl_syntax:application_arguments(Node)), ML);
         error -> Node
     end.
 
--ifndef(MODULE).
-implicit_fun_transform(L, Node) ->
-    N = erl_syntax:implicit_fun_name(Node),
-    case erl_syntax_lib:analyze_implicit_fun(Node) of
-        {Name, Arity} when is_atom(Name), is_integer(Arity), Arity >= 0 ->
-            NL = get_pos(erl_syntax:arity_qualifier_body(N)),
-            implicit_fun_transform(L, Node, {erlang, NL}, {Name, NL}, N);
-        {Module, {Name, Arity}} when is_atom(Module), is_atom(Name), is_integer(Arity), Arity >= 0 ->
-            B = erl_syntax:module_qualifier_body(N),
-            implicit_fun_transform(L, Node,
-                                  atom_pos(Module, erl_syntax:module_qualifier_argument(N)),
-                                  atom_pos(Name, erl_syntax:arity_qualifier_body(B)),
-                                  B);
+-ifdef(buggy__revert_implicit_fun_1).
+revert_implicit_fun(Node) ->
+    Name = erl_syntax:implicit_fun_name(Node),
+    case erl_syntax:type(Name) of
+        module_qualifier ->
+            N = erl_syntax:module_qualifier_body(Name),
+            case type(N) of
+                arity_qualifier ->
+                    {'fun', erl_syntax:get_pos(Node), {function,
+                                                       erl_syntax:module_qualifier_argument(Name),
+                                                       erl_syntax:arity_qualifier_body(N),
+                                                       erl_syntax:arity_qualifier_argument(N)}};
+                _ -> Node
+            end;
         _ -> Node
     end.
+-define(FIX_revert_implicit_fun(N), revert_implicit_fun(N)).
 -else.
+-define(FIX_revert_implicit_fun(N), N).
+-endif.
+
 implicit_fun_transform(L, Node) ->
     N = erl_syntax:implicit_fun_name(Node),
     case type(N) of
@@ -161,11 +165,10 @@ implicit_fun_transform(L, Node) ->
                             end;
                         _ -> Node
                     end;
-                _ -> Node
+                _ -> ?FIX_revert_implicit_fun(Node)
             end;
         _ -> Node
     end.
--endif.
 
 implicit_fun_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
     A = erl_syntax:arity_qualifier_argument(Arity),
@@ -175,7 +178,7 @@ implicit_fun_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
                          is_atom(MN) -> {MN, Name};
                          true -> MN
                      end,
-            erl_syntax:implicit_fun(atom_pos(M, ML), atom_pos(N, NL), A);
+            set_pos(erl_syntax:implicit_fun(atom_pos(M, ML), atom_pos(N, NL), A), ML);
         error -> Node
     end.
 
