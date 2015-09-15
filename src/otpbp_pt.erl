@@ -21,6 +21,7 @@ parse_transform(Forms, _Options) ->
                         {{insert_element, 3}, otpbp_erlang}]).
 -define(TRANSFORM_FUN, [{{erlang, integer_to_binary, 2}, otpbp_erlang},
                         {{erlang, get_keys, 0}, otpbp_erlang},
+                        {{erlang, timestamp, 0}, os},
                         {{application, ensure_started, 1}, otpbp_application},
                         {{application, ensure_started, 2}, otpbp_application},
                         {{application, ensure_all_started, 1}, otpbp_application},
