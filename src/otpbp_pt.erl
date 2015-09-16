@@ -128,8 +128,8 @@ revert_implicit_fun(Node) ->
         arity_qualifier ->
             F = erl_syntax:arity_qualifier_body(Name),
             A = erl_syntax:arity_qualifier_argument(Name),
-            case {type(F), type(A)} of
-                {atom, integer} -> {'fun', Pos, {function, erl_syntax:concrete(F), erl_syntax:concrete(A)}};
+            case type(F) =:= atom andalso type(A) of
+                integer -> {'fun', Pos, {function, erl_syntax:concrete(F), erl_syntax:concrete(A)}};
                 _ -> Node
             end;
         module_qualifier ->
