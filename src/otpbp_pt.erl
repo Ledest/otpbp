@@ -123,15 +123,22 @@ application_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
 -ifdef(buggy__revert_implicit_fun_1).
 revert_implicit_fun(Node) ->
     Name = erl_syntax:implicit_fun_name(Node),
+    Pos = get_pos(Node),
     case erl_syntax:type(Name) of
+        arity_qualifier ->
+            F = erl_syntax:arity_qualifier_body(Name),
+            A = erl_syntax:arity_qualifier_argument(Name),
+            case {type(F), type(A)} of
+                {atom, integer} -> {'fun', Pos, {function, erl_syntax:concrete(F), erl_syntax:concrete(A)}};
+                _ -> Node
+            end;
         module_qualifier ->
             N = erl_syntax:module_qualifier_body(Name),
             case type(N) of
-                arity_qualifier ->
-                    {'fun', erl_syntax:get_pos(Node), {function,
-                                                       erl_syntax:module_qualifier_argument(Name),
-                                                       erl_syntax:arity_qualifier_body(N),
-                                                       erl_syntax:arity_qualifier_argument(N)}};
+                arity_qualifier -> {'fun', Pos, {function,
+                                                 erl_syntax:module_qualifier_argument(Name),
+                                                 erl_syntax:arity_qualifier_body(N),
+                                                 erl_syntax:arity_qualifier_argument(N)}};
                 _ -> Node
             end;
         _ -> Node
