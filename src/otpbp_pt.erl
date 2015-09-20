@@ -36,7 +36,7 @@ parse_transform(Forms, _Options) ->
                         {{inet, parse_ipv4strict_address, 1}, {inet_parse, ipv4strict_address}},
                         {{inet, parse_ipv6_address, 1}, {inet_parse, ipv6_address}},
                         {{inet, parse_ipv6strict_address, 1}, {inet_parse, ipv6strict_address}},
-                        {{inet, parse_strict_address, 1}, otpbp_inet},
+                        {{inet, parse_strict_address, 1}, {otpbp_inet_parse, strict_address}},
                         {{inet_parse, strict_address, 1}, otpbp_inet_parse},
                         {{edlin, current_chars, 1}, otpbp_edlin},
                         {{edlin, start, 2}, otpbp_edlin},
