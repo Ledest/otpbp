@@ -74,18 +74,18 @@ lists:keystore(erl_opts, 1, CONFIG,
                     {tree, implicit_fun, _, _} ->
                         io:fwrite(standard_error,
                                   "There is buggy internal revert_implicit_fun/1 in erl_syntax, using workaround~n", []),
-                        [{d, buggy__revert_implicit_fun_1}];
+                        [{d, buggy__revert_implicit_fun_1m}];
                     _ -> []
                 end ++
                 case erl_syntax:revert({tree, implicit_fun, {attr, 0, [], none},
                                         {tree, arity_qualifier, {attr, 0, [], none},
                                          {arity_qualifier, {tree, atom, {attr, 0, [], none}, test},
                                           {tree, integer, {attr, 0, [], none}, 0}}}}) of
-                    {tree, implicit_fun, _, _} ->
+                    {'fun', 0, {function, test, 0}} -> [];
+                    _ ->
                         io:fwrite(standard_error,
                                   "There is buggy internal revert_implicit_fun/1 in erl_syntax, using workaround~n", []),
-                        [{d, buggy__revert_implicit_fun_1}];
-                    _ -> []
+                        [{d, buggy__revert_implicit_fun_1a}]
                 end ++
                 lists:map(fun(E) ->
                               {d, list_to_atom(lists:flatten(io_lib:format("HAVE_~s__~s_~B",
