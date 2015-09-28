@@ -1,4 +1,5 @@
-Check = fun({F, A}) when is_atom(F) andalso is_integer(A) andalso A >= 0 -> erlang:is_builtin(erlang, F, A);
+Check = fun({F, A}) when is_atom(F) andalso is_integer(A) andalso A >= 0 ->
+            erlang:is_builtin(erlang, F, A) orelse (catch lists:member({F, A}, erlang:module_info(exports))) =:= true;
            ({M, F, A}) when is_atom(M) andalso is_atom(F) andalso is_integer(A) andalso A >= 0 ->
             erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true
         end,
