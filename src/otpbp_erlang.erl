@@ -83,7 +83,7 @@ float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
                         ({decimals, D}, {_, _, Compact}) when is_integer(D), D >= 0, D =< 253 -> {decimals, D, Compact};
                         ({scientific, D}, {_, _, Compact}) when is_integer(D), D >= 0, D =< 249 ->
                          {scientific, D, Compact};
-                        (_, _) -> error(badarg)
+                        (O, _) -> error(badarg, [Float, O])
                      end, {none, 0, false}, Options) of
         {scientific, D, _} ->
             S = lists:flatten(io_lib:format("~.*e", [D + 1, Float])),
@@ -99,13 +99,13 @@ float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
             end;
         {none, _, _} -> erlang:float_to_list(Float)
     end;
-float_to_list(_, _) -> error(badarg).
+float_to_list(Float, O) -> error(badarg, [Float, O]).
 -endif.
 
 -ifndef(HAVE_erlang__delete_element_2).
 delete_element(Index, Tuple) when is_integer(Index), Index > 0, Index =< tuple_size(Tuple) ->
     delete_element(Index, Tuple, [], tuple_size(Tuple));
-delete_element(_, _) -> error(badarg).
+delete_element(Index, Tuple) -> error(badarg, [Index, Tuple]).
 
 delete_element(_, _, List, 0) -> list_to_tuple(List);
 delete_element(Index, Tuple, List, Index) -> delete_element(Index, Tuple, List, Index - 1);
@@ -116,7 +116,7 @@ delete_element(Index, Tuple, List, I) -> delete_element(Index, Tuple, [element(I
 insert_element(Index, Tuple, Term) when Index =:= tuple_size(Tuple) + 1 -> erlang:append_element(Tuple, Term);
 insert_element(Index, Tuple, Term) when is_integer(Index), Index > 0, Index =< tuple_size(Tuple) ->
     insert_element(Index, Tuple, Term, [], tuple_size(Tuple));
-insert_element(_, _, _) -> error(badarg).
+insert_element(Index, Tuple, Term) -> error(badarg, [Index, Tuple, Term]).
 
 insert_element(_, _, _, List, 0) -> list_to_tuple(List);
 insert_element(Index, Tuple, Term, List, Index) ->
