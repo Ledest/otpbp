@@ -10,83 +10,85 @@ parse_transform(Forms, _Options) ->
                        Forms)
     end.
 
--define(TRANSFORM_BIF, [{{binary_to_integer, 1}, otpbp_erlang},
-                        {{binary_to_integer, 2}, otpbp_erlang},
-                        {{binary_to_float, 1}, otpbp_erlang},
-                        {{integer_to_binary, 1}, otpbp_erlang},
-                        {{integer_to_binary, 2}, otpbp_erlang},
-                        {{float_to_binary, 1}, otpbp_erlang},
-                        {{float_to_binary, 2}, otpbp_erlang},
-                        {{float_to_list, 2}, otpbp_erlang},
-                        {{get_keys, 0}, otpbp_erlang},
-                        {{delete_element, 2}, otpbp_erlang},
-                        {{insert_element, 3}, otpbp_erlang}]).
--define(TRANSFORM_FUN, [{{erlang, timestamp, 0}, os},
-                        {{application, ensure_started, 1}, otpbp_application},
-                        {{application, ensure_started, 2}, otpbp_application},
-                        {{application, ensure_all_started, 1}, otpbp_application},
-                        {{application, ensure_all_started, 2}, otpbp_application},
-                        {{application, get_env, 3}, otpbp_application},
-                        {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
-                        {{file, list_dir_all, 1}, otpbp_file},
-                        {{file, read_link_all, 1}, otpbp_file},
-                        {{inet, ntoa, 1}, inet_parse},
-                        {{inet, parse_address, 1}, {inet_parse, address}},
-                        {{inet, parse_ipv4_address, 1}, {inet_parse, ipv4_address}},
-                        {{inet, parse_ipv4strict_address, 1}, {inet_parse, ipv4strict_address}},
-                        {{inet, parse_ipv6_address, 1}, {inet_parse, ipv6_address}},
-                        {{inet, parse_ipv6strict_address, 1}, {inet_parse, ipv6strict_address}},
-                        {{inet, parse_strict_address, 1}, {otpbp_inet_parse, strict_address}},
-                        {{inet_parse, strict_address, 1}, otpbp_inet_parse},
-                        {{edlin, current_chars, 1}, otpbp_edlin},
-                        {{edlin, start, 2}, otpbp_edlin},
-                        {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
-                        {{erl_scan, category, 1}, otpbp_erl_scan},
-                        {{erl_scan, column, 1}, otpbp_erl_scan},
-                        {{erl_scan, line, 1}, otpbp_erl_scan},
-                        {{erl_scan, location, 1}, otpbp_erl_scan},
-                        {{erl_scan, symbol, 1}, otpbp_erl_scan},
-                        {{erl_scan, text, 1}, otpbp_erl_scan},
-                        {{erl_scan, continuation_location, 1}, otpbp_erl_scan},
-                        {{epp, parse_file, 2}, otpbp_epp},
-                        {{dict, is_empty, 1}, otpbp_dict},
-                        {{gen_event, system_get_state, 1}, otpbp_gen_event},
-                        {{gen_event, system_replace_state, 2}, otpbp_gen_event},
-                        {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
-                        {{gen_fsm, system_replace_state, 2}, otpbp_gen_fsm},
-                        {{gen_server, system_get_state, 1}, otpbp_gen_server},
-                        {{gen_server, system_replace_state, 2}, otpbp_gen_server},
-                        {{io_lib, deep_latin1_char_list, 1}, {io_lib, deep_char_list}},
-                        {{io_lib, latin1_char_list, 1}, {io_lib, char_list}},
-                        {{io_lib, printable_latin1_list, 1}, {io_lib, printable_list}},
-                        {{io_lib, write_char_as_latin1, 1}, {io_lib, write_char}},
-                        {{io_lib, write_latin1_char, 1}, {io_lib, write_char}},
-                        {{io_lib, write_latin1_sring, 1}, {io_lib, write_string}},
-                        {{io_lib, write_string_as_latin1, 1}, {io_lib, write_string}},
-                        {{io_lib, write_string_as_latin1, 2}, {io_lib, write_string}},
-                        {{lists, droplast, 1}, otpbp_lists},
-                        {{lists, filtermap, 2}, {lists, zf}},
-                        {{orddict, is_empty, 1}, otpbp_orddict},
-                        {{os, system_time, 1}, otpbp_os},
-                        {{os, getenv, 2}, otpbp_os}]).
+-define(TRANSFORM_FUNCTIONS, [{{binary_to_integer, 1}, otpbp_erlang},
+                              {{binary_to_integer, 2}, otpbp_erlang},
+                              {{binary_to_float, 1}, otpbp_erlang},
+                              {{integer_to_binary, 1}, otpbp_erlang},
+                              {{integer_to_binary, 2}, otpbp_erlang},
+                              {{float_to_binary, 1}, otpbp_erlang},
+                              {{float_to_binary, 2}, otpbp_erlang},
+                              {{float_to_list, 2}, otpbp_erlang},
+                              {{get_keys, 0}, otpbp_erlang},
+                              {{delete_element, 2}, otpbp_erlang},
+                              {{insert_element, 3}, otpbp_erlang},
+                              {{erlang, timestamp, 0}, os},
+                              {{application, ensure_started, 1}, otpbp_application},
+                              {{application, ensure_started, 2}, otpbp_application},
+                              {{application, ensure_all_started, 1}, otpbp_application},
+                              {{application, ensure_all_started, 2}, otpbp_application},
+                              {{application, get_env, 3}, otpbp_application},
+                              {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
+                              {{file, list_dir_all, 1}, otpbp_file},
+                              {{file, read_link_all, 1}, otpbp_file},
+                              {{inet, ntoa, 1}, inet_parse},
+                              {{inet, parse_address, 1}, {inet_parse, address}},
+                              {{inet, parse_ipv4_address, 1}, {inet_parse, ipv4_address}},
+                              {{inet, parse_ipv4strict_address, 1}, {inet_parse, ipv4strict_address}},
+                              {{inet, parse_ipv6_address, 1}, {inet_parse, ipv6_address}},
+                              {{inet, parse_ipv6strict_address, 1}, {inet_parse, ipv6strict_address}},
+                              {{inet, parse_strict_address, 1}, {otpbp_inet_parse, strict_address}},
+                              {{inet_parse, strict_address, 1}, otpbp_inet_parse},
+                              {{edlin, current_chars, 1}, otpbp_edlin},
+                              {{edlin, start, 2}, otpbp_edlin},
+                              {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
+                              {{erl_scan, category, 1}, otpbp_erl_scan},
+                              {{erl_scan, column, 1}, otpbp_erl_scan},
+                              {{erl_scan, line, 1}, otpbp_erl_scan},
+                              {{erl_scan, location, 1}, otpbp_erl_scan},
+                              {{erl_scan, symbol, 1}, otpbp_erl_scan},
+                              {{erl_scan, text, 1}, otpbp_erl_scan},
+                              {{erl_scan, continuation_location, 1}, otpbp_erl_scan},
+                              {{epp, parse_file, 2}, otpbp_epp},
+                              {{dict, is_empty, 1}, otpbp_dict},
+                              {{gen_event, system_get_state, 1}, otpbp_gen_event},
+                              {{gen_event, system_replace_state, 2}, otpbp_gen_event},
+                              {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
+                              {{gen_fsm, system_replace_state, 2}, otpbp_gen_fsm},
+                              {{gen_server, system_get_state, 1}, otpbp_gen_server},
+                              {{gen_server, system_replace_state, 2}, otpbp_gen_server},
+                              {{io_lib, deep_latin1_char_list, 1}, {io_lib, deep_char_list}},
+                              {{io_lib, latin1_char_list, 1}, {io_lib, char_list}},
+                              {{io_lib, printable_latin1_list, 1}, {io_lib, printable_list}},
+                              {{io_lib, write_char_as_latin1, 1}, {io_lib, write_char}},
+                              {{io_lib, write_latin1_char, 1}, {io_lib, write_char}},
+                              {{io_lib, write_latin1_sring, 1}, {io_lib, write_string}},
+                              {{io_lib, write_string_as_latin1, 1}, {io_lib, write_string}},
+                              {{io_lib, write_string_as_latin1, 2}, {io_lib, write_string}},
+                              {{lists, droplast, 1}, otpbp_lists},
+                              {{lists, filtermap, 2}, {lists, zf}},
+                              {{orddict, is_empty, 1}, otpbp_orddict},
+                              {{os, system_time, 1}, otpbp_os},
+                              {{os, getenv, 2}, otpbp_os}]).
 
--ifdef(MODULE).
+dest({_, _} = MF, _) -> MF;
+dest(M, F) -> {M, F}.
+
+check_func(M, F, A) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true.
+
 transform_list() ->
-    dict:from_list(lists:foldl(fun({{F, A}, S}, Acc) ->
-                                   case erlang:is_builtin(erlang, F, A) of
-                                       true -> Acc;
-                                       _ -> [{{erlang, F, A}, S}|Acc]
-                                   end
-                               end,
-                               lists:filter(fun({{M, F, A}, _}) ->
-                                                not (erlang:is_builtin(M, F, A) orelse
-                                                    (catch lists:member({F, A}, M:module_info(exports))) =:= true)
-                                            end, ?TRANSFORM_FUN),
-                               ?TRANSFORM_BIF)).
--else.
-transform_list() ->
-    dict:from_list(lists:foldl(fun({{F, A}, S}, Acc) -> [{{erlang, F, A}, S}|Acc] end, ?TRANSFORM_FUN, ?TRANSFORM_BIF)).
--endif.
+    lists:foldl(fun({{F, A} = FA, D}, Acc) ->
+                    case check_func(erlang, F, A) of
+                        true -> Acc;
+                        _ ->
+                            Dest = dest(D, F),
+                            dict:store(FA, Dest, dict:store({erlang, FA}, Dest, Acc))
+                    end;
+                   ({{M, F, A}, D}, Acc) ->
+                    case check_func(M, F, A) of
+                        true -> Acc;
+                        _ -> dict:store({M, {F, A}}, dest(D, F), Acc)
+                    end
+                end, dict:new(), ?TRANSFORM_FUNCTIONS).
 
 do_transform(L, Node) ->
     case type(Node) of
@@ -96,27 +98,20 @@ do_transform(L, Node) ->
     end.
 
 application_transform(L, Node) ->
-    O = erl_syntax:application_operator(Node),
-    case erl_syntax_lib:analyze_application(Node) of
-        {Name, Arity} when is_atom(Name), is_integer(Arity), Arity >= 0 ->
-            Pos = get_pos(O),
-            application_transform(L, Node, {erlang, Pos}, {Name, Pos}, Arity);
-        {Module, {Name, Arity}} when is_atom(Module), is_atom(Name), is_integer(Arity), Arity >= 0 ->
-            application_transform(L, Node,
-                                  atom_pos(Module, erl_syntax:module_qualifier_argument(O)),
-                                  atom_pos(Name, erl_syntax:module_qualifier_body(O)),
-                                  Arity);
-        _ -> Node
-    end.
-
-application_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
-    case dict:find({Module, Name, Arity}, L) of
-        {ok, MN} ->
-            {M, N} = if
-                         is_atom(MN) -> {MN, Name};
-                         true -> MN
-                     end,
-            set_pos(erl_syntax:application(atom_pos(M, ML), atom_pos(N, NL), erl_syntax:application_arguments(Node)), ML);
+    A = erl_syntax_lib:analyze_application(Node),
+    case dict:find(A, L) of
+        {ok, {M, N}} ->
+            O = erl_syntax:application_operator(Node),
+            case A of
+                {_, {_, _}} ->
+                    ML = get_pos(erl_syntax:module_qualifier_argument(O)),
+                    NL = get_pos(erl_syntax:module_qualifier_body(O));
+                {_, _} -> ML = NL = get_pos(O)
+            end,
+            erl_syntax:copy_pos(Node,
+                                erl_syntax:application(set_pos(erl_syntax:atom(M), ML),
+                                                       set_pos(erl_syntax:atom(N), NL),
+                                                       erl_syntax:application_arguments(Node)));
         error -> Node
     end.
 
@@ -191,7 +186,7 @@ implicit_fun_transform(L, Node) ->
 
 implicit_fun_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
     A = erl_syntax:arity_qualifier_argument(Arity),
-    case dict:find({Module, Name, erl_syntax:integer_value(A)}, L) of
+    case dict:find({Module, {Name, erl_syntax:integer_value(A)}}, L) of
         {ok, MN} ->
             {M, N} = if
                          is_atom(MN) -> {MN, Name};
