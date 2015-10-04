@@ -2,15 +2,23 @@
 
 -ifndef(HAVE_gen_event__system_get_state_1).
 -export([system_get_state/1]).
+-ifndef(NEED_record__handler).
+-define(NEED_record__handler, true).
+-endif.
 -endif.
 -ifndef(HAVE_gen_event__system_replace_state_2).
 -export([system_replace_state/2]).
+-ifndef(NEED_record__handler).
+-define(NEED_record__handler, true).
+-endif.
 -endif.
 
+-ifdef(NEED_record__handler).
 -record(handler, {module             :: atom(),
                   id = false,
                   state,
                   supervised = false :: 'false' | pid()}).
+-endif.
 
 -ifndef(HAVE_gen_event__system_get_state_1).
 system_get_state([_ServerName, MSL, _Hib]) ->
