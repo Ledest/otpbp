@@ -5,5 +5,6 @@
 -endif.
 
 -ifndef(HAVE_lists__droplast_1).
-droplast(L) -> lists:reverse(tl(lists:reverse(L))).
+droplast([_])  -> [];
+droplast([H|T]) -> [H|droplast(T)].
 -endif.
