@@ -1,35 +1,27 @@
 -module(otpbp_pt).
 -export([parse_transform/2]).
 
--import(erl_syntax, [type/1, get_pos/1, set_pos/2]).
+-import(erl_syntax, [type/1, copy_pos/2, atom_value/1,
+                     implicit_fun_name/1,
+                     arity_qualifier_argument/1, arity_qualifier_body/1,
+                     module_qualifier_argument/1, module_qualifier_body/1]).
 
 parse_transform(Forms, _Options) ->
     case transform_list() of
         [] -> Forms;
-        L -> lists:map(fun(Tree) -> erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) end,
-                       Forms)
+        L -> [erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) || Tree <- Forms]
     end.
 
--define(TRANSFORM_FUNCTIONS, [{{binary_to_integer, 1}, otpbp_erlang},
-                              {{binary_to_integer, 2}, otpbp_erlang},
+-define(TRANSFORM_FUNCTIONS, [{{[binary_to_integer, integer_to_binary, float_to_binary], [1, 2]}, otpbp_erlang},
                               {{binary_to_float, 1}, otpbp_erlang},
-                              {{integer_to_binary, 1}, otpbp_erlang},
-                              {{integer_to_binary, 2}, otpbp_erlang},
-                              {{float_to_binary, 1}, otpbp_erlang},
-                              {{float_to_binary, 2}, otpbp_erlang},
-                              {{float_to_list, 2}, otpbp_erlang},
                               {{get_keys, 0}, otpbp_erlang},
-                              {{delete_element, 2}, otpbp_erlang},
+                              {{[float_to_list, delete_element], 2}, otpbp_erlang},
                               {{insert_element, 3}, otpbp_erlang},
                               {{erlang, timestamp, 0}, os},
-                              {{application, ensure_started, 1}, otpbp_application},
-                              {{application, ensure_started, 2}, otpbp_application},
-                              {{application, ensure_all_started, 1}, otpbp_application},
-                              {{application, ensure_all_started, 2}, otpbp_application},
+                              {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
                               {{application, get_env, 3}, otpbp_application},
                               {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
-                              {{file, list_dir_all, 1}, otpbp_file},
-                              {{file, read_link_all, 1}, otpbp_file},
+                              {{file, [list_dir_all, read_link_all], 1}, otpbp_file},
                               {{inet, ntoa, 1}, inet_parse},
                               {{inet, parse_address, 1}, {inet_parse, address}},
                               {{inet, parse_ipv4_address, 1}, {inet_parse, ipv4_address}},
@@ -41,13 +33,8 @@ parse_transform(Forms, _Options) ->
                               {{edlin, current_chars, 1}, otpbp_edlin},
                               {{edlin, start, 2}, otpbp_edlin},
                               {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
-                              {{erl_scan, category, 1}, otpbp_erl_scan},
-                              {{erl_scan, column, 1}, otpbp_erl_scan},
-                              {{erl_scan, line, 1}, otpbp_erl_scan},
-                              {{erl_scan, location, 1}, otpbp_erl_scan},
-                              {{erl_scan, symbol, 1}, otpbp_erl_scan},
-                              {{erl_scan, text, 1}, otpbp_erl_scan},
-                              {{erl_scan, continuation_location, 1}, otpbp_erl_scan},
+                              {{erl_scan, [category, column, line, location, symbol, text, continuation_location], 1},
+                               otpbp_erl_scan},
                               {{epp, parse_file, 2}, otpbp_epp},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{gen_event, system_get_state, 1}, otpbp_gen_event},
@@ -59,145 +46,113 @@ parse_transform(Forms, _Options) ->
                               {{io_lib, deep_latin1_char_list, 1}, {io_lib, deep_char_list}},
                               {{io_lib, latin1_char_list, 1}, {io_lib, char_list}},
                               {{io_lib, printable_latin1_list, 1}, {io_lib, printable_list}},
-                              {{io_lib, write_char_as_latin1, 1}, {io_lib, write_char}},
-                              {{io_lib, write_latin1_char, 1}, {io_lib, write_char}},
-                              {{io_lib, write_latin1_sring, 1}, {io_lib, write_string}},
-                              {{io_lib, write_string_as_latin1, 1}, {io_lib, write_string}},
-                              {{io_lib, write_string_as_latin1, 2}, {io_lib, write_string}},
+                              {{io_lib, [write_char_as_latin1, write_latin1_char], 1}, {io_lib, write_char}},
+                              {{io_lib, write_latin1_string, 1}, {io_lib, write_string}},
+                              {{io_lib, write_string_as_latin1, [1, 2]}, {io_lib, write_string}},
                               {{lists, droplast, 1}, otpbp_lists},
                               {{lists, filtermap, 2}, {lists, zf}},
                               {{orddict, is_empty, 1}, otpbp_orddict},
                               {{os, system_time, 1}, otpbp_os},
                               {{os, getenv, 2}, otpbp_os}]).
 
-dest({_, _} = MF, _) -> MF;
-dest(M, F) -> {M, F}.
+add_func(F, MF, D, I) -> lists:foldl(fun(A, Acc) -> add_func(setelement(I, F, A), MF, Acc) end, D, element(I, F)).
 
-check_func(M, F, A) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true.
+add_func(F, MF, D) when is_list(element(tuple_size(F), F)) -> add_func(F, MF, D, tuple_size(F));
+add_func(F, MF, D) when is_list(element(tuple_size(F) - 1, F)) -> add_func(F, MF, D, tuple_size(F) - 1);
+add_func({M, F, A} = MFA, MF, D) ->
+    case check_func(MFA) of
+        true -> D;
+        _ -> store_func({M, {F, A}}, MF, D)
+    end;
+add_func({_, _} = FA, MF, D) ->
+    case check_func(FA) of
+        true -> D;
+        _ -> store_func({erlang, FA}, MF, store_func(FA, MF, D))
+    end.
 
-transform_list() ->
-    lists:foldl(fun({{F, A} = FA, D}, Acc) ->
-                    case check_func(erlang, F, A) of
-                        true -> Acc;
-                        _ ->
-                            Dest = dest(D, F),
-                            dict:store(FA, Dest, dict:store({erlang, FA}, Dest, Acc))
-                    end;
-                   ({{M, F, A}, D}, Acc) ->
-                    case check_func(M, F, A) of
-                        true -> Acc;
-                        _ -> dict:store({M, {F, A}}, dest(D, F), Acc)
-                    end
-                end, dict:new(), ?TRANSFORM_FUNCTIONS).
+check_func({M, F, A}) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true;
+check_func({F, A}) -> check_func({erlang, F, A}).
+
+store_func(F, {_, _} = MF, D) -> dict:store(F, MF, D);
+store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
+store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
+
+transform_list() -> lists:foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, dict:new(), ?TRANSFORM_FUNCTIONS).
+-compile([{inline, [transform_list/0]}]).
 
 do_transform(L, Node) ->
     case type(Node) of
         application -> application_transform(L, Node);
-        implicit_fun -> implicit_fun_transform(L, Node);
+        implicit_fun -> revert_implicit_fun(implicit_fun_transform(L, Node));
         _ -> Node
     end.
+-compile([{inline, [do_transform/2]}]).
 
 application_transform(L, Node) ->
     A = erl_syntax_lib:analyze_application(Node),
     case dict:find(A, L) of
         {ok, {M, N}} ->
-            O = erl_syntax:application_operator(Node),
-            case A of
-                {_, {_, _}} ->
-                    ML = get_pos(erl_syntax:module_qualifier_argument(O)),
-                    NL = get_pos(erl_syntax:module_qualifier_body(O));
-                {_, _} -> ML = NL = get_pos(O)
-            end,
-            erl_syntax:copy_pos(Node,
-                                erl_syntax:application(set_pos(erl_syntax:atom(M), ML),
-                                                       set_pos(erl_syntax:atom(N), NL),
-                                                       erl_syntax:application_arguments(Node)));
+            {ML, NL} = module_name_lines(erl_syntax:application_operator(Node), A),
+            copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node)));
         error -> Node
     end.
+-compile([{inline, [application_transform/2]}]).
+
+module_name_lines(O, {_, {_, _}}) -> {module_qualifier_argument(O), module_qualifier_body(O)};
+module_name_lines(O, {_, _}) -> {O, O}.
+-compile([{inline, [module_name_lines/2]}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
-revert_implicit_fun_a(Node) ->
-    Name = erl_syntax:implicit_fun_name(Node),
-    case erl_syntax:type(Name) of
-        arity_qualifier ->
-            F = erl_syntax:arity_qualifier_body(Name),
-            A = erl_syntax:arity_qualifier_argument(Name),
-            case type(F) =:= atom andalso type(A) of
-                integer -> {'fun', get_pos(Node), {function, erl_syntax:concrete(F), erl_syntax:concrete(A)}};
-                _ -> Node
-            end;
+revert_implicit_fun(Node) ->
+    case erl_syntax:revert(Node) of
+        {'fun', Pos, {function, {atom, _, F}, {integer, _, A}}} -> {'fun', Pos, {function, F, A}};
         _ -> Node
     end.
 -else.
-revert_implicit_fun_a(N) -> N.
--endif.
-
 -ifdef(buggy__revert_implicit_fun_1m).
-revert_implicit_fun_m(Node) ->
+revert_implicit_fun(Node) ->
     Name = erl_syntax:implicit_fun_name(Node),
     case erl_syntax:type(Name) of
         module_qualifier ->
             N = erl_syntax:module_qualifier_body(Name),
             case type(N) of
-                arity_qualifier -> {'fun', get_pos(Node), {function,
-                                                           erl_syntax:module_qualifier_argument(Name),
-                                                           erl_syntax:arity_qualifier_body(N),
-                                                           erl_syntax:arity_qualifier_argument(N)}};
+                arity_qualifier -> {'fun', erl_syntax:get_pos(Node),
+                                    {function,
+                                     erl_syntax:revert(erl_syntax:module_qualifier_argument(Name)),
+                                     erl_syntax:revert(erl_syntax:arity_qualifier_body(N)),
+                                     erl_syntax:revert(erl_syntax:arity_qualifier_argument(N))}};
                 _ -> Node
             end;
         _ -> Node
     end.
 -else.
-revert_implicit_fun_m(N) -> N.
+revert_implicit_fun(Node) -> Node.
+-endif.
 -endif.
 
--compile([{inline, [revert_implicit_fun_a/1, revert_implicit_fun_m/1]}]).
+-compile([{inline, [revert_implicit_fun/1]}]).
 
 implicit_fun_transform(L, Node) ->
-    N = erl_syntax:implicit_fun_name(Node),
-    case type(N) of
-        arity_qualifier ->
-            Name = erl_syntax:arity_qualifier_body(N),
-            revert_implicit_fun_a(case type(Name) of
-                                      atom ->
-                                          NL = get_pos(Name),
-                                          implicit_fun_transform(L, Node, {erlang, NL},
-                                                                 {erl_syntax:atom_value(Name), NL}, N);
-                                      _ -> Node
-                                  end);
-        module_qualifier ->
-            Module = erl_syntax:module_qualifier_argument(N),
-            case type(Module) of
-                atom ->
-                    Arity = erl_syntax:module_qualifier_body(N),
-                    case type(Arity) of
-                        arity_qualifier ->
-                            Name = erl_syntax:arity_qualifier_body(Arity),
-                            case type(Name) =:= atom andalso type(erl_syntax:arity_qualifier_argument(Arity)) of
-                                integer -> implicit_fun_transform(L, Node, atom_pos(Module), atom_pos(Name), Arity);
-                                _ -> Node
-                            end;
-                        _ -> Node
-                    end;
-                _ -> revert_implicit_fun_m(Node)
-            end;
-        _ -> Node
-    end.
-
-implicit_fun_transform(L, Node, {Module, ML}, {Name, NL}, Arity) ->
-    A = erl_syntax:arity_qualifier_argument(Arity),
-    case dict:find({Module, {Name, erl_syntax:integer_value(A)}}, L) of
-        {ok, MN} ->
-            {M, N} = if
-                         is_atom(MN) -> {MN, Name};
-                         true -> MN
+    try erl_syntax_lib:analyze_implicit_fun(Node) of
+        F -> case dict:find(F, L) of
+                 {ok, {M, N}} ->
+                     Q = implicit_fun_name(Node),
+                     case type(Q) of
+                         arity_qualifier ->
+                             AQ = Q,
+                             MP = arity_qualifier_body(Q);
+                         module_qualifier ->
+                             AQ = module_qualifier_body(Q),
+                             MP = module_qualifier_argument(Q)
                      end,
-            set_pos(erl_syntax:implicit_fun(atom_pos(M, ML), atom_pos(N, NL), A), ML);
-        error -> Node
+                     implicit_fun(Node, AQ, MP, M, arity_qualifier_body(AQ), N);
+                 error -> Node
+             end
+    catch
+        _:_ -> Node
     end.
 
-atom_pos(Atom, Pos) when is_tuple(Atom), is_tuple(Pos) -> {erl_syntax:atom_value(Atom), get_pos(Pos)};
-atom_pos(Atom, Pos) when is_atom(Atom), is_tuple(Pos) -> {Atom, get_pos(Pos)};
-atom_pos(Atom, Pos) when is_atom(Atom), is_integer(Pos) -> set_pos(erl_syntax:atom(Atom), Pos).
+implicit_fun(Node, Q, MP, M, NP, N) ->
+    copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(NP, N), arity_qualifier_argument(Q))).
 
-atom_pos(Atom) when is_tuple(Atom) -> atom_pos(Atom, Atom).
+atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
