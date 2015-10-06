@@ -69,15 +69,11 @@ add_func(F, MF, D, I) -> lists:foldl(fun(A, Acc) -> add_func(setelement(I, F, A)
 
 add_func(F, MF, D) when is_list(element(tuple_size(F), F)) -> add_func(F, MF, D, tuple_size(F));
 add_func(F, MF, D) when is_list(element(tuple_size(F) - 1, F)) -> add_func(F, MF, D, tuple_size(F) - 1);
-add_func({M, F, A} = MFA, MF, D) ->
-    case check_func(MFA) of
+add_func(F, MF, D) ->
+    case check_func(F) orelse F of
         true -> D;
-        _ -> store_func({M, {F, A}}, MF, D)
-    end;
-add_func({_, _} = FA, MF, D) ->
-    case check_func(FA) of
-        true -> D;
-        _ -> store_func({erlang, FA}, MF, store_func(FA, MF, D))
+        {M, F, A} -> store_func({M, {F, A}}, MF, D);
+        {_, _} -> store_func({erlang, F}, MF, store_func(F, MF, D))
     end.
 
 check_func({M, F, A}) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true;
