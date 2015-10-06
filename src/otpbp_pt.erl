@@ -106,14 +106,17 @@ application_transform(L, Node) ->
     case dict:find(A, L) of
         {ok, {M, N}} ->
             {ML, NL} = module_name_lines(erl_syntax:application_operator(Node), A),
-            copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node)));
+            application(Node, ML, M, NL, N);
         error -> Node
     end.
--compile([{inline, [application_transform/2]}]).
 
 module_name_lines(O, {_, {_, _}}) -> {module_qualifier_argument(O), module_qualifier_body(O)};
 module_name_lines(O, {_, _}) -> {O, O}.
--compile([{inline, [module_name_lines/2]}]).
+
+application(Node, ML, M, NL, N) ->
+    copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node))).
+
+-compile([{inline, [application_transform/2, application/5, module_name_lines/2]}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
 revert_implicit_fun(Node) ->
@@ -167,5 +170,7 @@ implicit_fun_transform(L, Node) ->
 
 implicit_fun(Node, Q, MP, M, NP, N) ->
     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(NP, N), arity_qualifier_argument(Q))).
+
+-compile([{inline, [implicit_fun_transform/2, implicit_fun/6]}]).
 
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
