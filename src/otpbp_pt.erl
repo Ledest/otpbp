@@ -8,8 +8,8 @@
 
 parse_transform(Forms, _Options) ->
     TL = transform_list(),
-    case dict:size(TL) of
-        0 -> Forms;
+    case is_empty(TL) of
+        true -> Forms;
         _ ->
             L = lists:foldl(fun({M, Fs}, IA) ->
                                 lists:foldl(fun(FA, IAM) ->
@@ -85,6 +85,13 @@ store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
 transform_list() -> lists:foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, dict:new(), ?TRANSFORM_FUNCTIONS).
 -compile([{inline, [transform_list/0]}]).
+
+-ifdef(HAVE_dict__is_empty_1).
+is_empty(D) -> dict:is_empty(D).
+-else.
+is_empty(D) -> otpbp_dict:is_empty(D).
+-endif.
+-compile([{inline, [is_empty/1]}]).
 
 do_transform(L, Node) ->
     case type(Node) of
