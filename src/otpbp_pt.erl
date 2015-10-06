@@ -7,9 +7,10 @@
                      module_qualifier_argument/1, module_qualifier_body/1]).
 
 parse_transform(Forms, _Options) ->
-    case transform_list() of
-        [] -> Forms;
-        L -> [erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) || Tree <- Forms]
+    L = transform_list(),
+    case dict:size(L) of
+        0 -> Forms;
+        _ -> [erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) || Tree <- Forms]
     end.
 
 -define(TRANSFORM_FUNCTIONS, [{{[binary_to_integer, integer_to_binary, float_to_binary], [1, 2]}, otpbp_erlang},
