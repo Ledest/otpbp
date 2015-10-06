@@ -7,10 +7,19 @@
                      module_qualifier_argument/1, module_qualifier_body/1]).
 
 parse_transform(Forms, _Options) ->
-    L = transform_list(),
-    case dict:size(L) of
+    TL = transform_list(),
+    case dict:size(TL) of
         0 -> Forms;
-        _ -> [erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) || Tree <- Forms]
+        _ ->
+            L = lists:foldl(fun({M, Fs}, IA) ->
+                                lists:foldl(fun(FA, IAM) ->
+                                                case dict:find({M, FA}, TL) of
+                                                    {ok, V} -> dict:store(FA, V, IAM);
+                                                    _ -> IAM
+                                                end
+                                            end, IA, Fs)
+                            end, TL, proplists:get_value(imports, erl_syntax_lib:analyze_forms(Forms), [])),
+            [erl_syntax:revert(erl_syntax_lib:map(fun(E) -> do_transform(L, E) end, Tree)) || Tree <- Forms]
     end.
 
 -define(TRANSFORM_FUNCTIONS, [{{[binary_to_integer, integer_to_binary, float_to_binary], [1, 2]}, otpbp_erlang},
