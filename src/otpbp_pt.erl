@@ -153,20 +153,22 @@ do_transform(P, Node) ->
 application_transform(#param{funs = L} = P, Node) ->
     A = erl_syntax_lib:analyze_application(Node),
     case find(A, L) of
+        error -> false;
         {ok, {M, N}} ->
             replace_message(A, M, N, Node, P),
-            {ML, NL} = module_name_lines(erl_syntax:application_operator(Node), A),
-            application(Node, ML, M, NL, N);
-        error -> false
+            O = erl_syntax:application_operator(Node),
+            case A of
+                {_, {_, _}} ->
+                    ML = module_qualifier_argument(O),
+                    NL = module_qualifier_body(O);
+                {_, _} ->
+                    ML = O,
+                    NL = O
+            end,
+            copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node)))
     end.
 
-module_name_lines(O, {_, {_, _}}) -> {module_qualifier_argument(O), module_qualifier_body(O)};
-module_name_lines(O, {_, _}) -> {O, O}.
-
-application(Node, ML, M, NL, N) ->
-    copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node))).
-
--compile([{inline, [application_transform/2, application/5, module_name_lines/2]}]).
+-compile([{inline, [application_transform/2]}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
 revert_implicit_fun(false) -> false;
@@ -202,6 +204,7 @@ revert_implicit_fun(Node) -> Node.
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
         F -> case find(F, L) of
+                 error -> false;
                  {ok, {M, N}} ->
                      Q = implicit_fun_name(Node),
                      case type(Q) of
@@ -213,17 +216,14 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                              MP = module_qualifier_argument(Q)
                      end,
                      replace_message(F, M, N, Node, P),
-                     implicit_fun(Node, AQ, MP, M, arity_qualifier_body(AQ), N);
-                 error -> false
+                     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N),
+                                                            arity_qualifier_argument(AQ)))
              end
     catch
         throw:syntax_error -> false
     end.
 
-implicit_fun(Node, Q, MP, M, NP, N) ->
-    copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(NP, N), arity_qualifier_argument(Q))).
-
--compile([{inline, [implicit_fun_transform/2, implicit_fun/6]}]).
+-compile([{inline, [implicit_fun_transform/2]}]).
 
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
