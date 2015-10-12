@@ -55,35 +55,48 @@
 -import(dict, [store/3, find/2]).
 -import(lists, [foldl/3]).
 
+-record(param, {options = [] :: list(),
+                funs,
+                file = "" :: string()}).
+
 parse_transform(Forms, Options) ->
     TL = transform_list(),
     case is_empty(TL) of
         true -> Forms;
-        _ ->
-            L = foldl(fun({M, Fs}, IA) ->
-                          foldl(fun(FA, IAM) ->
-                                    case find({M, FA}, TL) of
-                                        {ok, V} -> store(FA, V, IAM);
-                                        _ -> IAM
-                                    end
-                                end, IA, Fs)
-                      end,
-                      store(options, Options, TL),
-                      proplists:get_value(imports, erl_syntax_lib:analyze_forms(Forms), [])),
-            element(1, lists:mapfoldl(fun(Tree, File) ->
-                                          case type(Tree) of
-                                              function ->
-                                                  {revert(erl_syntax_lib:map(fun(E) -> do_transform(L, File, E) end,
-                                                                             Tree)),
-                                                   File};
-                                              T -> {Tree,
-                                                    case T =:= attribute andalso
-                                                         erl_syntax_lib:analyze_attribute(Tree) of
-                                                        {file, {F, _}} -> F;
-                                                        _ -> File
-                                                    end}
-                                          end
-                                      end, "", Forms))
+        _ -> element(1,
+                     lists:mapfoldl(fun(Tree, P) ->
+                                        case type(Tree) of
+                                            function ->
+                                                %{revert(erl_syntax_lib:map(fun(E) -> do_transform(P, E) end, Tree)), P};
+                                                {case erl_syntax_lib:mapfold(fun(E, F) ->
+                                                                                 case do_transform(P, E) of
+                                                                                     false -> {E, F};
+                                                                                     N -> {N, true}
+                                                                                 end
+                                                                             end, false, Tree) of
+                                                     {T, true} -> revert(T);
+                                                     _ -> Tree
+                                                 end, P};
+                                            attribute ->
+                                                {Tree, case erl_syntax_lib:analyze_attribute(Tree) of
+                                                           {file, {F, _}} -> P#param{file = F};
+                                                           _ -> P
+                                                       end};
+                                            _ -> {Tree, P}
+                                        end
+                                    end,
+                                    #param{options = Options,
+                                           funs = foldl(fun({M, Fs}, IA) ->
+                                                            foldl(fun(FA, IAM) ->
+                                                                      case find({M, FA}, TL) of
+                                                                          {ok, V} -> store(FA, V, IAM);
+                                                                          _ -> IAM
+                                                                      end
+                                                                  end, IA, Fs)
+                                                        end, TL,
+                                                        proplists:get_value(imports,
+                                                                            erl_syntax_lib:analyze_forms(Forms), []))},
+                                    Forms))
     end.
 
 add_func(F, MF, D, I) -> foldl(fun(A, Acc) -> add_func(setelement(I, F, A), MF, Acc) end, D, element(I, F)).
@@ -114,22 +127,22 @@ is_empty(D) -> otpbp_dict:is_empty(D).
 -endif.
 -compile([{inline, [is_empty/1]}]).
 
-do_transform(L, F, Node) ->
+do_transform(P, Node) ->
     case type(Node) of
-        application -> application_transform(L, F, Node);
-        implicit_fun -> revert_implicit_fun(implicit_fun_transform(L, F, Node));
-        _ -> Node
+        application -> application_transform(P, Node);
+        implicit_fun -> revert_implicit_fun(implicit_fun_transform(P, Node));
+        _ -> false
     end.
--compile([{inline, [do_transform/3]}]).
+-compile([{inline, [do_transform/2]}]).
 
-application_transform(L, F, Node) ->
+application_transform(#param{funs = L} = P, Node) ->
     A = erl_syntax_lib:analyze_application(Node),
     case find(A, L) of
         {ok, {M, N}} ->
-            replace_message(A, M, N, F, Node, L),
+            replace_message(A, M, N, Node, P),
             {ML, NL} = module_name_lines(erl_syntax:application_operator(Node), A),
             application(Node, ML, M, NL, N);
-        error -> Node
+        error -> false
     end.
 
 module_name_lines(O, {_, {_, _}}) -> {module_qualifier_argument(O), module_qualifier_body(O)};
@@ -138,9 +151,10 @@ module_name_lines(O, {_, _}) -> {O, O}.
 application(Node, ML, M, NL, N) ->
     copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node))).
 
--compile([{inline, [application_transform/3, application/5, module_name_lines/2]}]).
+-compile([{inline, [application_transform/2, application/5, module_name_lines/2]}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
+revert_implicit_fun(false) -> false;
 revert_implicit_fun(Node) ->
     case revert(Node) of
         {'fun', Pos, {function, {atom, _, F}, {integer, _, A}}} -> {'fun', Pos, {function, F, A}};
@@ -148,6 +162,7 @@ revert_implicit_fun(Node) ->
     end.
 -else.
 -ifdef(buggy__revert_implicit_fun_1m).
+revert_implicit_fun(false) -> false;
 revert_implicit_fun(Node) ->
     Name = erl_syntax:implicit_fun_name(Node),
     case type(Name) of
@@ -169,7 +184,7 @@ revert_implicit_fun(Node) -> Node.
 
 -compile([{inline, [revert_implicit_fun/1]}]).
 
-implicit_fun_transform(L, File, Node) ->
+implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
         F -> case find(F, L) of
                  {ok, {M, N}} ->
@@ -182,24 +197,23 @@ implicit_fun_transform(L, File, Node) ->
                              AQ = module_qualifier_body(Q),
                              MP = module_qualifier_argument(Q)
                      end,
-                     replace_message(F, M, N, File, Node, L),
+                     replace_message(F, M, N, Node, P),
                      implicit_fun(Node, AQ, MP, M, arity_qualifier_body(AQ), N);
-                 error -> Node
+                 error -> false
              end
     catch
-        throw:syntax_error -> Node
+        throw:syntax_error -> false
     end.
 
 implicit_fun(Node, Q, MP, M, NP, N) ->
     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(NP, N), arity_qualifier_argument(Q))).
 
--compile([{inline, [implicit_fun_transform/3, implicit_fun/6]}]).
+-compile([{inline, [implicit_fun_transform/2, implicit_fun/6]}]).
 
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
-replace_message(F, NM, NN, File, Node, L) ->
-    proplists:get_value(verbose, dict:fetch(options, L)) =:= true andalso replace_message(F, NM, NN, File, Node).
-
+replace_message(F, NM, NN, Node, #param{options = O} = P) ->
+    proplists:get_value(verbose, O) =:= true andalso replace_message(F, NM, NN, P#param.file, Node);
 replace_message({M, {N, A}}, NM, NN, F, Node) -> replace_message({lists:concat([M, ":", N]), A}, NM, NN, F, Node);
 replace_message({N, A}, NM, NN, F, Node) ->
     io:fwrite("~ts:~b: replace ~s/~b to ~s:~s/~b~n", [F, get_pos(Node), N, A, NM, NN, A]).
