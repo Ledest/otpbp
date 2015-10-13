@@ -171,7 +171,7 @@ application_transform(#param{funs = L} = P, Node) ->
 -compile([{inline, [application_transform/2]}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
--define(ORIG_IMLICIT_FUN, Node).
+-define(ORIG_IMPLICIT_FUN, Node).
 revert_implicit_fun(Node) ->
     case revert(Node) of
         {'fun', Pos, {function, {atom, _, F}, {integer, _, A}}} -> {'fun', Pos, {function, F, A}};
@@ -179,7 +179,7 @@ revert_implicit_fun(Node) ->
     end.
 -else.
 -ifdef(buggy__revert_implicit_fun_1m).
--define(ORIG_IMLICIT_FUN, Node).
+-define(ORIG_IMPLICIT_FUN, Node).
 revert_implicit_fun(Node) ->
     Name = erl_syntax:implicit_fun_name(Node),
     case type(Name) of
@@ -195,7 +195,7 @@ revert_implicit_fun(Node) ->
         _ -> Node
     end.
 -else.
--define(ORIG_IMLICIT_FUN, false).
+-define(ORIG_IMPLICIT_FUN, false).
 revert_implicit_fun(Node) -> Node.
 -endif.
 -endif.
@@ -205,7 +205,7 @@ revert_implicit_fun(Node) -> Node.
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
         F -> case find(F, L) of
-                 error -> ?ORIG_IMLICIT_FUN;
+                 error -> ?ORIG_IMPLICIT_FUN;
                  {ok, {M, N}} ->
                      Q = implicit_fun_name(Node),
                      case type(Q) of
@@ -221,7 +221,7 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                                                             arity_qualifier_argument(AQ)))
              end
     catch
-        throw:syntax_error -> ?ORIG_IMLICIT_FUN
+        throw:syntax_error -> ?ORIG_IMPLICIT_FUN
     end.
 
 -compile([{inline, [implicit_fun_transform/2]}]).
