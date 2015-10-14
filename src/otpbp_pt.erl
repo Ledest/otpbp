@@ -161,9 +161,7 @@ application_transform(#param{funs = L} = P, Node) ->
                 {_, {_, _}} ->
                     ML = module_qualifier_argument(O),
                     NL = module_qualifier_body(O);
-                {_, _} ->
-                    ML = O,
-                    NL = O
+                {_, _} -> ML = NL = O
             end,
             copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node)))
     end.
