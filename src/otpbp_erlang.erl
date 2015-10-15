@@ -36,9 +36,6 @@
 -ifndef(HAVE_erlang__is_map_1).
 -export([is_map/1]).
 -endif.
--ifndef(HAVE_erlang__map_size_1).
--export([map_size/1]).
--endif.
 
 -ifndef(HAVE_erlang__binary_to_integer_1).
 binary_to_integer(Binary) -> list_to_integer(binary_to_list(Binary)).
@@ -136,8 +133,4 @@ get_keys() -> proplists:get_keys(get()).
 
 -ifndef(HAVE_erlang__is_map_1).
 is_map(Map) -> is_record(Map, dict, tuple_size(dict:new())).
--endif.
-
--ifndef(HAVE_erlang__map_size_1).
-map_size(Map) -> dict:size(Map).
 -endif.
