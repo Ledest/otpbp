@@ -33,6 +33,12 @@
 -ifndef(HAVE_erlang__get_keys_0).
 -export([get_keys/0]).
 -endif.
+-ifndef(HAVE_erlang__is_map_1).
+-export([is_map/1]).
+-endif.
+-ifndef(HAVE_erlang__map_size_1).
+-export([map_size/1]).
+-endif.
 
 -ifndef(HAVE_erlang__binary_to_integer_1).
 binary_to_integer(Binary) -> list_to_integer(binary_to_list(Binary)).
@@ -126,4 +132,12 @@ insert_element(Index, Tuple, Term, List, I) -> insert_element(Index, Tuple, Term
 
 -ifndef(HAVE_erlang__get_keys_0).
 get_keys() -> proplists:get_keys(get()).
+-endif.
+
+-ifndef(HAVE_erlang__is_map_1).
+is_map(Map) -> is_record(Map, dict, tuple_size(dict:new())).
+-endif.
+
+-ifndef(HAVE_erlang__map_size_1).
+map_size(Map) -> dict:size(Map).
 -endif.
