@@ -6,6 +6,8 @@
                               {{get_keys, 0}, otpbp_erlang},
                               {{[float_to_list, delete_element], 2}, otpbp_erlang},
                               {{insert_element, 3}, otpbp_erlang},
+                              {{is_map, 1}, {erlang, is_record, ['$', dict, 9]}},
+                              {{map_size, 1}, {erlang, element, [2, '$']}},
                               {{erlang, timestamp, 0}, os},
                               {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
                               {{application, get_env, 3}, otpbp_application},
@@ -40,6 +42,17 @@
                               {{io_lib, write_string_as_latin1, [1, 2]}, {io_lib, write_string}},
                               {{lists, droplast, 1}, otpbp_lists},
                               {{lists, filtermap, 2}, {lists, zf}},
+                              {{maps, new, 0}, dict},
+                              {{maps, keys, 1}, {dict, fetch_keys}},
+                              {{maps, [from_list, is_key, size, to_list], 1}, dict},
+                              {{maps, values, 1}, otpbp_maps},
+                              {{maps, [filter, find, map], 2}, dict},
+                              {{maps, get, 2}, {dict, fetch}},
+                              {{maps, remove, 2}, {dict, erase}},
+                              {{maps, [merge, with, without], 2}, otpbp_maps},
+                              {{maps, get, 3}, otpbp_maps},
+                              {{maps, [fold, update], 3}, dict},
+                              {{maps, put, 3}, {dict, store}},
                               {{orddict, is_empty, 1}, otpbp_orddict},
                               {{os, system_time, 1}, otpbp_os},
                               {{os, getenv, 2}, otpbp_os}]).
@@ -48,7 +61,7 @@
                      get_pos/1, copy_pos/2,
                      atom_value/1,
                      revert/1,
-                     implicit_fun_name/1,
+                     implicit_fun/3, implicit_fun_name/1,
                      arity_qualifier_argument/1, arity_qualifier_body/1,
                      module_qualifier_argument/1, module_qualifier_body/1]).
 -import(erl_syntax_lib, [analyze_forms/1]).
@@ -128,7 +141,7 @@ add_func(FA, MF, D) ->
 check_func({M, F, A}) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true;
 check_func({F, A}) -> check_func({erlang, F, A}).
 
-store_func(F, {_, _} = MF, D) -> store(F, MF, D);
+store_func(F, MF, D) when tuple_size(MF) =:= 2; tuple_size(MF) =:= 3 -> store(F, MF, D);
 store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
@@ -151,20 +164,27 @@ do_transform(P, Node) ->
 -compile([{inline, [do_transform/2]}]).
 
 application_transform(#param{funs = L} = P, Node) ->
-    A = erl_syntax_lib:analyze_application(Node),
-    case find(A, L) of
+    AA = erl_syntax_lib:analyze_application(Node),
+    case find(AA, L) of
         error -> false;
+        {ok, {M, N, Args}} when is_list(Args) ->
+            application(Node, AA, M, N, lists:map(fun('$') -> hd(erl_syntax:application_arguments(Node));
+                                                     (E) -> erl_syntax:abstract(E)
+                                                  end, Args));
         {ok, {M, N}} ->
-            replace_message(A, M, N, Node, P),
-            O = erl_syntax:application_operator(Node),
-            case A of
-                {_, {_, _}} ->
-                    ML = module_qualifier_argument(O),
-                    NL = module_qualifier_body(O);
-                {_, _} -> ML = NL = O
-            end,
-            copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), erl_syntax:application_arguments(Node)))
+            replace_message(AA, M, N, Node, P),
+            application(Node, AA, M, N, erl_syntax:application_arguments(Node))
     end.
+
+application(Node, AA, M, N, Args) ->
+    O = erl_syntax:application_operator(Node),
+    case AA of
+        {_, {_, _}} ->
+            ML = module_qualifier_argument(O),
+            NL = module_qualifier_body(O);
+        {_, _} -> ML = NL = O
+    end,
+    copy_pos(Node, erl_syntax:application(atom(ML, M), atom(NL, N), Args)).
 
 -compile([{inline, [application_transform/2]}]).
 
@@ -204,7 +224,7 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
         F -> case find(F, L) of
                  error -> ?ORIG_IMPLICIT_FUN;
-                 {ok, {M, N}} ->
+                 {ok, MNA} ->
                      Q = implicit_fun_name(Node),
                      case type(Q) of
                          arity_qualifier ->
@@ -214,9 +234,15 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                              AQ = module_qualifier_body(Q),
                              MP = module_qualifier_argument(Q)
                      end,
+                     case MNA of
+                         {M, N} -> Name = atom(arity_qualifier_body(AQ), N);
+                         {M, _, _} ->
+                             Name = arity_qualifier_body(AQ),
+                             N = atom_value(Name),
+                             M = list_to_atom(lists:concat(["otpbp_", M]))
+                     end,
                      replace_message(F, M, N, Node, P),
-                     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N),
-                                                            arity_qualifier_argument(AQ)))
+                     copy_pos(Node, implicit_fun(atom(MP, M), Name, arity_qualifier_argument(AQ)))
              end
     catch
         throw:syntax_error -> ?ORIG_IMPLICIT_FUN
