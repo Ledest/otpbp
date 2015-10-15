@@ -6,7 +6,7 @@
                               {{get_keys, 0}, otpbp_erlang},
                               {{[float_to_list, delete_element], 2}, otpbp_erlang},
                               {{insert_element, 3}, otpbp_erlang},
-                              {{is_map, 1}, {erlang, is_record, ['$', dict, 9]}},
+                              {{is_map, 1}, {erlang, is_record, ['$', dict, tuple_size(dict:new())]}},
                               {{map_size, 1}, {erlang, element, [2, '$']}},
                               {{erlang, timestamp, 0}, os},
                               {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
