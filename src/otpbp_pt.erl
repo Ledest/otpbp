@@ -158,8 +158,6 @@ add_func(FA, MF, D) ->
         {_, _} -> store_func({erlang, FA}, MF, store_func(FA, MF, D))
     end.
 
-check_func({is_map, 1}) -> false;
-check_func({map_size, 1}) -> false;
 check_func({M, F, A}) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true;
 check_func({F, A}) -> check_func({erlang, F, A}).
 
