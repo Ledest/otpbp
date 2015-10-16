@@ -171,7 +171,7 @@ transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, dict:new(
 -ifdef(HAVE_dict__is_empty_1).
 is_empty(D) -> dict:is_empty(D).
 -else.
-is_empty(D) -> dict:is_empty(D) =:= 0.
+is_empty(D) -> dict:size(D) =:= 0.
 -endif.
 -compile([{inline, [is_empty/1]}]).
 
