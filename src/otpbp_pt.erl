@@ -78,7 +78,7 @@
                      get_pos/1, copy_pos/2,
                      atom_value/1,
                      revert/1,
-                     application/2,
+                     application/2, application_arguments/1, application_operator/1,
                      infix_expr/3,
                      match_expr/2,
                      implicit_fun/3, implicit_fun_name/1,
@@ -119,18 +119,21 @@ parse_transform(Forms, Options) ->
                                       Forms))
     end.
 
-get_list(K, L) -> proplists:get_value(K, L, []).
+gl(K, L) -> proplists:get_value(K, L, []).
 
 get_no_auto_import(AF) ->
-    lists:flatten(proplists:get_all_values(no_auto_import, proplists:get_all_values(compile, get_list(attributes, AF)))).
+    lists:flatten(proplists:get_all_values(no_auto_import, proplists:get_all_values(compile, gl(attributes, AF)))).
 
-get_imports(AF) -> get_list(imports, AF).
+get_imports(AF) -> gl(imports, AF).
 
 -compile([{inline, [get_imports/1, get_no_auto_import/1]}]).
 
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
-                                    case do_transform(P, E) of
+                                    case do_transform(case F andalso type(E) of
+                                                          conjunction -> conjunction;
+                                                          _ -> P
+                                                      end, E) of
                                         false -> {E, F};
                                         N -> {N, true}
                                     end
@@ -145,7 +148,7 @@ transform_attribute(Tree, P) ->
         _ -> P
     end.
 
--compile([{inline, [get_imports/1, get_no_auto_import/1]}]).
+-compile([{inline, [transform_function/2, transform_attribute/2]}]).
 
 add_func(F, MF, D, I) -> foldl(fun(A, Acc) -> add_func(setelement(I, F, A), MF, Acc) end, D, element(I, F)).
 
@@ -175,13 +178,55 @@ is_empty(D) -> dict:size(D) =:= 0.
 -endif.
 -compile([{inline, [is_empty/1]}]).
 
-do_transform(P, Node) ->
+do_transform(conjunction, Tree) ->
+    case erl_syntax_lib:mapfold(fun(E, F) ->
+                                    case type(E) =:= application andalso application_transform_guard(E) of
+                                        false -> {E, F};
+                                        N -> {N, true}
+                                    end
+                                end, false, Tree) of
+        {T, true} -> T;
+        _ -> Tree
+    end;
+do_transform(P, Node) when is_record(P, param) ->
     case type(Node) of
         application -> application_transform(P, Node);
         implicit_fun -> revert_implicit_fun(implicit_fun_transform(P, Node));
         _ -> false
     end.
--compile([{inline, [do_transform/2]}]).
+
+application_transform_guard(Node) ->
+    case erl_syntax_lib:analyze_application(Node) of
+        {M, {N, _}} -> application_guard(Node, M, N);
+        _ -> false
+    end.
+
+-compile([{inline, [application_transform_guard/1]}]).
+
+application_guard(Node, dict, size) ->
+    [A] = application_arguments(Node),
+    O = application_operator(Node),
+    ML = module_qualifier_argument(O),
+    NL = module_qualifier_body(O),
+    copy_pos(Node,
+             erl_syntax:parentheses(copy_pos(ML,
+                                             infix_expr(copy_pos(ML,
+                                                                 match_expr(atom(ML, true),
+                                                                            copy_pos(ML,
+                                                                                     application(otpbp_erlang, is_map,
+                                                                                                 ML, ML,
+                                                                                                 [copy_pos(ML, A)])))),
+                                                        copy_pos(ML, erl_syntax:operator('andalso')),
+                                                        copy_pos(NL, application(erlang, element, NL, NL,
+                                                                                 [integer(A, 2), A]))))));
+application_guard(Node, otpbp_erlang, is_map) ->
+    [A] = application_arguments(Node),
+    O = application_operator(Node),
+    ML = module_qualifier_argument(O),
+    copy_pos(Node,
+             application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(module_qualifier_body(O), is_record))),
+                         [A, atom(A, dict), integer(A, tuple_size(dict:new()))]));
+application_guard(_, _, _) -> false.
 
 application_transform(#param{funs = L} = P, Node) ->
     AA = erl_syntax_lib:analyze_application(Node),
@@ -193,30 +238,18 @@ application_transform(#param{funs = L} = P, Node) ->
     end.
 
 application(Node, AA, M, N) ->
-    O = erl_syntax:application_operator(Node),
+    O = application_operator(Node),
     case AA of
         {_, {_, _}} ->
             ML = module_qualifier_argument(O),
             NL = module_qualifier_body(O);
         {_, _} -> ML = NL = O
     end,
-    copy_pos(Node, application(M, N, ML, NL, erl_syntax:application_arguments(Node))).
+    copy_pos(Node, application(M, N, ML, NL, application_arguments(Node))).
 
-application(dict, size, ML, NL, [A]) ->
-    erl_syntax:parentheses(copy_pos(ML, infix_expr(copy_pos(ML, match_expr(atom(ML, true),
-                                                                           copy_pos(ML,
-                                                                                    application(otpbp_erlang, is_map,
-                                                                                                ML, ML,
-                                                                                                [copy_pos(ML, A)])))),
-                                                   copy_pos(ML, erl_syntax:operator('andalso')),
-                                                   copy_pos(NL, application(erlang, element, NL, NL,
-                                                                            [integer(A, 2), A])))));
-application(otpbp_erlang, is_map, ML, NL, [A]) ->
-    application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(NL, is_record))),
-                [A, atom(A, dict), integer(A, tuple_size(dict:new()))]);
 application(M, N, ML, NL, A) -> application(copy_pos(ML, module_qualifier(atom(ML, M), atom(NL, N))), A).
 
--compile([{inline, [application_transform/2, application/4]}]).
+-compile([{inline, [application_transform/2, application/4, application/5]}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
 -define(ORIG_IMPLICIT_FUN, Node).
