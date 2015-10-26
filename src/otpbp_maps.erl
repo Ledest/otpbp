@@ -1,5 +1,8 @@
 -module(otpbp_maps).
 
+-ifndef(HAVE_maps__filter_2).
+-export([filter/2]).
+-endif.
 -ifndef(HAVE_maps__get_3).
 -export([get/3]).
 -endif.
@@ -22,6 +25,20 @@ get(Key, Map, Default) ->
         {ok, V} -> V;
         error -> Default
     end.
+-endif.
+
+-ifndef(HAVE_maps__filter_2).
+-ifdef(HAVE_maps__fold_3).
+filter(F, Map) when is_function(F, 2) ->
+    maps:fold(fun(K, V, A) ->
+                  case F(K, V) of
+                      true -> A#{K => V};
+                      false -> A
+                  end
+              end, #{}, Map).
+-else.
+filter(F, Map) -> dict:filter(F, Map).
+-endif.
 -endif.
 
 -ifndef(HAVE_maps__merge_2).
