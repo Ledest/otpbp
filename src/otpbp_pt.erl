@@ -51,6 +51,7 @@
                               {{epp, parse_file, 2}, otpbp_epp},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
+                              {{gb_trees, iterator_from, 2}, otpbp_gb_trees},
                               {{gen_event, system_get_state, 1}, otpbp_gen_event},
                               {{gen_event, system_replace_state, 2}, otpbp_gen_event},
                               {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
