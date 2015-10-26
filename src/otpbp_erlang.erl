@@ -1,5 +1,36 @@
 -module(otpbp_erlang).
 
+-ifndef(HAVE_erlang__monotonic_time_0).
+-ifndef(NEED_erlang__system_time_0).
+-define(NEED_erlang__system_time_0, true).
+-endif.
+-endif.
+-ifndef(HAVE_erlang__monotonic_time_1).
+-ifndef(NEED_erlang__system_time_1).
+-define(NEED_erlang__system_time_1, true).
+-endif.
+-endif.
+-ifndef(HAVE_erlang__system_time_0).
+-ifndef(NEED_erlang__system_time_0).
+-define(NEED_erlang__system_time_0, true).
+-endif.
+-endif.
+-ifndef(HAVE_erlang__system_time_1).
+-ifndef(NEED_erlang__system_time_1).
+-define(NEED_erlang__system_time_1, true).
+-endif.
+-endif.
+-ifndef(HAVE_erlang__unique_integer_0).
+-ifndef(NEED_erlang__system_time_0).
+-define(NEED_erlang__system_time_0, true).
+-endif.
+-endif.
+-ifndef(HAVE_erlang__unique_integer_1).
+-ifndef(NEED_erlang__system_time_0).
+-define(NEED_erlang__system_time_0, true).
+-endif.
+-endif.
+
 -ifndef(HAVE_erlang__binary_to_integer_1).
 -export([binary_to_integer/1]).
 -endif.
@@ -32,6 +63,24 @@
 -endif.
 -ifndef(HAVE_erlang__get_keys_0).
 -export([get_keys/0]).
+-endif.
+-ifndef(HAVE_erlang__convert_time_unit_3).
+-export([convert_time_unit/3]).
+-endif.
+-ifdef(NEED_erlang__system_time_0).
+-export([system_time/0]).
+-endif.
+-ifdef(NEED_erlang__system_time_1).
+-export([system_time/1]).
+-endif.
+-ifndef(HAVE_erlang__time_offset_0).
+-export([time_offset/0]).
+-endif.
+-ifndef(HAVE_erlang__time_offset_1).
+-export([time_offset/1]).
+-endif.
+-ifndef(HAVE_erlang__unique_integer_1).
+-export([unique_integer/1]).
 -endif.
 -ifndef(HAVE_erlang__is_map_1).
 -export([is_map/1]).
@@ -129,6 +178,60 @@ insert_element(Index, Tuple, Term, List, I) -> insert_element(Index, Tuple, Term
 
 -ifndef(HAVE_erlang__get_keys_0).
 get_keys() -> proplists:get_keys(get()).
+-endif.
+
+-ifndef(HAVE_erlang__convert_time_unit_3).
+convert_time_unit(Time, FromUnit, ToUnit) when is_integer(Time) ->
+    FU = integer_time_unit(FromUnit),
+    (Time * integer_time_unit(ToUnit) - if
+                                            Time < 0 -> FU - 1;
+                                            true -> 0
+                                        end) div FU.
+
+integer_time_unit(native) -> 1000000;
+integer_time_unit(nano_seconds) -> 1000000000;
+integer_time_unit(micro_seconds) -> 1000000;
+integer_time_unit(milli_seconds) -> 1000;
+integer_time_unit(seconds) -> 1;
+integer_time_unit(I) when is_integer(I), I > 0 -> I;
+integer_time_unit(BadRes) -> erlang:error(badarg, [BadRes]).
+-endif.
+
+-ifdef(NEED_erlang__system_time_0).
+system_time() ->
+    {MS, S, US} = erlang:now(),
+    (MS * 1000000 + S) * 1000000 + US.
+-endif.
+
+-ifdef(NEED_erlang__system_time_1).
+system_time(nano_seconds) -> system_time() div 1000000000;
+system_time(micro_seconds) -> system_time();
+system_time(milli_seconds) -> system_time() div 1000;
+system_time(seconds) ->
+    {MS, S, _} = erlang:now(),
+    MS * 1000000 + S;
+system_time(I) when is_integer(I), I > 0 -> system_time() * I div 1000000000;
+system_time(BadArg) -> erlang:error(badarg, [BadArg]).
+-endif.
+
+-ifndef(HAVE_erlang__time_offset_0).
+time_offset() -> 0.
+-endif.
+
+-ifndef(HAVE_erlang__time_offset_1).
+time_offset(nano_seconds) -> 0;
+time_offset(micro_seconds) -> 0;
+time_offset(milli_seconds) -> 0;
+time_offset(seconds) -> 0;
+time_offset(I) when is_integer(I), I > 0 -> 0;
+time_offset(BadArg) -> erlang:error(badarg, [BadArg]).
+-endif.
+
+-ifndef(HAVE_erlang__unique_integer_1).
+unique_integer([]) -> system_time();
+unique_integer([positive|O]) -> unique_integer(O);
+unique_integer([monotonic|O]) -> unique_integer(O);
+unique_integer(O) -> erlang:error(badarg, [O]).
 -endif.
 
 -ifndef(HAVE_erlang__is_map_1).
