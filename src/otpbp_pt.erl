@@ -77,6 +77,7 @@
                               {{maps, get, 3}, otpbp_maps},
                               {{maps, [fold, update], 3}, dict},
                               {{maps, put, 3}, {dict, store}},
+                              {{math, log2, 1}, otpbp_math},
                               {{orddict, is_empty, 1}, otpbp_orddict},
                               {{os, system_time, 1}, otpbp_os},
                               {{os, getenv, 2}, otpbp_os}]).
