@@ -5,5 +5,5 @@
 -endif.
 
 -ifndef(HAVE_math__log2_1).
-log2(X) -> log(X) / log(2).
+log2(X) -> math:log(X) / math:log(2).
 -endif.
