@@ -80,7 +80,11 @@
                               {{math, log2, 1}, otpbp_math},
                               {{orddict, is_empty, 1}, otpbp_orddict},
                               {{os, system_time, 1}, otpbp_os},
-                              {{os, getenv, 2}, otpbp_os}]).
+                              {{os, getenv, 2}, otpbp_os},
+                              {{rand, [export_seed, normal], 0}, otpbp_rand},
+                              {{rand, [export_seed_s, normal_s], 1}, otpbp_rand},
+                              {{rand, [seed, seed_s, uniform_s], [1, 2]}, otpbp_rand},
+                              {{rand, uniform, [0, 1]}, otpbp_rand}]).
 
 -import(erl_syntax, [type/1,
                      get_pos/1, copy_pos/2,
