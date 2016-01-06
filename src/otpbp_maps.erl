@@ -49,11 +49,10 @@ merge(Map1, Map2) -> dict:merge(fun(_, _, V2) -> V2 end, Map1, Map2).
 -endif.
 
 -ifndef(HAVE_maps__update_3).
-update(Key, Value, Map) when element(1, Map) =:= dict ->
-    tuple_size(Map) =:= tuple_size(dict:new()) orelse error({badmap, Map}),
+update(Key, Value, Map) ->
+    is_record(Map, dict, tuple_size(dict:new())) =:= true orelse error({badmap, Map}),
     dict:is_key(Key, Map) orelse error({badkey, Key}),
-    dict:update(Key, fun(_) -> Value end, Map);
-update(_, _, Map) -> error({badmap, Map}).
+    dict:update(Key, fun(_) -> Value end, Map).
 -endif.
 
 -ifndef(HAVE_maps__values_1).
