@@ -9,6 +9,9 @@
 -ifndef(HAVE_maps__merge_2).
 -export([merge/2]).
 -endif.
+-ifndef(HAVE_maps__update_3).
+-export([update/3]).
+-endif.
 -ifndef(HAVE_maps__values_1).
 -export([values/1]).
 -endif.
@@ -43,6 +46,10 @@ filter(F, Map) -> dict:filter(F, Map).
 
 -ifndef(HAVE_maps__merge_2).
 merge(Map1, Map2) -> dict:merge(fun(_, _, V2) -> V2 end, Map1, Map2).
+-endif.
+
+-ifndef(HAVE_maps__update_3).
+update(Key, Value, Map) -> dict:update(Key, fun(_) -> Value end, Map).
 -endif.
 
 -ifndef(HAVE_maps__values_1).
