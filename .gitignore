@@ -7,5 +7,6 @@ deps/*
 /ebin
 /doc
 .project
+.kateproject
 .settings/
 erl_crash.dump
