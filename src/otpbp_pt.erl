@@ -99,7 +99,7 @@
                      module_qualifier/2, module_qualifier_argument/1, module_qualifier_body/1]).
 -import(erl_syntax_lib, [analyze_forms/1]).
 -import(dict, [store/3, find/2]).
--import(lists, [foldl/3]).
+-import(lists, [foldl/3, mapfoldl/3]).
 
 -record(param, {options = [] :: list(),
                 funs,
@@ -109,27 +109,33 @@ parse_transform(Forms, Options) ->
     TL = transform_list(),
     case is_empty(TL) of
         true -> Forms;
-        _ ->
-            AF = analyze_forms(Forms),
-            element(1, lists:mapfoldl(fun(Tree, P) ->
-                                          case type(Tree) of
-                                              function -> {transform_function(Tree, P), P};
-                                              attribute -> {Tree, transform_attribute(Tree, P)};
-                                              _ -> {Tree, P}
-                                          end
-                                      end,
-                                      #param{options = Options,
-                                             funs = foldl(fun({M, Fs}, IA) ->
-                                                              foldl(fun(FA, IAM) ->
-                                                                        case find({M, FA}, TL) of
-                                                                            {ok, V} -> store(FA, V, IAM);
-                                                                            _ -> IAM
-                                                                        end
-                                                                    end, IA, Fs)
-                                                          end,
-                                                          foldl(fun dict:erase/2, TL, get_no_auto_import(AF)),
-                                                          get_imports(AF))},
-                                      Forms))
+        _ -> try analyze_forms(Forms) of
+                 AF -> element(1, mapfoldl(fun(Tree, P) ->
+                                               case type(Tree) of
+                                                   function -> {transform_function(Tree, P), P};
+                                                   attribute -> {Tree, transform_attribute(Tree, P)};
+                                                   _ -> {Tree, P}
+                                               end
+                                           end,
+                                           #param{options = Options,
+                                                  funs = foldl(fun({M, Fs}, IA) ->
+                                                                   foldl(fun(FA, IAM) ->
+                                                                             case find({M, FA}, TL) of
+                                                                                 {ok, V} -> store(FA, V, IAM);
+                                                                                 _ -> IAM
+                                                                              end
+                                                                         end, IA, Fs)
+                                                               end,
+                                                               foldl(fun dict:erase/2, TL, get_no_auto_import(AF)),
+                                                               get_imports(AF))},
+                                           Forms))
+            catch
+                C:E ->
+                    io:fwrite(standard_error,
+                              ?MODULE_STRING ": error erl_syntax_lib:analyze_forms/1 {~p:~p}, see below.~n",
+                              [C, E]),
+                    Forms
+            end
     end.
 
 gl(K, L) -> proplists:get_value(K, L, []).
