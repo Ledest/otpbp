@@ -6,7 +6,7 @@
 
 -ifndef(HAVE_ets__take_2).
 take(Tab, Key) ->
-    R = ets:lookup(Tab, Key),
-    ets:delete(Tab, Key),
-    R.
+    Objects = ets:lookup(Tab, Key),
+    Objects =:= [] orelse ets:delete(Tab, Key),
+    Objects.
 -endif.
