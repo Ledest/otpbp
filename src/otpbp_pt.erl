@@ -50,6 +50,7 @@
                               {{erl_scan, [category, column, line, location, symbol, text, continuation_location], 1},
                                otpbp_erl_scan},
                               {{epp, parse_file, 2}, otpbp_epp},
+                              {{ets, take, 2}, otpbp_ets},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
                               {{gb_trees, iterator_from, 2}, otpbp_gb_trees},
