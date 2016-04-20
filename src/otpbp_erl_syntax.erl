@@ -714,9 +714,7 @@ revert_try_expr(Node) ->
     After = try_expr_after(Node),
     {'try', Pos, Body, Clauses, Handlers, After}.
 
-revert_tuple(Node) ->
-    Pos = get_pos(Node),
-    {tuple, Pos, tuple_elements(Node)}.
+revert_tuple(Node) -> {tuple, get_pos(Node), tuple_elements(Node)}.
 
 revert_underscore(Node) -> {var, get_pos(Node), '_'}.
 
