@@ -593,18 +593,13 @@ revert_receive_expr(Node) ->
 revert_record_access(Node) ->
     Pos = get_pos(Node),
     Argument = record_access_argument(Node),
-    Type = record_access_type(Node),
     Field = record_access_field(Node),
-    if Type =:= none ->
-	    {record_field, Pos, Argument, Field};
-       true ->
-	    case type(Type) of
-		atom ->
-		    {record_field, Pos,
-		     Argument, concrete(Type), Field};
-		_ ->
-		    Node
-	    end
+    case record_access_type(Node) of
+        none -> {record_field, Pos, Argument, Field};
+        Type -> case type(Type) of
+                    atom -> {record_field, Pos, Argument, concrete(Type), Field};
+                    _ -> Node
+                end
     end.
 
 revert_record_expr(Node) ->
