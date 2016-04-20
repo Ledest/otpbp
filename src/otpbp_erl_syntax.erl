@@ -553,9 +553,7 @@ revert_infix_expr(Node) ->
 	    Node
     end.
 
-revert_integer(Node) ->
-    Pos = get_pos(Node),
-    {integer, Pos, integer_value(Node)}.
+revert_integer(Node) -> {integer, get_pos(Node), integer_value(Node)}.
 
 revert_list(Node) ->
     Pos = get_pos(Node),
