@@ -707,12 +707,12 @@ fold_try_clause({clause, Pos, [P], Guard, Body}) ->
     {clause, Pos, [P1], Guard, Body}.
 
 revert_try_expr(Node) ->
-    Pos = get_pos(Node),
-    Body = try_expr_body(Node),
-    Clauses = [revert_clause(C) || C <- try_expr_clauses(Node)],
-    Handlers = [revert_try_clause(C) || C <- try_expr_handlers(Node)],
-    After = try_expr_after(Node),
-    {'try', Pos, Body, Clauses, Handlers, After}.
+    {'try',
+     get_pos(Node),
+     try_expr_body(Node),
+     lists:map(fun revert_clause/1, try_expr_clauses(Node)),
+     lists:map(fun revert_try_clause/1, try_expr_handlers(Node)),
+     try_expr_after(Node)}.
 
 revert_tuple(Node) -> {tuple, get_pos(Node), tuple_elements(Node)}.
 
