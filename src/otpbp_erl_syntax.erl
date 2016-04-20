@@ -619,14 +619,10 @@ revert_prefix_expr(Node) ->
 
 revert_receive_expr(Node) ->
     Pos = get_pos(Node),
-    Clauses = [revert_clause(C) || C <- receive_expr_clauses(Node)],
-    Timeout = receive_expr_timeout(Node),
-    Action = receive_expr_action(Node),
-    case Timeout of
-	none ->
-	    {'receive', Pos, Clauses};
-	_ ->
-	    {'receive', Pos, Clauses, Timeout, Action}
+    Clauses = lists:map(fun revert_clause/1, receive_expr_clauses(Node)),
+    case receive_expr_timeout(Node) of
+        none -> {'receive', Pos, Clauses};
+        Timeout -> {'receive', Pos, Clauses, Timeout, receive_expr_action(Node)}
     end.
 
 revert_record_access(Node) ->
