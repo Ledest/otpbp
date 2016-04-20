@@ -591,11 +591,7 @@ revert_module_name(A) ->
 	    error
     end.
 
-revert_module_qualifier(Node) ->
-    Pos = get_pos(Node),
-    Module = module_qualifier_argument(Node),
-    Body = module_qualifier_body(Node),
-    {remote, Pos, Module, Body}.
+revert_module_qualifier(Node) -> {remote, get_pos(Node), module_qualifier_argument(Node), module_qualifier_body(Node)}.
 
 revert_nil(Node) -> {nil, get_pos(Node)}.
 
