@@ -741,8 +741,7 @@ fold_function_name(N) ->
     true = ((type(Name) =:= atom) and (type(Arity) =:= integer)),
     {concrete(Name), concrete(Arity)}.
 
-fold_variable_names(Vs) ->
-    [variable_name(V) || V <- Vs].
+fold_variable_names(Vs) -> lists:map(fun erl_syntax:variable_name/1, Vs).
 
 fold_record_fields(Fs) ->
     lists:map(fun(F) ->
