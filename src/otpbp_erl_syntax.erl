@@ -559,17 +559,12 @@ revert_integer(Node) ->
 
 revert_list(Node) ->
     Pos = get_pos(Node),
-    P = list_prefix(Node),
-    S = case list_suffix(Node) of
-	    none ->
-		revert_nil(set_pos(nil(), Pos));
-	    S1 ->
-		S1
-	end,
-    lists:foldr(fun (X, A) ->
-			{cons, Pos, X, A}
-		end,
-		S, P).
+    lists:foldr(fun(X, A) -> {cons, Pos, X, A} end,
+                case list_suffix(Node) of
+                    none -> revert_nil(set_pos(nil(), Pos));
+                    S -> S
+                end,
+                list_prefix(Node)).
 
 revert_list_comp(Node) -> {lc, get_pos(Node), list_comp_template(Node), list_comp_body(Node)}.
 
