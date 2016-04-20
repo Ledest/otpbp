@@ -605,16 +605,11 @@ revert_parentheses(Node) ->
     parentheses_body(Node).
 
 revert_prefix_expr(Node) ->
-    Pos = get_pos(Node),
     Operator = prefix_expr_operator(Node),
-    Argument = prefix_expr_argument(Node),
     case type(Operator) of
-	operator ->
-	    %% Note that the operator itself is not revertible out
-	    %% of context.
-	    {op, Pos, operator_name(Operator), Argument};
-	_ ->
-	    Node
+        %% Note that the operator itself is not revertible out of context.
+        operator -> {op, get_pos(Node), operator_name(Operator), prefix_expr_argument(Node)};
+        _ -> Node
     end.
 
 revert_receive_expr(Node) ->
