@@ -688,9 +688,7 @@ revert_rule(Node) ->
 	    Node
     end.
 
-revert_string(Node) ->
-    Pos = get_pos(Node),
-    {string, Pos, string_value(Node)}.
+revert_string(Node) -> {string, get_pos(Node), string_value(Node)}.
 
 revert_try_clause(Node) ->
     {clause, Pos, [P], _, _} = C = revert_clause(Node),
