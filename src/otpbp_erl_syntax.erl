@@ -608,22 +608,17 @@ revert_record_access(Node) ->
     end.
 
 revert_record_expr(Node) ->
-    Pos = get_pos(Node),
-    Argument = record_expr_argument(Node),
     Type = record_expr_type(Node),
-    Fields = record_expr_fields(Node),
     case type(Type) of
-	atom ->
-	    T = concrete(Type),
-	    Fs = fold_record_fields(Fields),
-	    case Argument of
-		none ->
-		    {record, Pos, T, Fs};
-		_ ->
-		    {record, Pos, Argument, T, Fs}
-	    end;
-	_ ->
-	    Node
+        atom ->
+            Pos = get_pos(Node),
+            T = concrete(Type),
+            Fs = fold_record_fields(record_expr_fields(Node)),
+            case record_expr_argument(Node) of
+                none -> {record, Pos, T, Fs};
+                Argument -> {record, Pos, Argument, T, Fs}
+            end;
+        _ -> Node
     end.
 
 revert_record_index_expr(Node) ->
