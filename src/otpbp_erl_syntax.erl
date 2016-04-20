@@ -597,12 +597,9 @@ revert_module_qualifier(Node) ->
     Body = module_qualifier_body(Node),
     {remote, Pos, Module, Body}.
 
-revert_nil(Node) ->
-    Pos = get_pos(Node),
-    {nil, Pos}.
+revert_nil(Node) -> {nil, get_pos(Node)}.
 
-revert_parentheses(Node) ->
-    parentheses_body(Node).
+revert_parentheses(Node) -> parentheses_body(Node).
 
 revert_prefix_expr(Node) ->
     Operator = prefix_expr_operator(Node),
