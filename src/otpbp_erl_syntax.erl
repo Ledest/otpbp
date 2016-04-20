@@ -571,11 +571,7 @@ revert_list(Node) ->
 		end,
 		S, P).
 
-revert_list_comp(Node) ->
-    Pos = get_pos(Node),
-    Template = list_comp_template(Node),
-    Body = list_comp_body(Node),
-    {lc, Pos, Template, Body}.
+revert_list_comp(Node) -> {lc, get_pos(Node), list_comp_template(Node), list_comp_body(Node)}.
 
 revert_match_expr(Node) -> {match, get_pos(Node), match_expr_pattern(Node), match_expr_body(Node)}.
 
