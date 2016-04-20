@@ -758,13 +758,9 @@ fold_record_field(F) ->
     end.
 
 fold_binary_field_types(Ts) ->
-    [fold_binary_field_type(T) || T <- Ts].
-
-fold_binary_field_type(Node) ->
-    case type(Node) of
-	size_qualifier ->
-	    {concrete(size_qualifier_body(Node)),
-	     concrete(size_qualifier_argument(Node))};
-	_ ->
-	    concrete(Node)
-    end.
+    lists:map(fun(Node) ->
+                  case type(Node) of
+                      size_qualifier -> {concrete(size_qualifier_body(Node)), concrete(size_qualifier_argument(Node))};
+                      _ -> concrete(Node)
+                  end
+              end, Ts).
