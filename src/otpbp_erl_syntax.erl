@@ -666,14 +666,10 @@ revert_record_expr(Node) ->
     end.
 
 revert_record_index_expr(Node) ->
-    Pos = get_pos(Node),
     Type = record_index_expr_type(Node),
-    Field = record_index_expr_field(Node),
     case type(Type) of
-	atom ->
-	    {record_index, Pos, concrete(Type), Field};
-	_ ->
-	    Node
+        atom -> {record_index, get_pos(Node), concrete(Type), record_index_expr_field(Node)};
+        _ -> Node
     end.
 
 revert_rule(Node) ->
