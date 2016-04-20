@@ -718,9 +718,7 @@ revert_tuple(Node) ->
     Pos = get_pos(Node),
     {tuple, Pos, tuple_elements(Node)}.
 
-revert_underscore(Node) ->
-    Pos = get_pos(Node),
-    {var, Pos, '_'}.
+revert_underscore(Node) -> {var, get_pos(Node), '_'}.
 
 revert_variable(Node) -> {var, get_pos(Node), variable_name(Node)}.
 
