@@ -722,10 +722,7 @@ revert_underscore(Node) ->
     Pos = get_pos(Node),
     {var, Pos, '_'}.
 
-revert_variable(Node) ->
-    Pos = get_pos(Node),
-    Name = variable_name(Node),
-    {var, Pos, Name}.
+revert_variable(Node) -> {var, get_pos(Node), variable_name(Node)}.
 
 revert_warning_marker(Node) ->
     %% Note that the position information of the node itself is not
