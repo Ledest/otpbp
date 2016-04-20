@@ -733,13 +733,12 @@ revert_warning_marker(Node) ->
     {warning, warning_marker_info(Node)}.
 
 fold_function_names(Ns) ->
-    [fold_function_name(N) || N <- Ns].
-
-fold_function_name(N) ->
-    Name = arity_qualifier_body(N),
-    Arity = arity_qualifier_argument(N),
-    true = ((type(Name) =:= atom) and (type(Arity) =:= integer)),
-    {concrete(Name), concrete(Arity)}.
+    lists:map(fun(N) ->
+                  Name = arity_qualifier_body(N),
+                  Arity = arity_qualifier_argument(N),
+                  true = (type(Name) =:= atom) and (type(Arity) =:= integer),
+                  {concrete(Name), concrete(Arity)}
+              end, Ns).
 
 fold_variable_names(Vs) -> lists:map(fun erl_syntax:variable_name/1, Vs).
 
