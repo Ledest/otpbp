@@ -745,17 +745,14 @@ fold_variable_names(Vs) ->
     [variable_name(V) || V <- Vs].
 
 fold_record_fields(Fs) ->
-    [fold_record_field(F) || F <- Fs].
-
-fold_record_field(F) ->
-    Pos = get_pos(F),
-    Name = record_field_name(F),
-    case record_field_value(F) of
-	none ->
-	    {record_field, Pos, Name};
-	Value ->
-	    {record_field, Pos, Name, Value}
-    end.
+    lists:map(fun(F) ->
+                  Pos = get_pos(F),
+                  Name = record_field_name(F),
+                  case record_field_value(F) of
+                      none -> {record_field, Pos, Name};
+                      Value -> {record_field, Pos, Name, Value}
+                  end
+              end, Fs).
 
 fold_binary_field_types(Ts) ->
     lists:map(fun(Node) ->
