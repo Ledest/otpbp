@@ -678,14 +678,10 @@ revert_record_index_expr(Node) ->
 
 revert_rule(Node) ->
     Name = rule_name(Node),
-    Clauses = [revert_clause(C) || C <- rule_clauses(Node)],
-    Pos = get_pos(Node),
     case type(Name) of
-	atom ->
-	    A = rule_arity(Node),
-	    {rule, Pos, concrete(Name), A, Clauses};
-	_ ->
-	    Node
+        atom ->
+            {rule, get_pos(Node), concrete(Name), rule_arity(Node), lists:map(fun revert_clause/1, rule_clauses(Node))};
+        _ -> Node
     end.
 
 revert_string(Node) -> {string, get_pos(Node), string_value(Node)}.
