@@ -540,17 +540,11 @@ revert_implicit_fun(Node) ->
     end.
 
 revert_infix_expr(Node) ->
-    Pos = get_pos(Node),
     Operator = infix_expr_operator(Node),
-    Left = infix_expr_left(Node),
-    Right = infix_expr_right(Node),
     case type(Operator) of
-	operator ->
-	    %% Note that the operator itself is not revertible out
-	    %% of context.
-	    {op, Pos, operator_name(Operator), Left, Right};
-	_ ->
-	    Node
+        %% Note that the operator itself is not revertible out of context.
+        operator -> {op, get_pos(Node), operator_name(Operator), infix_expr_left(Node), infix_expr_right(Node)};
+        _ -> Node
     end.
 
 revert_integer(Node) -> {integer, get_pos(Node), integer_value(Node)}.
