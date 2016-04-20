@@ -693,18 +693,12 @@ revert_string(Node) ->
     {string, Pos, string_value(Node)}.
 
 revert_try_clause(Node) ->
-    fold_try_clause(revert_clause(Node)).
-
-fold_try_clause({clause, Pos, [P], Guard, Body}) ->
-    P1 = case type(P) of
-	     class_qualifier ->
-		 {tuple, Pos, [class_qualifier_argument(P),
-			       class_qualifier_body(P),
-			       {var, Pos, '_'}]};
-	     _ ->
-		 {tuple, Pos, [{atom, Pos, throw}, P, {var, Pos, '_'}]}
-	 end,
-    {clause, Pos, [P1], Guard, Body}.
+    {clause, Pos, [P], _, _} = C = revert_clause(Node),
+    {A, B} = case type(P) of
+                 class_qualifier -> {class_qualifier_argument(P), class_qualifier_body(P)};
+                 _ -> {{atom, Pos, throw}, P}
+             end,
+     setelement(3, C, [{tuple, Pos, [A, B, {var, Pos, '_'}]}]).
 
 revert_try_expr(Node) ->
     {'try',
