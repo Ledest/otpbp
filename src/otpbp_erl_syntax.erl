@@ -499,11 +499,7 @@ revert_function(Node) ->
 	    Node
     end.
 
-revert_generator(Node) ->
-    Pos = get_pos(Node),
-    Pattern = generator_pattern(Node),
-    Body = generator_body(Node),
-    {generate, Pos, Pattern, Body}.
+revert_generator(Node) -> {generate, get_pos(Node), generator_pattern(Node), generator_body(Node)}.
 
 revert_if_expr(Node) ->
     Pos = get_pos(Node),
