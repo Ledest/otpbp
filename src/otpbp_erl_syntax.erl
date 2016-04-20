@@ -577,18 +577,12 @@ revert_list_comp(Node) ->
     Body = list_comp_body(Node),
     {lc, Pos, Template, Body}.
 
-revert_match_expr(Node) ->
-    Pos = get_pos(Node),
-    Pattern = match_expr_pattern(Node),
-    Body = match_expr_body(Node),
-    {match, Pos, Pattern, Body}.
+revert_match_expr(Node) -> {match, get_pos(Node), match_expr_pattern(Node), match_expr_body(Node)}.
 
 revert_module_name(A) ->
     case type(A) of
-	atom ->
-	    {ok, concrete(A)};
-	_ ->
-	    error
+        atom -> {ok, concrete(A)};
+        _ -> error
     end.
 
 revert_module_qualifier(Node) -> {remote, get_pos(Node), module_qualifier_argument(Node), module_qualifier_body(Node)}.
