@@ -262,11 +262,7 @@ revert_root(Node) ->
 unwrap(#wrapper{tree = Node}) -> Node;
 unwrap(Node) -> Node.	 % This could also be a new-form node.
 
-revert_application(Node) ->
-    Pos = get_pos(Node),
-    Operator = application_operator(Node),
-    Arguments = application_arguments(Node),
-    {call, Pos, Operator, Arguments}.
+revert_application(Node) -> {call, get_pos(Node), application_operator(Node), application_arguments(Node)}.
 
 revert_atom(Node) -> {atom, get_pos(Node), atom_value(Node)}.
 
