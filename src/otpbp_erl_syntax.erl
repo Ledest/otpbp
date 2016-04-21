@@ -482,10 +482,7 @@ revert_float(Node) ->
     Pos = get_pos(Node),
     {float, Pos, float_value(Node)}.
 
-revert_fun_expr(Node) ->
-    Clauses = [revert_clause(C) || C <- fun_expr_clauses(Node)],
-    Pos = get_pos(Node),
-    {'fun', Pos, {clauses, Clauses}}.
+revert_fun_expr(Node) -> {'fun', get_pos(Node), {clauses, lists:map(fun revert_clause/1, fun_expr_clauses(Node))}}.
 
 revert_function(Node) ->
     Name = function_name(Node),
