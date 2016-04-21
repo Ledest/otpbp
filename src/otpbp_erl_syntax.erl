@@ -459,15 +459,13 @@ revert_clause(Node) ->
      clause_body(Node)}.
 
 revert_clause_disjunction(D) ->
-    %% We handle conjunctions within a disjunction, but only at
-    %% the top level; no recursion.
-    [case type(E) of
-	 conjunction ->
-	     conjunction_body(E);
-	 _ ->
-	     [E]
-     end
-     || E <- disjunction_body(D)].
+    %% We handle conjunctions within a disjunction, but only at the top level; no recursion.
+    lists:map(fun(E) ->
+                  case type(E) of
+                      conjunction -> conjunction_body(E);
+                      _ -> [E]
+                  end
+              end, disjunction_body(D)).
 
 revert_eof_marker(Node) -> {eof, get_pos(Node)}.
 
