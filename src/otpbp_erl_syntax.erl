@@ -372,14 +372,10 @@ revert_attribute_1(record, [A, Tuple], Pos, Node) ->
 	_ ->
 	    Node
     end;
-revert_attribute_1(N, [T], Pos, _) ->
-    {attribute, Pos, N, concrete(T)};
-revert_attribute_1(_, _, _, Node) ->
-    Node.
+revert_attribute_1(N, [T], Pos, _) -> {attribute, Pos, N, concrete(T)};
+revert_attribute_1(_, _, _, Node) -> Node.
 
-revert_binary(Node) ->
-    Pos = get_pos(Node),
-    {bin, Pos, binary_fields(Node)}.
+revert_binary(Node) -> {bin, get_pos(Node), binary_fields(Node)}.
 
 revert_binary_comp(Node) ->
     Pos = get_pos(Node),
