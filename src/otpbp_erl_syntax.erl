@@ -433,10 +433,7 @@ revert_char(Node) ->
     Pos = get_pos(Node),
     {char, Pos, char_value(Node)}.
 
-revert_cond_expr(Node) ->
-    Pos = get_pos(Node),
-    Clauses = [revert_clause(C) || C <- cond_expr_clauses(Node)],
-    {'cond', Pos, Clauses}.
+revert_cond_expr(Node) -> {'cond', get_pos(Node), list:map(fun revert_clause/1, cond_expr_clauses(Node))}.
 
 revert_clause(Node) ->
     Pos = get_pos(Node),
