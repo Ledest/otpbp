@@ -377,11 +377,7 @@ revert_attribute_1(_, _, _, Node) -> Node.
 
 revert_binary(Node) -> {bin, get_pos(Node), binary_fields(Node)}.
 
-revert_binary_comp(Node) ->
-    Pos = get_pos(Node),
-    Template = binary_comp_template(Node),
-    Body = binary_comp_body(Node),
-    {bc, Pos, Template, Body}.
+revert_binary_comp(Node) -> {bc, get_pos(Node), binary_comp_template(Node), binary_comp_body(Node)}.
 
 revert_binary_field(Node) ->
     Pos = get_pos(Node),
