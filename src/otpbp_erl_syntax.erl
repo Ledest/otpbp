@@ -446,14 +446,10 @@ revert_fun_expr(Node) -> {'fun', get_pos(Node), {clauses, lists:map(fun revert_c
 
 revert_function(Node) ->
     Name = function_name(Node),
-    Clauses = [revert_clause(C) || C <- function_clauses(Node)],
-    Pos = get_pos(Node),
     case type(Name) of
-	atom ->
-	    A = function_arity(Node),
-	    {function, Pos, concrete(Name), A, Clauses};
-	_ ->
-	    Node
+        atom -> {function, get_pos(Node), concrete(Name), function_arity(Node),
+                 lists:map(fun revert_clause/1, function_clauses(Node))};
+        _ -> Node
     end.
 
 revert_generator(Node) -> {generate, get_pos(Node), generator_pattern(Node), generator_body(Node)}.
