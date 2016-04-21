@@ -274,103 +274,53 @@ revert_atom(Node) ->
 
 revert_attribute(Node) ->
     Name = attribute_name(Node),
-    Args = attribute_arguments(Node),
-    Pos = get_pos(Node),
     case type(Name) of
-	atom ->
-	    revert_attribute_1(atom_value(Name), Args, Pos, Node);
-	_ ->
-	    Node
+        atom -> revert_attribute_1(atom_value(Name), attribute_arguments(Node), get_pos(Node), Node);
+        _ -> Node
     end.
 
 %% All the checking makes this part a bit messy:
 
 revert_attribute_1(module, [M], Pos, Node) ->
     case revert_module_name(M) of
-	{ok, A} -> 
-	    {attribute, Pos, module, A};
-	error -> Node
+        {ok, A} -> {attribute, Pos, module, A};
+        error -> Node
     end;
 revert_attribute_1(module, [M, List], Pos, Node) ->
-    Vs = case is_list_skeleton(List) of
-	     true ->
-		 case is_proper_list(List) of
-		     true ->
-			 fold_variable_names(list_elements(List));
-		     false ->
-			 Node
-		 end;
-	     false ->
-		 Node
-	 end,
     case revert_module_name(M) of
-	{ok, A} -> 
-	    {attribute, Pos, module, {A, Vs}};
-	error -> Node
+        {ok, A} -> {attribute, Pos, module, {A, case is_list_skeleton(List) andalso is_proper_list(List) of
+                                                    true -> fold_variable_names(list_elements(List));
+                                                    false -> Node
+                                                end}};
+        error -> Node
     end;
 revert_attribute_1(export, [List], Pos, Node) ->
-    case is_list_skeleton(List) of
-	true ->
-	    case is_proper_list(List) of
-		true ->
-		    Fs = fold_function_names(list_elements(List)),
-		    {attribute, Pos, export, Fs};
-		false ->
-		    Node
-	    end;
-	false ->
-	    Node
+    case is_list_skeleton(List) andalso is_proper_list(List) of
+        true -> {attribute, Pos, export, fold_function_names(list_elements(List))};
+        false -> Node
     end;
 revert_attribute_1(import, [M], Pos, Node) ->
     case revert_module_name(M) of
-	{ok, A} -> {attribute, Pos, import, A};
-	error -> Node
+        {ok, A} -> {attribute, Pos, import, A};
+        error -> Node
     end;
 revert_attribute_1(import, [M, List], Pos, Node) ->
     case revert_module_name(M) of
-	{ok, A} ->
-	    case is_list_skeleton(List) of
-		true ->
-		    case is_proper_list(List) of
-			true ->
-			    Fs = fold_function_names(
-				   list_elements(List)),
-			    {attribute, Pos, import, {A, Fs}};
-			false ->
-			    Node
-		    end;
-		false ->
-		    Node
-	    end;
-	error ->
-	    Node
+        {ok, A} -> case is_list_skeleton(List) andalso is_proper_list(List) of
+                       true -> {attribute, Pos, import, {A, fold_function_names(list_elements(List))}};
+                       false -> Node
+                   end;
+        error -> Node
     end;
 revert_attribute_1(file, [A, Line], Pos, Node) ->
-    case type(A) of
-	string ->
-	    case type(Line) of
-		integer ->
-		    {attribute, Pos, file,
-		     {concrete(A), concrete(Line)}};
-		_ ->
-		    Node
-	    end;
-	_ ->
-	    Node
+    case type(A) =:= string andalso type(Line) of
+        integer -> {attribute, Pos, file, {concrete(A), concrete(Line)}};
+        _ -> Node
     end;
 revert_attribute_1(record, [A, Tuple], Pos, Node) ->
-    case type(A) of
-	atom ->
-	    case type(Tuple) of
-		tuple ->
-		    Fs = fold_record_fields(
-			   tuple_elements(Tuple)),
-		    {attribute, Pos, record, {concrete(A), Fs}};
-		_ ->
-		    Node
-	    end;
-	_ ->
-	    Node
+    case type(A) =:= atom andalso type(Tuple) of
+        tuple -> {attribute, Pos, record, {concrete(A), fold_record_fields(tuple_elements(Tuple))}};
+        _ -> Node
     end;
 revert_attribute_1(N, [T], Pos, _) -> {attribute, Pos, N, concrete(T)};
 revert_attribute_1(_, _, _, Node) -> Node.
