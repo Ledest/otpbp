@@ -380,24 +380,17 @@ revert_binary(Node) -> {bin, get_pos(Node), binary_fields(Node)}.
 revert_binary_comp(Node) -> {bc, get_pos(Node), binary_comp_template(Node), binary_comp_body(Node)}.
 
 revert_binary_field(Node) ->
-    Pos = get_pos(Node),
     Body = binary_field_body(Node),
     {Expr, Size} = case type(Body) of
-		       size_qualifier ->
-			   %% Note that size qualifiers are not
-			   %% revertible out of context.
-			   {size_qualifier_body(Body),
-			    size_qualifier_argument(Body)};
-		       _ ->
-			   {Body, default}
-		   end,
-    Types = case binary_field_types(Node) of
-		[] ->
-		    default;
-		Ts ->
-		    fold_binary_field_types(Ts)
-	    end,
-    {bin_element, Pos, Expr, Size, Types}.
+                       %% Note that size qualifiers are not revertible out of context.
+                       size_qualifier -> {size_qualifier_body(Body), size_qualifier_argument(Body)};
+                       _ -> {Body, default}
+                   end,
+    {bin_element, get_pos(Node), Expr, Size,
+     case binary_field_types(Node) of
+         [] -> default;
+         Ts -> fold_binary_field_types(Ts)
+     end}.
 
 revert_binary_generator(Node) ->
     {b_generate, get_pos(Node), binary_generator_pattern(Node), binary_generator_body(Node)}.
