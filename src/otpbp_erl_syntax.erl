@@ -408,10 +408,7 @@ revert_binary_field(Node) ->
     {bin_element, Pos, Expr, Size, Types}.
 
 revert_binary_generator(Node) ->
-    Pos = get_pos(Node),
-    Pattern = binary_generator_pattern(Node),
-    Body = binary_generator_body(Node),
-    {b_generate, Pos, Pattern, Body}.
+    {b_generate, get_pos(Node), binary_generator_pattern(Node), binary_generator_body(Node)}.
 
 revert_block_expr(Node) -> {block, get_pos(Node), block_expr_body(Node)}.
 
