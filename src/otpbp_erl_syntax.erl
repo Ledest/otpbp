@@ -429,9 +429,7 @@ revert_catch_expr(Node) ->
     Expr = catch_expr_body(Node),
     {'catch', Pos, Expr}.
 
-revert_char(Node) ->
-    Pos = get_pos(Node),
-    {char, Pos, char_value(Node)}.
+revert_char(Node) -> {char, get_pos(Node), char_value(Node)}.
 
 revert_cond_expr(Node) -> {'cond', get_pos(Node), list:map(fun revert_clause/1, cond_expr_clauses(Node))}.
 
