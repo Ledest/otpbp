@@ -413,10 +413,7 @@ revert_binary_generator(Node) ->
     Body = binary_generator_body(Node),
     {b_generate, Pos, Pattern, Body}.
 
-revert_block_expr(Node) ->
-    Pos = get_pos(Node),
-    Body = block_expr_body(Node),
-    {block, Pos, Body}.
+revert_block_expr(Node) -> {block, get_pos(Node), block_expr_body(Node)}.
 
 revert_case_expr(Node) ->
     {'case', get_pos(Node), case_expr_argument(Node), lists:map(fun revert_clause/1, case_expr_clauses(Node))}.
