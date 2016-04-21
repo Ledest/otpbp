@@ -469,14 +469,10 @@ revert_clause_disjunction(D) ->
      end
      || E <- disjunction_body(D)].
 
-revert_eof_marker(Node) ->
-    Pos = get_pos(Node),
-    {eof, Pos}.
+revert_eof_marker(Node) -> {eof, get_pos(Node)}.
 
-revert_error_marker(Node) ->
-    %% Note that the position information of the node itself is not
-    %% preserved.
-    {error, error_marker_info(Node)}.
+%% Note that the position information of the node itself is not preserved.
+revert_error_marker(Node) -> {error, error_marker_info(Node)}.
 
 revert_float(Node) -> {float, get_pos(Node), float_value(Node)}.
 
