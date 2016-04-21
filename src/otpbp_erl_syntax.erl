@@ -268,9 +268,7 @@ revert_application(Node) ->
     Arguments = application_arguments(Node),
     {call, Pos, Operator, Arguments}.
 
-revert_atom(Node) ->
-    Pos = get_pos(Node),
-    {atom, Pos, atom_value(Node)}.
+revert_atom(Node) -> {atom, get_pos(Node), atom_value(Node)}.
 
 revert_attribute(Node) ->
     Name = attribute_name(Node),
