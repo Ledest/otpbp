@@ -478,9 +478,7 @@ revert_error_marker(Node) ->
     %% preserved.
     {error, error_marker_info(Node)}.
 
-revert_float(Node) ->
-    Pos = get_pos(Node),
-    {float, Pos, float_value(Node)}.
+revert_float(Node) -> {float, get_pos(Node), float_value(Node)}.
 
 revert_fun_expr(Node) -> {'fun', get_pos(Node), {clauses, lists:map(fun revert_clause/1, fun_expr_clauses(Node))}}.
 
