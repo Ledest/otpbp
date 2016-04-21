@@ -419,10 +419,7 @@ revert_block_expr(Node) ->
     {block, Pos, Body}.
 
 revert_case_expr(Node) ->
-    Pos = get_pos(Node),
-    Argument = case_expr_argument(Node),
-    Clauses = [revert_clause(C) || C <- case_expr_clauses(Node)],
-    {'case', Pos, Argument, Clauses}.
+    {'case', get_pos(Node), case_expr_argument(Node), lists:map(fun revert_clause/1, case_expr_clauses(Node))}.
 
 revert_catch_expr(Node) -> {'catch', get_pos(Node), catch_expr_body(Node)}.
 
