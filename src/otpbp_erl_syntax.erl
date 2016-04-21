@@ -341,32 +341,23 @@ revert_generator(Node) -> {generate, get_pos(Node), generator_pattern(Node), gen
 revert_if_expr(Node) -> {'if', get_pos(Node), lists:map(fun revert_clause/1, if_expr_clauses(Node))}.
 
 revert_implicit_fun(Node) ->
-    Pos = get_pos(Node),
     Name = implicit_fun_name(Node),
     case type(Name) of
-	arity_qualifier ->
-	    F = arity_qualifier_body(Name),
-	    A = arity_qualifier_argument(Name),
-	    case {type(F), type(A)} of
-		{atom, integer} ->
-		    {'fun', Pos,
-		     {function, concrete(F), concrete(A)}};
-		_ ->
-		    Node
-	    end;
-	module_qualifier ->
-	    M = module_qualifier_argument(Name),
-	    Name1 = module_qualifier_body(Name),
-	    case type(Name1) of
-		arity_qualifier ->
-		    F = arity_qualifier_body(Name1),
-		    A = arity_qualifier_argument(Name1),
-		    {'fun', Pos, {function, M, F, A}};
-		_ ->
-		    Node
-	    end;
-	_ ->
-	    Node
+        arity_qualifier ->
+            F = arity_qualifier_body(Name),
+            A = arity_qualifier_argument(Name),
+            case type(F) =:= atom andalso type(A) of
+                integer -> {'fun', get_pos(Node), {function, concrete(F), concrete(A)}};
+                _ -> Node
+            end;
+        module_qualifier ->
+            Name1 = module_qualifier_body(Name),
+            case type(Name1) of
+                arity_qualifier -> {'fun', get_pos(Node), {function, module_qualifier_argument(Name),
+                                    arity_qualifier_body(Name1), arity_qualifier_argument(Name1)}};
+                _ -> Node
+            end;
+        _ -> Node
     end.
 
 revert_infix_expr(Node) ->
