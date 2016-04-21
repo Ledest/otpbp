@@ -501,10 +501,7 @@ revert_function(Node) ->
 
 revert_generator(Node) -> {generate, get_pos(Node), generator_pattern(Node), generator_body(Node)}.
 
-revert_if_expr(Node) ->
-    Pos = get_pos(Node),
-    Clauses = [revert_clause(C) || C <- if_expr_clauses(Node)],
-    {'if', Pos, Clauses}.
+revert_if_expr(Node) -> {'if', get_pos(Node), lists:map(fun revert_clause/1, if_expr_clauses(Node))}.
 
 revert_implicit_fun(Node) ->
     Pos = get_pos(Node),
