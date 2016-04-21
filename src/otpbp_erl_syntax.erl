@@ -154,91 +154,49 @@ revert(Node) ->
 
 revert_root(Node) ->
     case type(Node) of
-	application ->
-	    revert_application(Node);
-	atom ->
-	    revert_atom(Node);
-	attribute ->
-	    revert_attribute(Node);
-	binary ->
-	    revert_binary(Node);
-        binary_comp ->
-	    revert_binary_comp(Node);
-	binary_field ->
-	    revert_binary_field(Node);
-        binary_generator ->
-	    revert_binary_generator(Node);
-	block_expr ->
-	    revert_block_expr(Node);
-	case_expr ->
-	    revert_case_expr(Node);
-	catch_expr ->
-	    revert_catch_expr(Node);
-	char ->
-	    revert_char(Node);
-	clause ->
-	    revert_clause(Node);
-	cond_expr ->
-	    revert_cond_expr(Node);
-	eof_marker ->
-	    revert_eof_marker(Node);
-	error_marker ->
-	    revert_error_marker(Node);
-	float ->
-	    revert_float(Node);
-	fun_expr ->
-	    revert_fun_expr(Node);
-	function ->
-	    revert_function(Node);
-	generator ->
-	    revert_generator(Node);
-	if_expr ->
-	    revert_if_expr(Node);
-	implicit_fun ->
-	    revert_implicit_fun(Node);
-	infix_expr ->
-	    revert_infix_expr(Node);
-	integer ->
-	    revert_integer(Node);
-	list ->
-	    revert_list(Node);
-	list_comp ->
-	    revert_list_comp(Node);
-	match_expr ->
-	    revert_match_expr(Node);
-	module_qualifier ->
-	    revert_module_qualifier(Node);
-	nil ->
-	    revert_nil(Node);
-	parentheses ->
-	    revert_parentheses(Node);
-	prefix_expr ->
-	    revert_prefix_expr(Node);
-	receive_expr ->
-	    revert_receive_expr(Node);
-	record_access ->
-	    revert_record_access(Node);
-	record_expr ->
-	    revert_record_expr(Node);
-	record_index_expr ->
-	    revert_record_index_expr(Node);
-	rule ->
-	    revert_rule(Node);
-	string ->
-	    revert_string(Node);
-	try_expr ->
-	    revert_try_expr(Node);
-	tuple ->
-	    revert_tuple(Node);
-	underscore ->
-	    revert_underscore(Node);
-	variable ->
-	    revert_variable(Node);
-	warning_marker ->
-	    revert_warning_marker(Node);
-	_ ->
-	    %% Non-revertible new-form node
-	    Node
+        application -> revert_application(Node);
+        atom -> revert_atom(Node);
+        attribute -> revert_attribute(Node);
+        binary -> revert_binary(Node);
+        binary_comp -> revert_binary_comp(Node);
+        binary_field -> revert_binary_field(Node);
+        binary_generator -> revert_binary_generator(Node);
+        block_expr -> revert_block_expr(Node);
+        case_expr -> revert_case_expr(Node);
+        catch_expr -> revert_catch_expr(Node);
+        char -> revert_char(Node);
+        clause -> revert_clause(Node);
+        cond_expr -> revert_cond_expr(Node);
+        eof_marker -> revert_eof_marker(Node);
+        error_marker -> revert_error_marker(Node);
+        float -> revert_float(Node);
+        fun_expr -> revert_fun_expr(Node);
+        function -> revert_function(Node);
+        generator -> revert_generator(Node);
+        if_expr -> revert_if_expr(Node);
+        implicit_fun -> revert_implicit_fun(Node);
+        infix_expr -> revert_infix_expr(Node);
+        integer -> revert_integer(Node);
+        list -> revert_list(Node);
+        list_comp -> revert_list_comp(Node);
+        match_expr -> revert_match_expr(Node);
+        module_qualifier -> revert_module_qualifier(Node);
+        nil -> revert_nil(Node);
+        parentheses -> revert_parentheses(Node);
+        prefix_expr -> revert_prefix_expr(Node);
+        receive_expr -> revert_receive_expr(Node);
+        record_access -> revert_record_access(Node);
+        record_expr -> revert_record_expr(Node);
+        record_index_expr -> revert_record_index_expr(Node);
+        rule -> revert_rule(Node);
+        string -> revert_string(Node);
+        try_expr -> revert_try_expr(Node);
+        tuple -> revert_tuple(Node);
+        underscore -> revert_underscore(Node);
+        variable -> revert_variable(Node);
+        warning_marker -> revert_warning_marker(Node);
+        %% Non-revertible new-form node
+        _ -> Node
     end.
 
 %% =====================================================================
