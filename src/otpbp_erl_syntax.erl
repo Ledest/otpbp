@@ -407,23 +407,16 @@ revert_char(Node) -> {char, get_pos(Node), char_value(Node)}.
 revert_cond_expr(Node) -> {'cond', get_pos(Node), list:map(fun revert_clause/1, cond_expr_clauses(Node))}.
 
 revert_clause(Node) ->
-    Pos = get_pos(Node),
-    Guard = case clause_guard(Node) of
-		none ->
-		    [];
-		E ->
-		    case type(E) of
-			disjunction ->
-			    revert_clause_disjunction(E);
-			conjunction ->
-			    %% Only the top level expression is
-			    %% unfolded here; no recursion.
-			    [conjunction_body(E)];
-			_ ->
-			    [[E]]	% a single expression
-		    end
-	    end,
-    {clause, Pos, clause_patterns(Node), Guard,
+    {clause, get_pos(Node), clause_patterns(Node),
+     case clause_guard(Node) of
+         none -> [];
+         E -> case type(E) of
+                  disjunction -> revert_clause_disjunction(E);
+                  %% Only the top level expression is unfolded here; no recursion.
+                  conjunction -> [conjunction_body(E)];
+                  _ -> [[E]] % a single expression
+              end
+     end,
      clause_body(Node)}.
 
 revert_clause_disjunction(D) ->
