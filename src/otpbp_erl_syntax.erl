@@ -134,26 +134,16 @@
 -spec revert(syntaxTree()) -> syntaxTree().
 revert(Node) ->
     case is_tree(Node) of
-	false ->
-	    %% Just remove any wrapper. `erl_parse' nodes never contain
-	    %% abstract syntax tree nodes as subtrees.
-	    unwrap(Node);
-	true ->
-	    case is_leaf(Node) of
-		true ->
-		    revert_root(Node);
-		false ->
-		    %% First revert the subtrees, where possible.
-		    %% (Sometimes, subtrees cannot be reverted out of
-		    %% context, and the real work will be done when the
-		    %% parent node is reverted.)
-		    Gs = [[revert(X) || X <- L] || L <- subtrees(Node)],
-
-		    %% Then reconstruct the node from the reverted
-		    %% parts, and revert the node itself.
-		    Node1 = update_tree(Node, Gs),
-		    revert_root(Node1)
-	    end
+        %% Just remove any wrapper. `erl_parse' nodes never contain abstract syntax tree nodes as subtrees.
+        false -> unwrap(Node);
+        true -> revert_root(case is_leaf(Node) of
+                                true -> Node;
+                                %% First revert the subtrees, where possible.
+                                %% (Sometimes, subtrees cannot be reverted out of context, and the real work will be done
+                                %% when the parent node is reverted.)
+                                %% Then reconstruct the node from the reverted parts, and revert the node itself.
+                                false -> update_tree(Node, [lists:map(fun revert/1, L) || L <- subtrees(Node)])
+                            end)
     end.
 
 %% Note: The concept of "compatible root node" is not strictly defined.
@@ -258,9 +248,8 @@ revert_root(Node) ->
 %% itself.
 
 -spec unwrap(syntaxTree()) -> #tree{} | erl_parse().
-
 unwrap(#wrapper{tree = Node}) -> Node;
-unwrap(Node) -> Node.	 % This could also be a new-form node.
+unwrap(Node) -> Node. % This could also be a new-form node.
 
 revert_application(Node) -> {call, get_pos(Node), application_operator(Node), application_arguments(Node)}.
 
