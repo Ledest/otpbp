@@ -114,6 +114,12 @@
                      arity_qualifier_argument/1, arity_qualifier_body/1,
                      module_qualifier/2, module_qualifier_argument/1, module_qualifier_body/1]).
 -import(erl_syntax_lib, [analyze_forms/1]).
+-ifdef(HAVE_dict__is_empty_1).
+-import(dict, [is_empty/1]).
+-else.
+-import(otpbp_dict, [is_empty/1]).
+-endif.
+-compile([{inline, [is_empty/1]}]).
 -import(dict, [store/3, find/2]).
 -import(lists, [foldl/3, mapfoldl/3]).
 
@@ -205,13 +211,6 @@ store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
 transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, dict:new(), ?TRANSFORM_FUNCTIONS).
 -compile([{inline, [transform_list/0]}]).
-
--ifdef(HAVE_dict__is_empty_1).
-is_empty(D) -> dict:is_empty(D).
--else.
-is_empty(D) -> dict:size(D) =:= 0.
--endif.
--compile([{inline, [is_empty/1]}]).
 
 do_transform(conjunction, Tree) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
