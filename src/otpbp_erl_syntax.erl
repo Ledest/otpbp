@@ -482,4 +482,26 @@ fold_binary_field_types(Ts) ->
                 _ -> concrete(Node)
             end
         end, Ts).
+
+-compile([{inline, [fold_binary_field_types/1, fold_variable_names/1,
+                    revert_application/1, revert_atom/1, revert_attribute/1,
+                    revert_binary/1, revert_binary_comp/1, revert_binary_field/1, revert_binary_generator/1,
+                    revert_block_expr/1,
+                    revert_case_expr/1, revert_catch_expr/1, revert_char/1, revert_clause_disjunction/1,
+                    revert_cond_expr/1,
+                    revert_eof_marker/1, revert_error_marker/1,
+                    revert_float/1, revert_fun_expr/1, revert_function/1,
+                    revert_generator/1,
+                    revert_if_expr/1, revert_implicit_fun/1, revert_infix_expr/1, revert_integer/1,
+                    revert_list/1, revert_list_comp/1,
+                    revert_match_expr/1, revert_module_qualifier/1,
+                    revert_parentheses/1, revert_prefix_expr/1,
+                    revert_receive_expr/1, revert_record_access/1, revert_record_expr/1, revert_record_index_expr/1,
+                    revert_rule/1,
+                    revert_string/1,
+                    revert_try_expr/1, revert_tuple/1,
+                    revert_underscore/1,
+                    revert_variable/1,
+                    revert_warning_marker/1,
+                    unwrap/1]}]).
 -endif.
