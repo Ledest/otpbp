@@ -1,5 +1,17 @@
 -module(otpbp_erl_syntax).
 
+-ifdef(buggy__revert_implicit_fun_1a).
+-ifndef(buggy__revert_implicit_fun).
+-define(buggy__revert_implicit_fun, true).
+-endif.
+-endif.
+-ifdef(buggy__revert_implicit_fun_1m).
+-ifndef(buggy__revert_implicit_fun).
+-define(buggy__revert_implicit_fun, true).
+-endif.
+-endif.
+
+-ifdef(buggy__revert_implicit_fun).
 -export([revert/1]).
 
 -import(lists, [map/2]).
@@ -470,3 +482,4 @@ fold_binary_field_types(Ts) ->
                 _ -> concrete(Node)
             end
         end, Ts).
+-endif.
