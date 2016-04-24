@@ -88,10 +88,25 @@
                               {{rand, [seed, seed_s, uniform_s], [1, 2]}, otpbp_rand},
                               {{rand, uniform, [0, 1]}, otpbp_rand}]).
 
+-ifdef(buggy__revert_implicit_fun_1a).
+-ifndef(buggy__revert_implicit_fun).
+-define(buggy__revert_implicit_fun, true).
+-endif.
+-endif.
+-ifdef(buggy__revert_implicit_fun_1m).
+-ifndef(buggy__revert_implicit_fun).
+-define(buggy__revert_implicit_fun, true).
+-endif.
+-endif.
+
+-ifdef(buggy__revert_implicit_fun).
+-import(otpbp_erl_syntax, [revert/1]).
+-else.
+-import(erl_syntax, [revert/1]).
+-endif.
 -import(erl_syntax, [type/1,
                      get_pos/1, copy_pos/2,
                      atom_value/1,
-                     revert/1,
                      application/2, application_arguments/1, application_operator/1,
                      infix_expr/3,
                      match_expr/2,
@@ -211,7 +226,7 @@ do_transform(conjunction, Tree) ->
 do_transform(P, Node) when is_record(P, param) ->
     case type(Node) of
         application -> application_transform(P, Node);
-        implicit_fun -> revert_implicit_fun(implicit_fun_transform(P, Node));
+        implicit_fun -> implicit_fun_transform(P, Node);
         _ -> false
     end.
 
@@ -271,42 +286,10 @@ application(M, N, ML, NL, A) -> application(copy_pos(ML, module_qualifier(atom(M
 
 -compile([{inline, [application_transform/2, application/4, application/5]}]).
 
--ifdef(buggy__revert_implicit_fun_1a).
--define(ORIG_IMPLICIT_FUN, Node).
-revert_implicit_fun(Node) ->
-    case revert(Node) of
-        {'fun', Pos, {function, {atom, _, F}, {integer, _, A}}} -> {'fun', Pos, {function, F, A}};
-        _ -> Node
-    end.
--else.
--ifdef(buggy__revert_implicit_fun_1m).
--define(ORIG_IMPLICIT_FUN, Node).
-revert_implicit_fun(Node) ->
-    Name = erl_syntax:implicit_fun_name(Node),
-    case type(Name) of
-        module_qualifier ->
-            N = module_qualifier_body(Name),
-            case type(N) of
-                arity_qualifier -> {'fun', get_pos(Node), {function,
-                                                           revert(module_qualifier_argument(Name)),
-                                                           revert(arity_qualifier_body(N)),
-                                                           revert(arity_qualifier_argument(N))}};
-                _ -> Node
-            end;
-        _ -> Node
-    end.
--else.
--define(ORIG_IMPLICIT_FUN, false).
-revert_implicit_fun(Node) -> Node.
--endif.
--endif.
-
--compile([{inline, [revert_implicit_fun/1]}]).
-
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
         F -> case find(F, L) of
-                 error -> ?ORIG_IMPLICIT_FUN;
+                 error -> false;
                  {ok, {M, N}} ->
                      Q = implicit_fun_name(Node),
                      case type(Q) of
@@ -322,7 +305,7 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                               implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N), arity_qualifier_argument(AQ)))
              end
     catch
-        throw:syntax_error -> ?ORIG_IMPLICIT_FUN
+        throw:syntax_error -> false
     end.
 
 -compile([{inline, [implicit_fun_transform/2]}]).
