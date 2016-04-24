@@ -19,8 +19,7 @@
 %%
 %%	type(Com) = comment
 
--record(com, {pre  = [] :: [syntaxTree()],
-	      post = [] :: [syntaxTree()]}).
+-record(com, {pre = []::[syntaxTree()], post = []::[syntaxTree()]}).
 
 %% `attr' records store node attributes as an aggregate.
 %%
@@ -33,9 +32,7 @@
 %% where `Pos' `Ann' and `Comments' are the corresponding values of a
 %% `tree' or `wrapper' record.
 
--record(attr, {pos = 0    :: term(),
-	       ann = []   :: [term()],
-	       com = none :: 'none' | #com{}}).
+-record(attr, {pos = 0::term(), ann = []::[term()], com = none::'none'|#com{}}).
 
 %% `tree' records represent new-form syntax tree nodes.
 %%
@@ -47,9 +44,7 @@
 %%
 %%	is_tree(Tree) = true
 
--record(tree, {type           :: atom(),
-	       attr = #attr{} :: #attr{},
-	       data           :: term()}).
+-record(tree, {type :: atom(), attr = #attr{}::#attr{}, data :: term()}).
 
 %% `wrapper' records are used for attaching new-form node information to
 %% `erl_parse' trees.
@@ -62,9 +57,7 @@
 %%
 %%	is_tree(Wrapper) = false
 
--record(wrapper, {type           :: atom(),
-		  attr = #attr{} :: #attr{},
-		  tree           :: erl_parse()}).
+-record(wrapper, {type :: atom(), attr = #attr{} :: #attr{}, tree :: erl_parse()}).
 
 %% =====================================================================
 
