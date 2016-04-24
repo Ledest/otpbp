@@ -114,14 +114,37 @@
                      arity_qualifier_argument/1, arity_qualifier_body/1,
                      module_qualifier/2, module_qualifier_argument/1, module_qualifier_body/1]).
 -import(erl_syntax_lib, [analyze_forms/1]).
+-import(lists, [foldl/3, mapfoldl/3]).
+-ifdef(HAVE_maps__find_2).
+-import(maps, [find/2]).
+-else.
+-import(dict, [find/2]).
+-endif.
+-ifdef(HAVE_maps__new_0).
+-import(maps, [new/0]).
+-else.
+-import(dict, [new/0]).
+-endif.
+-ifdef(HAVE_maps__put_3).
+-import(maps, [put/3]).
+-endif.
+
+-ifndef(HAVE_maps__size_1).
 -ifdef(HAVE_dict__is_empty_1).
 -import(dict, [is_empty/1]).
 -else.
 -import(otpbp_dict, [is_empty/1]).
 -endif.
--compile([{inline, [is_empty/1]}]).
--import(dict, [store/3, find/2]).
--import(lists, [foldl/3, mapfoldl/3]).
+-endif.
+
+-ifdef(HAVE_maps__size_1).
+is_empty(M) -> maps:size(M) =:= 0.
+-endif.
+
+-ifndef(HAVE_maps__put_3).
+put(K, V, M) -> dict:store(K, V, M).
+-compile([{inline, [put/3]}]).
+-endif.
 
 -record(param, {options = [] :: list(),
                 funs,
@@ -143,12 +166,12 @@ parse_transform(Forms, Options) ->
                                                   funs = foldl(fun({M, Fs}, IA) ->
                                                                    foldl(fun(FA, IAM) ->
                                                                              case find({M, FA}, TL) of
-                                                                                 {ok, V} -> store(FA, V, IAM);
+                                                                                 {ok, V} -> put(FA, V, IAM);
                                                                                  _ -> IAM
                                                                               end
                                                                          end, IA, Fs)
                                                                end,
-                                                               foldl(fun dict:erase/2, TL, get_no_auto_import(AF)),
+                                                               foldl(fun remove/2, TL, get_no_auto_import(AF)),
                                                                get_imports(AF))},
                                            Forms))
             catch
@@ -205,11 +228,11 @@ add_func(FA, MF, D) ->
 check_func({M, F, A}) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true;
 check_func({F, A}) -> check_func({erlang, F, A}).
 
-store_func(F, {_, _} = MF, D) -> store(F, MF, D);
+store_func(F, {_, _} = MF, D) -> put(F, MF, D);
 store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
-transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, dict:new(), ?TRANSFORM_FUNCTIONS).
+transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, new(), ?TRANSFORM_FUNCTIONS).
 -compile([{inline, [transform_list/0]}]).
 
 do_transform(conjunction, Tree) ->
@@ -312,6 +335,12 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
 integer(P, I) when is_tuple(P), is_integer(I) -> copy_pos(P, erl_syntax:integer(I)).
+
+-ifdef(HAVE_maps__remove_2).
+remove(K, M) -> maps:remove(K, M).
+-else.
+remove(K, M) -> dict:erase(K, M).
+-endif.
 
 replace_message(F, NM, NN, Node, #param{options = O} = P) ->
     proplists:get_value(verbose, O) =:= true andalso do_replace_message(F, NM, NN, P#param.file, Node).
