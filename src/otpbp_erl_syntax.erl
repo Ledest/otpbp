@@ -2,50 +2,8 @@
 
 -export([revert/1]).
 
--import(erl_syntax, [application_arguments/1, application_operator/1,
-                     arity_qualifier_argument/1, arity_qualifier_body/1,
-                     atom_value/1,
-                     attribute_arguments/1, attribute_name/1,
-                     binary_comp_body/1, binary_comp_template/1,
-                     block_expr_body/1,
-                     binary_fields/1, binary_field_body/1, binary_field_types/1,
-                     binary_generator_body/1, binary_generator_pattern/1,
-                     case_expr_argument/1, case_expr_clauses/1,
-                     catch_expr_body/1,
-                     char_value/1,
-                     class_qualifier_argument/1, class_qualifier_body/1,
-                     clause_body/1, clause_guard/1, clause_patterns/1,
-                     concrete/1,
-                     cond_expr_clauses/1,
-                     conjunction_body/1,
-                     disjunction_body/1,
-                     error_marker_info/1,
-                     float_value/1, fun_expr_clauses/1, function_arity/1, function_clauses/1, function_name/1,
-                     generator_body/1, generator_pattern/1, get_pos/1,
-                     if_expr_clauses/1,
-                     implicit_fun_name/1,
-                     infix_expr_left/1, infix_expr_operator/1, infix_expr_right/1,
-                     integer_value/1,
-                     is_leaf/1, is_list_skeleton/1, is_proper_list/1, is_tree/1,
-                     list_comp_body/1, list_comp_template/1, list_elements/1, list_prefix/1, list_suffix/1,
-                     match_expr_body/1, match_expr_pattern/1, module_qualifier_argument/1, module_qualifier_body/1,
-                     nil/0,
-                     operator_name/1,
-                     parentheses_body/1,
-                     prefix_expr_argument/1, prefix_expr_operator/1,
-                     receive_expr_action/1, receive_expr_clauses/1, receive_expr_timeout/1,
-                     record_access_argument/1, record_access_field/1, record_access_type/1,
-                     record_expr_argument/1, record_expr_fields/1, record_expr_type/1,
-                     record_field_name/1, record_field_value/1,
-                     record_index_expr_field/1, record_index_expr_type/1,
-                     rule_arity/1, rule_clauses/1, rule_name/1,
-                     set_pos/2, size_qualifier_argument/1, size_qualifier_body/1, string_value/1, subtrees/1,
-                     tree/2,
-                     try_expr_after/1, try_expr_body/1, try_expr_clauses/1, try_expr_handlers/1,
-                     tuple_elements/1, type/1,
-                     update_tree/2,
-                     variable_name/1,
-                     warning_marker_info/1]).
+-import(lists, [map/2]).
+-import(erl_syntax, [concrete/1, get_pos/1, type/1]).
 
 %% =====================================================================
 %% Declarations of globally used internal data structures
@@ -133,16 +91,17 @@
 
 -spec revert(syntaxTree()) -> syntaxTree().
 revert(Node) ->
-    case is_tree(Node) of
+    case erl_syntax:is_tree(Node) of
         %% Just remove any wrapper. `erl_parse' nodes never contain abstract syntax tree nodes as subtrees.
         false -> unwrap(Node);
-        true -> revert_root(case is_leaf(Node) of
+        true -> revert_root(case erl_syntax:is_leaf(Node) of
                                 true -> Node;
                                 %% First revert the subtrees, where possible.
                                 %% (Sometimes, subtrees cannot be reverted out of context, and the real work will be done
                                 %% when the parent node is reverted.)
                                 %% Then reconstruct the node from the reverted parts, and revert the node itself.
-                                false -> update_tree(Node, [lists:map(fun revert/1, L) || L <- subtrees(Node)])
+                                false -> erl_syntax:update_tree(Node, map(fun(L) -> map(fun revert/1, L) end,
+                                                                                        erl_syntax:subtrees(Node)))
                             end)
     end.
 
@@ -209,14 +168,16 @@ revert_root(Node) ->
 unwrap(#wrapper{tree = Node}) -> Node;
 unwrap(Node) -> Node. % This could also be a new-form node.
 
-revert_application(Node) -> {call, get_pos(Node), application_operator(Node), application_arguments(Node)}.
+revert_application(Node) ->
+    {call, get_pos(Node), erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node)}.
 
-revert_atom(Node) -> {atom, get_pos(Node), atom_value(Node)}.
+revert_atom(Node) -> {atom, get_pos(Node), erl_syntax:atom_value(Node)}.
 
 revert_attribute(Node) ->
-    Name = attribute_name(Node),
+    Name = erl_syntax:attribute_name(Node),
     case type(Name) of
-        atom -> revert_attribute_1(atom_value(Name), attribute_arguments(Node), get_pos(Node), Node);
+        atom -> revert_attribute_1(erl_syntax:atom_value(Name), erl_syntax:attribute_arguments(Node), get_pos(Node),
+                                   Node);
         _ -> Node
     end.
 
@@ -229,15 +190,16 @@ revert_attribute_1(module, [M], Pos, Node) ->
     end;
 revert_attribute_1(module, [M, List], Pos, Node) ->
     case revert_module_name(M) of
-        {ok, A} -> {attribute, Pos, module, {A, case is_list_skeleton(List) andalso is_proper_list(List) of
-                                                    true -> fold_variable_names(list_elements(List));
-                                                    false -> Node
-                                                end}};
+        {ok, A} -> {attribute, Pos, module,
+                    {A, case erl_syntax:is_list_skeleton(List) andalso erl_syntax:is_proper_list(List) of
+                            true -> fold_variable_names(erl_syntax:list_elements(List));
+                            false -> Node
+                        end}};
         error -> Node
     end;
 revert_attribute_1(export, [List], Pos, Node) ->
-    case is_list_skeleton(List) andalso is_proper_list(List) of
-        true -> {attribute, Pos, export, fold_function_names(list_elements(List))};
+    case erl_syntax:is_list_skeleton(List) andalso erl_syntax:is_proper_list(List) of
+        true -> {attribute, Pos, export, fold_function_names(erl_syntax:list_elements(List))};
         false -> Node
     end;
 revert_attribute_1(import, [M], Pos, Node) ->
@@ -247,8 +209,8 @@ revert_attribute_1(import, [M], Pos, Node) ->
     end;
 revert_attribute_1(import, [M, List], Pos, Node) ->
     case revert_module_name(M) of
-        {ok, A} -> case is_list_skeleton(List) andalso is_proper_list(List) of
-                       true -> {attribute, Pos, import, {A, fold_function_names(list_elements(List))}};
+        {ok, A} -> case erl_syntax:is_list_skeleton(List) andalso erl_syntax:is_proper_list(List) of
+                       true -> {attribute, Pos, import, {A, fold_function_names(erl_syntax:list_elements(List))}};
                        false -> Node
                    end;
         error -> Node
@@ -260,128 +222,132 @@ revert_attribute_1(file, [A, Line], Pos, Node) ->
     end;
 revert_attribute_1(record, [A, Tuple], Pos, Node) ->
     case type(A) =:= atom andalso type(Tuple) of
-        tuple -> {attribute, Pos, record, {concrete(A), fold_record_fields(tuple_elements(Tuple))}};
+        tuple -> {attribute, Pos, record, {concrete(A), fold_record_fields(erl_syntax:tuple_elements(Tuple))}};
         _ -> Node
     end;
 revert_attribute_1(N, [T], Pos, _) -> {attribute, Pos, N, concrete(T)};
 revert_attribute_1(_, _, _, Node) -> Node.
 
-revert_binary(Node) -> {bin, get_pos(Node), binary_fields(Node)}.
+revert_binary(Node) -> {bin, get_pos(Node), erl_syntax:binary_fields(Node)}.
 
-revert_binary_comp(Node) -> {bc, get_pos(Node), binary_comp_template(Node), binary_comp_body(Node)}.
+revert_binary_comp(Node) ->
+    {bc, get_pos(Node), erl_syntax:binary_comp_template(Node), erl_syntax:binary_comp_body(Node)}.
 
 revert_binary_field(Node) ->
-    Body = binary_field_body(Node),
+    Body = erl_syntax:binary_field_body(Node),
     {Expr, Size} = case type(Body) of
                        %% Note that size qualifiers are not revertible out of context.
-                       size_qualifier -> {size_qualifier_body(Body), size_qualifier_argument(Body)};
+                       size_qualifier -> {erl_syntax:size_qualifier_body(Body),
+                                          erl_syntax:size_qualifier_argument(Body)};
                        _ -> {Body, default}
                    end,
     {bin_element, get_pos(Node), Expr, Size,
-     case binary_field_types(Node) of
+     case erl_syntax:binary_field_types(Node) of
          [] -> default;
          Ts -> fold_binary_field_types(Ts)
      end}.
 
 revert_binary_generator(Node) ->
-    {b_generate, get_pos(Node), binary_generator_pattern(Node), binary_generator_body(Node)}.
+    {b_generate, get_pos(Node), erl_syntax:binary_generator_pattern(Node), erl_syntax:binary_generator_body(Node)}.
 
-revert_block_expr(Node) -> {block, get_pos(Node), block_expr_body(Node)}.
+revert_block_expr(Node) -> {block, get_pos(Node), erl_syntax:block_expr_body(Node)}.
 
 revert_case_expr(Node) ->
-    {'case', get_pos(Node), case_expr_argument(Node), lists:map(fun revert_clause/1, case_expr_clauses(Node))}.
+    {'case', get_pos(Node),
+     erl_syntax:case_expr_argument(Node), map(fun revert_clause/1, erl_syntax:case_expr_clauses(Node))}.
 
-revert_catch_expr(Node) -> {'catch', get_pos(Node), catch_expr_body(Node)}.
+revert_catch_expr(Node) -> {'catch', get_pos(Node), erl_syntax:catch_expr_body(Node)}.
 
-revert_char(Node) -> {char, get_pos(Node), char_value(Node)}.
+revert_char(Node) -> {char, get_pos(Node), erl_syntax:char_value(Node)}.
 
-revert_cond_expr(Node) -> {'cond', get_pos(Node), list:map(fun revert_clause/1, cond_expr_clauses(Node))}.
+revert_cond_expr(Node) -> {'cond', get_pos(Node), list:map(fun revert_clause/1, erl_syntax:cond_expr_clauses(Node))}.
 
 revert_clause(Node) ->
-    {clause, get_pos(Node), clause_patterns(Node),
-     case clause_guard(Node) of
+    {clause, get_pos(Node), erl_syntax:clause_patterns(Node),
+     case erl_syntax:clause_guard(Node) of
          none -> [];
          E -> case type(E) of
                   disjunction -> revert_clause_disjunction(E);
                   %% Only the top level expression is unfolded here; no recursion.
-                  conjunction -> [conjunction_body(E)];
+                  conjunction -> [erl_syntax:conjunction_body(E)];
                   _ -> [[E]] % a single expression
               end
      end,
-     clause_body(Node)}.
+     erl_syntax:clause_body(Node)}.
 
 revert_clause_disjunction(D) ->
     %% We handle conjunctions within a disjunction, but only at the top level; no recursion.
-    lists:map(fun(E) ->
-                  case type(E) of
-                      conjunction -> conjunction_body(E);
-                      _ -> [E]
-                  end
-              end, disjunction_body(D)).
+    map(fun(E) ->
+            case type(E) of
+                conjunction -> erl_syntax:conjunction_body(E);
+                _ -> [E]
+            end
+        end, erl_syntax:disjunction_body(D)).
 
 revert_eof_marker(Node) -> {eof, get_pos(Node)}.
 
 %% Note that the position information of the node itself is not preserved.
-revert_error_marker(Node) -> {error, error_marker_info(Node)}.
+revert_error_marker(Node) -> {error, erl_syntax:error_marker_info(Node)}.
 
-revert_float(Node) -> {float, get_pos(Node), float_value(Node)}.
+revert_float(Node) -> {float, get_pos(Node), erl_syntax:float_value(Node)}.
 
-revert_fun_expr(Node) -> {'fun', get_pos(Node), {clauses, lists:map(fun revert_clause/1, fun_expr_clauses(Node))}}.
+revert_fun_expr(Node) -> {'fun', get_pos(Node), {clauses, map(fun revert_clause/1, erl_syntax:fun_expr_clauses(Node))}}.
 
 revert_function(Node) ->
-    Name = function_name(Node),
+    Name = erl_syntax:function_name(Node),
     case type(Name) of
-        atom -> {function, get_pos(Node), concrete(Name), function_arity(Node),
-                 lists:map(fun revert_clause/1, function_clauses(Node))};
+        atom -> {function, get_pos(Node), concrete(Name), erl_syntax:function_arity(Node),
+                 map(fun revert_clause/1, erl_syntax:function_clauses(Node))};
         _ -> Node
     end.
 
-revert_generator(Node) -> {generate, get_pos(Node), generator_pattern(Node), generator_body(Node)}.
+revert_generator(Node) -> {generate, get_pos(Node), erl_syntax:generator_pattern(Node), erl_syntax:generator_body(Node)}.
 
-revert_if_expr(Node) -> {'if', get_pos(Node), lists:map(fun revert_clause/1, if_expr_clauses(Node))}.
+revert_if_expr(Node) -> {'if', get_pos(Node), map(fun revert_clause/1, erl_syntax:if_expr_clauses(Node))}.
 
 revert_implicit_fun(Node) ->
-    Name = implicit_fun_name(Node),
+    Name = erl_syntax:implicit_fun_name(Node),
     case type(Name) of
         arity_qualifier ->
-            F = arity_qualifier_body(Name),
-            A = arity_qualifier_argument(Name),
+            F = erl_syntax:arity_qualifier_body(Name),
+            A = erl_syntax:arity_qualifier_argument(Name),
             case type(F) =:= atom andalso type(A) of
                 integer -> {'fun', get_pos(Node), {function, concrete(F), concrete(A)}};
                 _ -> Node
             end;
         module_qualifier ->
-            Name1 = module_qualifier_body(Name),
+            Name1 = erl_syntax:module_qualifier_body(Name),
             case type(Name1) of
-                arity_qualifier -> {'fun', get_pos(Node), {function, module_qualifier_argument(Name),
-                                    arity_qualifier_body(Name1), arity_qualifier_argument(Name1)}};
+                arity_qualifier -> {'fun', get_pos(Node), {function, erl_syntax:module_qualifier_argument(Name),
+                                    erl_syntax:arity_qualifier_body(Name1), erl_syntax:arity_qualifier_argument(Name1)}};
                 _ -> Node
             end;
         _ -> Node
     end.
 
 revert_infix_expr(Node) ->
-    Operator = infix_expr_operator(Node),
+    Operator = erl_syntax:infix_expr_operator(Node),
     case type(Operator) of
         %% Note that the operator itself is not revertible out of context.
-        operator -> {op, get_pos(Node), operator_name(Operator), infix_expr_left(Node), infix_expr_right(Node)};
+        operator -> {op, get_pos(Node), erl_syntax:operator_name(Operator),
+                     erl_syntax:infix_expr_left(Node), erl_syntax:infix_expr_right(Node)};
         _ -> Node
     end.
 
-revert_integer(Node) -> {integer, get_pos(Node), integer_value(Node)}.
+revert_integer(Node) -> {integer, get_pos(Node), erl_syntax:integer_value(Node)}.
 
 revert_list(Node) ->
     Pos = get_pos(Node),
     lists:foldr(fun(X, A) -> {cons, Pos, X, A} end,
-                case list_suffix(Node) of
-                    none -> revert_nil(set_pos(nil(), Pos));
+                case erl_syntax:list_suffix(Node) of
+                    none -> revert_nil(erl_syntax:set_pos(erl_syntax:nil(), Pos));
                     S -> S
                 end,
-                list_prefix(Node)).
+                erl_syntax:list_prefix(Node)).
 
-revert_list_comp(Node) -> {lc, get_pos(Node), list_comp_template(Node), list_comp_body(Node)}.
+revert_list_comp(Node) -> {lc, get_pos(Node), erl_syntax:list_comp_template(Node), erl_syntax:list_comp_body(Node)}.
 
-revert_match_expr(Node) -> {match, get_pos(Node), match_expr_pattern(Node), match_expr_body(Node)}.
+revert_match_expr(Node) -> {match, get_pos(Node), erl_syntax:match_expr_pattern(Node), erl_syntax:match_expr_body(Node)}.
 
 revert_module_name(A) ->
     case type(A) of
@@ -389,33 +355,34 @@ revert_module_name(A) ->
         _ -> error
     end.
 
-revert_module_qualifier(Node) -> {remote, get_pos(Node), module_qualifier_argument(Node), module_qualifier_body(Node)}.
+revert_module_qualifier(Node) ->
+    {remote, get_pos(Node), erl_syntax:module_qualifier_argument(Node), erl_syntax:module_qualifier_body(Node)}.
 
 revert_nil(Node) -> {nil, get_pos(Node)}.
 
-revert_parentheses(Node) -> parentheses_body(Node).
+revert_parentheses(Node) -> erl_syntax:parentheses_body(Node).
 
 revert_prefix_expr(Node) ->
-    Operator = prefix_expr_operator(Node),
+    Operator = erl_syntax:prefix_expr_operator(Node),
     case type(Operator) of
         %% Note that the operator itself is not revertible out of context.
-        operator -> {op, get_pos(Node), operator_name(Operator), prefix_expr_argument(Node)};
+        operator -> {op, get_pos(Node), erl_syntax:operator_name(Operator), erl_syntax:prefix_expr_argument(Node)};
         _ -> Node
     end.
 
 revert_receive_expr(Node) ->
     Pos = get_pos(Node),
-    Clauses = lists:map(fun revert_clause/1, receive_expr_clauses(Node)),
-    case receive_expr_timeout(Node) of
+    Clauses = map(fun revert_clause/1, erl_syntax:receive_expr_clauses(Node)),
+    case erl_syntax:receive_expr_timeout(Node) of
         none -> {'receive', Pos, Clauses};
-        Timeout -> {'receive', Pos, Clauses, Timeout, receive_expr_action(Node)}
+        Timeout -> {'receive', Pos, Clauses, Timeout, erl_syntax:receive_expr_action(Node)}
     end.
 
 revert_record_access(Node) ->
     Pos = get_pos(Node),
-    Argument = record_access_argument(Node),
-    Field = record_access_field(Node),
-    case record_access_type(Node) of
+    Argument = erl_syntax:record_access_argument(Node),
+    Field = erl_syntax:record_access_field(Node),
+    case erl_syntax:record_access_type(Node) of
         none -> {record_field, Pos, Argument, Field};
         Type -> case type(Type) of
                     atom -> {record_field, Pos, Argument, concrete(Type), Field};
@@ -424,13 +391,13 @@ revert_record_access(Node) ->
     end.
 
 revert_record_expr(Node) ->
-    Type = record_expr_type(Node),
+    Type = erl_syntax:record_expr_type(Node),
     case type(Type) of
         atom ->
             Pos = get_pos(Node),
             T = concrete(Type),
-            Fs = fold_record_fields(record_expr_fields(Node)),
-            case record_expr_argument(Node) of
+            Fs = fold_record_fields(erl_syntax:record_expr_fields(Node)),
+            case erl_syntax:record_expr_argument(Node) of
                 none -> {record, Pos, T, Fs};
                 Argument -> {record, Pos, Argument, T, Fs}
             end;
@@ -438,26 +405,27 @@ revert_record_expr(Node) ->
     end.
 
 revert_record_index_expr(Node) ->
-    Type = record_index_expr_type(Node),
+    Type = erl_syntax:record_index_expr_type(Node),
     case type(Type) of
-        atom -> {record_index, get_pos(Node), concrete(Type), record_index_expr_field(Node)};
+        atom -> {record_index, get_pos(Node), concrete(Type), erl_syntax:record_index_expr_field(Node)};
         _ -> Node
     end.
 
 revert_rule(Node) ->
-    Name = rule_name(Node),
+    Name = erl_syntax:rule_name(Node),
     case type(Name) of
         atom ->
-            {rule, get_pos(Node), concrete(Name), rule_arity(Node), lists:map(fun revert_clause/1, rule_clauses(Node))};
+            {rule, get_pos(Node),
+             concrete(Name), erl_syntax:rule_arity(Node), map(fun revert_clause/1, erl_syntax:rule_clauses(Node))};
         _ -> Node
     end.
 
-revert_string(Node) -> {string, get_pos(Node), string_value(Node)}.
+revert_string(Node) -> {string, get_pos(Node), erl_syntax:string_value(Node)}.
 
 revert_try_clause(Node) ->
     {clause, Pos, [P], _, _} = C = revert_clause(Node),
     {A, B} = case type(P) of
-                 class_qualifier -> {class_qualifier_argument(P), class_qualifier_body(P)};
+                 class_qualifier -> {erl_syntax:class_qualifier_argument(P), erl_syntax:class_qualifier_body(P)};
                  _ -> {{atom, Pos, throw}, P}
              end,
      setelement(3, C, [{tuple, Pos, [A, B, {var, Pos, '_'}]}]).
@@ -465,46 +433,47 @@ revert_try_clause(Node) ->
 revert_try_expr(Node) ->
     {'try',
      get_pos(Node),
-     try_expr_body(Node),
-     lists:map(fun revert_clause/1, try_expr_clauses(Node)),
-     lists:map(fun revert_try_clause/1, try_expr_handlers(Node)),
-     try_expr_after(Node)}.
+     erl_syntax:try_expr_body(Node),
+     map(fun revert_clause/1, erl_syntax:try_expr_clauses(Node)),
+     map(fun revert_try_clause/1, erl_syntax:try_expr_handlers(Node)),
+     erl_syntax:try_expr_after(Node)}.
 
-revert_tuple(Node) -> {tuple, get_pos(Node), tuple_elements(Node)}.
+revert_tuple(Node) -> {tuple, get_pos(Node), erl_syntax:tuple_elements(Node)}.
 
 revert_underscore(Node) -> {var, get_pos(Node), '_'}.
 
-revert_variable(Node) -> {var, get_pos(Node), variable_name(Node)}.
+revert_variable(Node) -> {var, get_pos(Node), erl_syntax:variable_name(Node)}.
 
 revert_warning_marker(Node) ->
     %% Note that the position information of the node itself is not
     %% preserved.
-    {warning, warning_marker_info(Node)}.
+    {warning, erl_syntax:warning_marker_info(Node)}.
 
 fold_function_names(Ns) ->
-    lists:map(fun(N) ->
-                  Name = arity_qualifier_body(N),
-                  Arity = arity_qualifier_argument(N),
-                  true = (type(Name) =:= atom) and (type(Arity) =:= integer),
-                  {concrete(Name), concrete(Arity)}
-              end, Ns).
+    map(fun(N) ->
+            Name = erl_syntax:arity_qualifier_body(N),
+            Arity = erl_syntax:arity_qualifier_argument(N),
+            true = (type(Name) =:= atom) and (type(Arity) =:= integer),
+            {concrete(Name), concrete(Arity)}
+        end, Ns).
 
-fold_variable_names(Vs) -> lists:map(fun erl_syntax:variable_name/1, Vs).
+fold_variable_names(Vs) -> map(fun erl_syntax:variable_name/1, Vs).
 
 fold_record_fields(Fs) ->
-    lists:map(fun(F) ->
-                  Pos = get_pos(F),
-                  Name = record_field_name(F),
-                  case record_field_value(F) of
-                      none -> {record_field, Pos, Name};
-                      Value -> {record_field, Pos, Name, Value}
-                  end
-              end, Fs).
+    map(fun(F) ->
+            Pos = get_pos(F),
+            Name = erl_syntax:record_field_name(F),
+            case erl_syntax:record_field_value(F) of
+                none -> {record_field, Pos, Name};
+                Value -> {record_field, Pos, Name, Value}
+            end
+        end, Fs).
 
 fold_binary_field_types(Ts) ->
-    lists:map(fun(Node) ->
-                  case type(Node) of
-                      size_qualifier -> {concrete(size_qualifier_body(Node)), concrete(size_qualifier_argument(Node))};
-                      _ -> concrete(Node)
-                  end
-              end, Ts).
+    map(fun(Node) ->
+            case type(Node) of
+                size_qualifier -> {concrete(erl_syntax:size_qualifier_body(Node)),
+                                   concrete(erl_syntax:size_qualifier_argument(Node))};
+                _ -> concrete(Node)
+            end
+        end, Ts).
