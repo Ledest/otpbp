@@ -25,6 +25,8 @@
 -module(otpbp_rand).
 
 -ifndef(HAVE_rand__seed_1).
+-compile([{parse_transform, otpbp_pt}]).
+
 -export([seed_s/1, seed_s/2, seed/1, seed/2,
 	 export_seed/0, export_seed_s/1,
          uniform/0, uniform/1, uniform_s/1, uniform_s/2,
@@ -116,7 +118,7 @@ seed_s({Alg0, Seed}) ->
     {Alg, Seed}.
 -else.
 seed_s(Alg) when is_atom(Alg) ->
-    ST = otpbp_erlang:system_time(),
+    ST = erlang:system_time(),
     seed_s(Alg, {erlang:phash2([{node(), self()}]), ST div 1000, ST rem 1000});
 seed_s({Alg0, Seed}) ->
     {Alg,_SeedFun} = mk_alg(Alg0),
