@@ -47,11 +47,11 @@
 %% This depends on the algorithm handler function
 -type alg_seed() :: exs64_state() | exsplus_state() | exs1024_state().
 %% This is the algorithm handler function within this module
--record(alg_handler, {type = none :: alg(),
-		      max = none :: integer(),
-		      next = none :: fun(),
-		      uniform = none :: fun(),
-		      uniform_n = none :: fun()}).
+-record(alg_handler, {type :: alg(),
+		      max :: integer(),
+		      next :: fun(),
+		      uniform :: fun(),
+		      uniform_n :: fun()}).
 -type alg_handler() :: #alg_handler{}.
 
 %% Internal state
@@ -68,12 +68,12 @@
 -spec export_seed() -> undefined | export_state().
 export_seed() ->
     case seed_get() of
-	{#alg_handler{type=Alg}, Seed} when Alg =/= none -> {Alg, Seed};
+	{#alg_handler{type = Alg}, Seed} when Alg =/= undefined -> {Alg, Seed};
 	_ -> undefined
     end.
 
 -spec export_seed_s(state()) -> export_state().
-export_seed_s({#alg_handler{type=Alg}, Seed}) when Alg =/= none -> {Alg, Seed}.
+export_seed_s({#alg_handler{type = Alg}, Seed}) when Alg =/= undefined -> {Alg, Seed}.
 
 %% seed(Alg) seeds RNG with runtime dependent values
 %% and return the NEW state
@@ -147,21 +147,20 @@ uniform(N) ->
 %% and a new state.
 
 -spec uniform_s(state()) -> {X::float(), NewS :: state()}.
-uniform_s(State = {#alg_handler{uniform=Uniform}, _}) when Uniform =/= none ->
-    Uniform(State).
+uniform_s(State = {#alg_handler{uniform = Uniform}, _}) when Uniform =/= undefined -> Uniform(State).
 
 %% uniform_s/2: given an integer N >= 1 and a state, uniform_s/2
 %% uniform_s/2 returns a random integer X where 1 =< X =< N,
 %% and a new state.
 
 -spec uniform_s(N::pos_integer(), state()) -> {X::pos_integer(), NewS::state()}.
-uniform_s(N, State = {#alg_handler{uniform_n=Uniform, max=Max}, _})
-  when Uniform =/= none, Max =/= none, 0 < N, N =< Max ->
-    Uniform(N, State);
-uniform_s(N, State0 = {#alg_handler{uniform=Uniform}, _})
-  when Uniform =/= none, is_integer(N), 0 < N ->
-    {F, State} = Uniform(State0),
-    {trunc(F * N) + 1, State}.
+uniform_s(N, State = {#alg_handler{uniform_n = Uniform, max = Max}, _}) when Uniform =/= undefined, 0 < N ->
+    if
+        Max =:= undefined; N > Max ->
+            {F, State} = Uniform(State0),
+            {trunc(F * N) + 1, State};
+        true -> Uniform(N, State)
+    end.
 
 %% normal/0: returns a random float with standard normal distribution
 %% updating the state in the process dictionary.
@@ -356,7 +355,7 @@ exs1024_uniform(Max, {Alg, R}) ->
 -define(NOR_INV_R, 1/?NOR_R).
 
 %% return a {sign, Random51bits, State}
-get_52({Alg=#alg_handler{next=Next}, S0}) when Next =/= none ->
+get_52({Alg = #alg_handler{next = Next}, S0}) when Next =/= undefined ->
     {Int,S1} = Next(S0),
     {((1 bsl 51) band Int), Int band ((1 bsl 51)-1), {Alg, S1}}.
 
