@@ -34,6 +34,7 @@
                               {{erlang, unique_integer, 1}, otpbp_erlang},
                               {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
                               {{application, get_env, 3}, otpbp_application},
+                              {{crypto, rand_bytes, 1}, {crypto, strong_rand_bytes}},
                               {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
                               {{file, [list_dir_all, read_link_all], 1}, otpbp_file},
                               {{inet, ntoa, 1}, inet_parse},
