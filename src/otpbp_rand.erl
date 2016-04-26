@@ -47,20 +47,12 @@
 %% This depends on the algorithm handler function
 -type alg_seed() :: exs64_state() | exsplus_state() | exs1024_state().
 %% This is the algorithm handler function within this module
--ifndef(HAVE_erlang__is_map_1).
 -record(alg_handler, {type = none :: alg(),
 		      max = none :: integer(),
 		      next = none :: fun(),
 		      uniform = none :: fun(),
 		      uniform_n = none :: fun()}).
 -type alg_handler() :: #alg_handler{}.
--else.
--type alg_handler() :: #{type      => alg(),
-			 max       => integer(),
-			 next      => fun(),
-			 uniform   => fun(),
-			 uniform_n => fun()}.
--endif.
 
 %% Internal state
 -opaque state() :: {alg_handler(), alg_seed()}.
@@ -74,26 +66,14 @@
 
 %% Return algorithm and seed so that RNG state can be recreated with seed/1
 -spec export_seed() -> undefined | export_state().
--ifndef(HAVE_erlang__is_map_1).
 export_seed() ->
     case seed_get() of
 	{#alg_handler{type=Alg}, Seed} when Alg =/= none -> {Alg, Seed};
 	_ -> undefined
     end.
--else.
-export_seed() ->
-    case seed_get() of
-	{#{type:=Alg}, Seed} -> {Alg, Seed};
-	_ -> undefined
-    end.
--endif.
 
 -spec export_seed_s(state()) -> export_state().
--ifndef(HAVE_erlang__is_map_1).
 export_seed_s({#alg_handler{type=Alg}, Seed}) when Alg =/= none -> {Alg, Seed}.
--else.
-export_seed_s({#{type:=Alg}, Seed}) -> {Alg, Seed}.
--endif.
 
 %% seed(Alg) seeds RNG with runtime dependent values
 %% and return the NEW state
@@ -167,20 +147,14 @@ uniform(N) ->
 %% and a new state.
 
 -spec uniform_s(state()) -> {X::float(), NewS :: state()}.
--ifndef(HAVE_erlang__is_map_1).
 uniform_s(State = {#alg_handler{uniform=Uniform}, _}) when Uniform =/= none ->
     Uniform(State).
--else.
-uniform_s(State = {#{uniform:=Uniform}, _}) ->
-    Uniform(State).
--endif.
 
 %% uniform_s/2: given an integer N >= 1 and a state, uniform_s/2
 %% uniform_s/2 returns a random integer X where 1 =< X =< N,
 %% and a new state.
 
 -spec uniform_s(N::pos_integer(), state()) -> {X::pos_integer(), NewS::state()}.
--ifndef(HAVE_erlang__is_map_1).
 uniform_s(N, State = {#alg_handler{uniform_n=Uniform, max=Max}, _})
   when Uniform =/= none, Max =/= none, 0 < N, N =< Max ->
     Uniform(N, State);
@@ -188,15 +162,6 @@ uniform_s(N, State0 = {#alg_handler{uniform=Uniform}, _})
   when Uniform =/= none, is_integer(N), 0 < N ->
     {F, State} = Uniform(State0),
     {trunc(F * N) + 1, State}.
--else.
-uniform_s(N, State = {#{uniform_n:=Uniform, max:=Max}, _})
-  when 0 < N, N =< Max ->
-    Uniform(N, State);
-uniform_s(N, State0 = {#{uniform:=Uniform}, _})
-  when is_integer(N), 0 < N ->
-    {F, State} = Uniform(State0),
-    {trunc(F * N) + 1, State}.
--endif.
 
 %% normal/0: returns a random float with standard normal distribution
 %% updating the state in the process dictionary.
@@ -251,7 +216,6 @@ seed_get() ->
     end.
 
 %% Setup alg record
--ifndef(HAVE_erlang__is_map_1).
 mk_alg(exs64) ->
     {#alg_handler{type=exs64, max=?UINT64MASK, next=fun exs64_next/1,
        uniform=fun exs64_uniform/1, uniform_n=fun exs64_uniform/2},
@@ -264,20 +228,6 @@ mk_alg(exs1024) ->
     {#alg_handler{type=exs1024, max=?UINT64MASK, next=fun exs1024_next/1,
        uniform=fun exs1024_uniform/1, uniform_n=fun exs1024_uniform/2},
      fun exs1024_seed/1}.
--else.
-mk_alg(exs64) ->
-    {#{type=>exs64, max=>?UINT64MASK, next=>fun exs64_next/1,
-       uniform=>fun exs64_uniform/1, uniform_n=>fun exs64_uniform/2},
-     fun exs64_seed/1};
-mk_alg(exsplus) ->
-    {#{type=>exsplus, max=>?UINT58MASK, next=>fun exsplus_next/1,
-       uniform=>fun exsplus_uniform/1, uniform_n=>fun exsplus_uniform/2},
-     fun exsplus_seed/1};
-mk_alg(exs1024) ->
-    {#{type=>exs1024, max=>?UINT64MASK, next=>fun exs1024_next/1,
-       uniform=>fun exs1024_uniform/1, uniform_n=>fun exs1024_uniform/2},
-     fun exs1024_seed/1}.
--endif.
 
 %% =====================================================================
 %% exs64 PRNG: Xorshift64*
@@ -406,15 +356,9 @@ exs1024_uniform(Max, {Alg, R}) ->
 -define(NOR_INV_R, 1/?NOR_R).
 
 %% return a {sign, Random51bits, State}
--ifndef(HAVE_erlang__is_map_1).
 get_52({Alg=#alg_handler{next=Next}, S0}) when Next =/= none ->
     {Int,S1} = Next(S0),
     {((1 bsl 51) band Int), Int band ((1 bsl 51)-1), {Alg, S1}}.
--else.
-get_52({Alg=#{next:=Next}, S0}) ->
-    {Int,S1} = Next(S0),
-    {((1 bsl 51) band Int), Int band ((1 bsl 51)-1), {Alg, S1}}.
--endif.
 
 %% Slow path
 normal_s(0, Sign, X0, State0) ->
