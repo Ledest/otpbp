@@ -11,7 +11,7 @@
 -endif.
 -endif.
 
--ifndef(buggy__revert_implicit_fun).
+-ifdef(buggy__revert_implicit_fun).
 -export([revert/1]).
 
 %% =====================================================================
@@ -131,15 +131,19 @@ revert_implicit_fun(Node) ->
     case erl_syntax:type(Name) of
         arity_qualifier ->
             F = erl_syntax:arity_qualifier_body(Name),
-            A = erl_syntax:arity_qualifier_argument(Name),
-            case erl_syntax:type(F) =:= atom andalso erl_syntax:type(A) of
-                integer -> {'fun', erl_syntax:get_pos(Node), {function, erl_syntax:concrete(F), erl_syntax:concrete(A)}};
+            case erl_syntax:type(F) of
+                atom ->
+                    A = erl_syntax:arity_qualifier_argument(Name),
+                    case erl_syntax:type(A) of
+                        integer -> {'fun', erl_syntax:get_pos(Node), {function, erl_syntax:concrete(F), erl_syntax:concrete(A)}};
+                        _ -> Node
+                    end;
                 _ -> Node
             end;
         module_qualifier ->
             N = erl_syntax:module_qualifier_body(Name),
             case erl_syntax:type(N) of
-                arity_qualifier -> {'fun', erl_syntax:get_pos(Node), {function, 
+                arity_qualifier -> {'fun', erl_syntax:get_pos(Node), {function,
                                                                       erl_syntax:module_qualifier_argument(Name),
                                                                       erl_syntax:arity_qualifier_body(N),
                                                                       erl_syntax:arity_qualifier_argument(N)}};
