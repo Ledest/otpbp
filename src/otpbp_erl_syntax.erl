@@ -20,7 +20,6 @@
 -define(buggy__revert_implicit_fun, true).
 -endif.
 -endif.
--define(buggy__revert_implicit_fun, true).
 
 -ifdef(buggy__revert_implicit_fun).
 -export([concrete/1, revert/1, revert_forms/1]).
