@@ -21,6 +21,18 @@
 -ifndef(HAVE_maps__without_2).
 -export([without/2]).
 -endif.
+-ifndef(HAVE_maps__without_2).
+-export([without/2]).
+-endif.
+-ifndef(HAVE_maps__update_with_3).
+-export([update_with/3]).
+-endif.
+-ifndef(HAVE_maps__update_with_4).
+-export([update_with/4]).
+-endif.
+-ifndef(HAVE_maps__take_2).
+-export([take/2]).
+-endif.
 
 -ifndef(HAVE_maps__get_3).
 get(Key, Map, Default) ->
@@ -65,4 +77,45 @@ with(Ks, Map) -> dict:filter(fun(K, _) -> lists:member(K, Ks) end, Map).
 
 -ifndef(HAVE_maps__without_2).
 without(Ks, Map) -> dict:filter(fun(K, _) -> not lists:member(K, Ks) end, Map).
+-endif.
+
+-ifdef(HAVE_maps__update_3).
+update_with(Key, Fun, Init, Map) when is_function(Fun, 1), is_map(Map) ->
+    case maps:find(Key, Map) of
+        {ok, Val} -> maps:update(Key, Fun(Val), Map);
+        error -> maps:put(Key, Init, Map)
+    end;
+update_with(Key, Fun, Init, Map) ->
+     erlang:error(if
+                      is_map(Map) -> badarg;
+                      true -> {badmap, Map}
+                 end,
+                 [Key, Fun, Init, Map]).
+-else.
+update_with(Key, Fun, Init, Map) -> dict:update(Key, Fun, Init, Map).
+-endif.
+
+-ifndef(HAVE_maps__update_3).
+update_with(Key, Fun, Map) when is_function(Fun, 1), is_map(Map) ->
+    case maps:find(Key, Map) of
+        {ok, Val} -> maps:update(Key, Fun(Val), Map);
+        error -> erlang:error({badkey, Key}, [Key, Fun, Map])
+    end;
+update_with(Key, Fun, Map) ->
+     erlang:error(if
+                      is_map(Map) -> badarg;
+                      true -> {badmap, Map}
+                 end,
+                 [Key, Fun, Map]).
+-else.
+update_with(Key, Fun, Map) -> dict:update(Key, Fun, Map).
+-endif.
+
+-ifndef(HAVE_maps__take_2).
+take(Key, Map) when is_map(Map) ->
+    case maps:find(Key, Map) of
+        {ok, Val} -> {Val, maps:remove(Key, Map)};
+        error -> error
+    end;
+take(Key, Map) -> erlang:error({badmap, Map}, [Key, Map]).
 -endif.
