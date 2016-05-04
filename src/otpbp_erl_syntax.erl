@@ -249,7 +249,7 @@ revert_forms(T) ->
     end.
 
 revert_forms_1([T|Ts]) ->
-    case erl_stntax:type(T) of
+    case erl_syntax:type(T) of
         comment -> revert_forms_1(Ts);
         _ ->
             T1 = revert(T),
