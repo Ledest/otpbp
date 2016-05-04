@@ -1,5 +1,7 @@
 -module(otpbp_maps).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_maps__filter_2).
 -export([filter/2]).
 -endif.
@@ -17,9 +19,6 @@
 -endif.
 -ifndef(HAVE_maps__with_2).
 -export([with/2]).
--endif.
--ifndef(HAVE_maps__without_2).
--export([without/2]).
 -endif.
 -ifndef(HAVE_maps__without_2).
 -export([without/2]).
