@@ -238,7 +238,7 @@ concrete_list([]) -> [].
 -spec revert_forms(forms()) -> [erl_parse()].
 revert_forms(Forms) when is_list(Forms) -> revert_forms(erl_syntax:form_list(Forms));
 revert_forms(T) ->
-    case type(T) of
+    case erl_syntax:type(T) of
         form_list -> case catch {ok, revert_forms_1(erl_syntax:form_list_elements(erl_syntax:flatten_form_list(T)))} of
                          {ok, Fs} -> Fs;
                          {error, _} = Error -> error(Error);
@@ -261,24 +261,27 @@ revert_forms_1([T|Ts]) ->
 revert_forms_1([]) -> [].
 
 revert_binary_field(Node) ->
-    Pos = erl_syntax:get_pos(Node),
     Body = erl_syntax:binary_field_body(Node),
     {Expr, Size} = case erl_syntax:type(Body) of
-		       size_qualifier ->
-			   %% Note that size qualifiers are not
-			   %% revertible out of context.
-			   {erl_syntax:size_qualifier_body(Body),
-			    erl_syntax:size_qualifier_argument(Body)};
-		       _ ->
-			   {Body, default}
-		   end,
-    Types = case erl_syntax:binary_field_types(Node) of
-		[] ->
-		    default;
-		Ts ->
-		    fold_binary_field_types(Ts)
-	    end,
-    {bin_element, Pos, Expr, Size, Types}.
+                       %% Note that size qualifiers are not revertible out of context.
+                       size_qualifier -> {erl_syntax:size_qualifier_body(Body),
+                                          erl_syntax:size_qualifier_argument(Body)};
+                       _ -> {Body, default}
+                   end,
+    {bin_element, erl_syntax:get_pos(Node), Expr, Size,
+     case erl_syntax:binary_field_types(Node) of
+         [] -> default;
+         Ts -> fold_binary_field_types(Ts)
+     end}.
 
--compile({inline, [revert_implicit_fun/1, revert_root/1, unwrap/1]}).
+fold_binary_field_types(Ts) -> lists:map(fun fold_binary_field_type/1, Ts).
+
+fold_binary_field_type(Node) ->
+    case erl_syntax:type(Node) of
+        size_qualifier -> {concrete(erl_syntax:size_qualifier_body(Node)),
+                           concrete(erl_syntax:size_qualifier_argument(Node))};
+        _ -> concrete(Node)
+    end.
+
+-compile({inline, [fold_binary_field_types/1, revert_implicit_fun/1, revert_root/1, unwrap/1]}).
 -endif.
