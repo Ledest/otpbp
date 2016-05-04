@@ -79,6 +79,7 @@ with(Ks, Map) -> dict:filter(fun(K, _) -> lists:member(K, Ks) end, Map).
 without(Ks, Map) -> dict:filter(fun(K, _) -> not lists:member(K, Ks) end, Map).
 -endif.
 
+-ifndef(HAVE_maps__update_with_4).
 -ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Init, Map) when is_function(Fun, 1), is_map(Map) ->
     case maps:find(Key, Map) of
@@ -94,8 +95,10 @@ update_with(Key, Fun, Init, Map) ->
 -else.
 update_with(Key, Fun, Init, Map) -> dict:update(Key, Fun, Init, Map).
 -endif.
+-endif.
 
--ifndef(HAVE_maps__update_3).
+-ifndef(HAVE_maps__update_with_3).
+-ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Map) when is_function(Fun, 1), is_map(Map) ->
     case maps:find(Key, Map) of
         {ok, Val} -> maps:update(Key, Fun(Val), Map);
@@ -109,6 +112,7 @@ update_with(Key, Fun, Map) ->
                  [Key, Fun, Map]).
 -else.
 update_with(Key, Fun, Map) -> dict:update(Key, Fun, Map).
+-endif.
 -endif.
 
 -ifndef(HAVE_maps__take_2).
