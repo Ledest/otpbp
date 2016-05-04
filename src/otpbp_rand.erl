@@ -154,12 +154,12 @@ uniform_s(State = {#alg_handler{uniform = Uniform}, _}) when Uniform =/= undefin
 %% and a new state.
 
 -spec uniform_s(N::pos_integer(), state()) -> {X::pos_integer(), NewS::state()}.
-uniform_s(N, State = {#alg_handler{uniform_n = Uniform, max = Max}, _}) when Uniform =/= undefined, 0 < N ->
+uniform_s(N, State0 = {#alg_handler{uniform_n = Uniform, max = Max}, _}) when Uniform =/= undefined, 0 < N ->
     if
         Max =:= undefined; N > Max ->
             {F, State} = Uniform(State0),
             {trunc(F * N) + 1, State};
-        true -> Uniform(N, State)
+        true -> Uniform(N, State0)
     end.
 
 %% normal/0: returns a random float with standard normal distribution
