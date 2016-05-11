@@ -38,82 +38,13 @@ record_access(Argument, Field) -> erl_syntax:record_access(Argument, none, Field
 -endif.
 
 -ifdef(buggy__revert_implicit_fun).
-%% =====================================================================
-%% Declarations of globally used internal data structures
-%% =====================================================================
-
-%% `com' records are used to hold comment information attached to a
-%% syntax tree node or a wrapper structure.
-%%
-%% #com{pre :: Pre, post :: Post}
-%%
-%%	Pre = Post = [Com]
-%%	Com = syntaxTree()
-%%
-%%	type(Com) = comment
-
 -record(com, {pre = []::[syntaxTree()], post = []::[syntaxTree()]}).
-
-%% `attr' records store node attributes as an aggregate.
-%%
-%% #attr{pos :: Pos, ann :: Ann, com :: Comments}
-%%
-%%	Pos = term()
-%%	Ann = [term()]
-%%	Comments = none | #com{}
-%%
-%% where `Pos' `Ann' and `Comments' are the corresponding values of a
-%% `tree' or `wrapper' record.
-
 -record(attr, {pos = 0::term(), ann = []::[term()], com = none::'none'|#com{}}).
-
-%% `tree' records represent new-form syntax tree nodes.
-%%
-%% Tree = #tree{type :: Type, attr :: Attr, data :: Data}
-%%
-%%	Type = atom()
-%%	Attr = #attr{}
-%%	Data = term()
-%%
-%%	is_tree(Tree) = true
-
 -record(tree, {type :: atom(), attr = #attr{}::#attr{}, data :: term()}).
-
-%% `wrapper' records are used for attaching new-form node information to
-%% `erl_parse' trees.
-%%
-%% Wrapper = #wrapper{type :: Type, attr :: Attr, tree :: ParseTree}
-%%
-%%	Type = atom()
-%%	Attr = #attr{}
-%%	ParseTree = term()
-%%
-%%	is_tree(Wrapper) = false
-
 -record(wrapper, {type :: atom(), attr = #attr{} :: #attr{}, tree :: erl_parse()}).
-
-%% =====================================================================
 
 -type syntaxTree() :: erl_syntax:syntaxTree().
 -type erl_parse() :: erl_syntax:erl_parse().
-
-%% =====================================================================
-%% @doc Returns an `erl_parse'-compatible representation of a
-%% syntax tree, if possible. If `Tree' represents a
-%% well-formed Erlang program or expression, the conversion should work
-%% without problems. Typically, {@link is_tree/1} yields
-%% `true' if conversion failed (i.e., the result is still an
-%% abstract syntax tree), and `false' otherwise.
-%%
-%% The {@link is_tree/1} test is not completely foolproof. For a
-%% few special node types (e.g. `arity_qualifier'), if such a
-%% node occurs in a context where it is not expected, it will be left
-%% unchanged as a non-reverted subtree of the result. This can only
-%% happen if `Tree' does not actually represent legal Erlang
-%% code.
-%%
-%% @see revert_forms/1
-%% @see //stdlib/erl_parse
 
 -spec revert(syntaxTree()) -> syntaxTree().
 revert(Node) ->
@@ -132,24 +63,12 @@ revert(Node) ->
                             end)
     end.
 
-%% Note: The concept of "compatible root node" is not strictly defined.
-%% At a minimum, if `make_tree' is used to compose a node `T' from
-%% subtrees that are all completely backwards compatible, then the
-%% result of `revert_root(T)' should also be completely backwards
-%% compatible.
-
 revert_root(Node) ->
     case erl_syntax:type(Node) of
         binary_field -> revert_binary_field(Node);
         implicit_fun -> revert_implicit_fun(Node);
         _ -> erl_syntax:revert(Node)
     end.
-
-%% =====================================================================
-%% @doc Removes any wrapper structure, if present. If `Node'
-%% is a wrapper structure, this function returns the wrapped
-%% `erl_parse' tree; otherwise it returns `Node'
-%% itself.
 
 revert_implicit_fun(Node) ->
     Name = erl_syntax:implicit_fun_name(Node),
@@ -181,23 +100,6 @@ revert_implicit_fun(Node) ->
 unwrap(#wrapper{tree = Node}) -> Node;
 unwrap(Node) -> Node. % This could also be a new-form node.
 
-%% =====================================================================
-%% @doc Returns the Erlang term represented by a syntax tree. Evaluation
-%% fails with reason `badarg' if `Node' does not
-%% represent a literal term.
-%%
-%% Note: Currently, the set of syntax trees which have a concrete
-%% representation is larger than the set of trees which can be built
-%% using the function {@link abstract/1}. An abstract character
-%% will be concretised as an integer, while {@link abstract/1} does
-%% not at present yield an abstract character for any input. (Use the
-%% {@link char/1} function to explicitly create an abstract
-%% character.)
-%%
-%% @see abstract/1
-%% @see is_literal/1
-%% @see char/1
-
 -spec concrete(syntaxTree()) -> term().
 concrete(Node) ->
     case erl_syntax:type(Node) of
@@ -219,19 +121,6 @@ concrete(Node) ->
 
 concrete_list([E|Es]) -> [concrete(E)|concrete_list(Es)];
 concrete_list([]) -> [].
-
-%% =====================================================================
-%% @doc Reverts a sequence of Erlang source code forms. The sequence can
-%% be given either as a `form_list' syntax tree (possibly
-%% nested), or as a list of "program form" syntax trees. If successful,
-%% the corresponding flat list of `erl_parse'-compatible
-%% syntax trees is returned (see {@link revert/1}). If some program
-%% form could not be reverted, `{error, Form}' is thrown.
-%% Standalone comments in the form sequence are discarded.
-%%
-%% @see revert/1
-%% @see form_list/1
-%% @see is_form/1
 
 -type forms() :: syntaxTree() | [syntaxTree()].
 
