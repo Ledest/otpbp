@@ -123,8 +123,7 @@
                      implicit_fun/3, implicit_fun_name/1,
                      arity_qualifier_argument/1, arity_qualifier_body/1,
                      module_qualifier/2, module_qualifier_argument/1, module_qualifier_body/1]).
--import(erl_syntax_lib, [analyze_forms/1]).
--import(lists, [foldl/3, mapfoldl/3]).
+-import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
 -else.
@@ -157,33 +156,36 @@ put(K, V, M) -> dict:store(K, V, M).
 -endif.
 
 -record(param, {options = [] :: list(),
+                verbose = false :: boolean(),
                 funs,
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
-    TL = transform_list(),
-    case is_empty(TL) of
+    case is_empty(TL = transform_list()) of
         true -> Forms;
-        _ -> try analyze_forms(Forms) of
-                 AF -> element(1, mapfoldl(fun(Tree, P) ->
-                                               case type(Tree) of
-                                                   function -> {transform_function(Tree, P), P};
-                                                   attribute -> {Tree, transform_attribute(Tree, P)};
-                                                   _ -> {Tree, P}
-                                               end
-                                           end,
-                                           #param{options = Options,
-                                                  funs = foldl(fun({M, Fs}, IA) ->
-                                                                   foldl(fun(FA, IAM) ->
-                                                                             case find({M, FA}, TL) of
-                                                                                 {ok, V} -> put(FA, V, IAM);
-                                                                                 _ -> IAM
-                                                                              end
-                                                                         end, IA, Fs)
-                                                               end,
-                                                               foldl(fun remove/2, TL, get_no_auto_import(AF)),
-                                                               get_imports(AF))},
-                                           Forms))
+        _ -> try erl_syntax_lib:analyze_forms(Forms) of
+                 AF ->
+                     {NF, _} = lists:mapfoldl(fun(Tree, P) ->
+                                                  case type(Tree) of
+                                                      function -> {transform_function(Tree, P), P};
+                                                      attribute -> {Tree, transform_attribute(Tree, P)};
+                                                      _ -> {Tree, P}
+                                                  end
+                                              end,
+                                              #param{options = Options,
+                                                     verbose = proplists:get_bool(verbose, Options),
+                                                     funs = foldl(fun({M, Fs}, IA) ->
+                                                                      foldl(fun(FA, IAM) ->
+                                                                                case find({M, FA}, TL) of
+                                                                                    {ok, V} -> put(FA, V, IAM);
+                                                                                    _ -> IAM
+                                                                                end
+                                                                             end, IA, Fs)
+                                                                  end,
+                                                                  foldl(fun remove/2, TL, get_no_auto_import(AF)),
+                                                                  get_imports(AF))},
+                                              Forms),
+                     NF
             catch
                 C:E ->
                     io:fwrite(standard_error,
@@ -352,8 +354,8 @@ remove(K, M) -> maps:remove(K, M).
 remove(K, M) -> dict:erase(K, M).
 -endif.
 
-replace_message(F, NM, NN, Node, #param{options = O} = P) ->
-    proplists:get_value(verbose, O) =:= true andalso do_replace_message(F, NM, NN, P#param.file, Node).
+replace_message(_F, _NM, _NN, _Node, #param{verbose = false}) -> ok;
+replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, NM, NN, File, Node).
 
 do_replace_message({M, {N, A}}, NM, NN, F, Node) -> do_replace_message({lists:concat([M, ":", N]), A}, NM, NN, F, Node);
 do_replace_message({N, A}, NM, NN, F, Node) ->
