@@ -34,13 +34,14 @@ string_literal(Node, latin1) -> erl_syntax:string_literal(Node).
 -endif.
 
 -ifndef(HAVE_erl_syntax__record_access_2).
-record_access(Argument, Field) -> erl_syntax:record_access(Argument, none, Field).
+-spec record_access(Argument::erl_syntax:syntaxTree(), Field::erl_syntax:syntaxTree()) -> erl_syntax:syntaxTree().
+record_access(Argument, Field) -> erl_syntax:record_access(Argument, erl_syntax:atom(any), Field).
 -endif.
 
 -ifdef(buggy__revert_implicit_fun).
--record(com, {pre = []::[syntaxTree()], post = []::[syntaxTree()]}).
--record(attr, {pos = 0::term(), ann = []::[term()], com = none::'none'|#com{}}).
--record(tree, {type :: atom(), attr = #attr{}::#attr{}, data :: term()}).
+-record(com, {pre = [] :: [syntaxTree()], post = [] :: [syntaxTree()]}).
+-record(attr, {pos = 0 :: term(), ann = [] :: [term()], com = none :: 'none'|#com{}}).
+-record(tree, {type :: atom(), attr = #attr{} :: #attr{}, data :: term()}).
 -record(wrapper, {type :: atom(), attr = #attr{} :: #attr{}, tree :: erl_parse()}).
 
 -type syntaxTree() :: erl_syntax:syntaxTree().
