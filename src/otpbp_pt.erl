@@ -29,7 +29,7 @@
                               {{erlang, convert_time_unit, 3}, otpbp_erlang},
                               {{erlang, monotonic_time, [0, 1]}, {otpbp_erlang, system_time}},
                               {{erlang, [system_time, time_offset], [0, 1]}, otpbp_erlang},
-                              {{erlang, timestamp, 0}, {erlang, now}},
+                              {{erlang, timestamp, 0}, os},
                               {{erlang, unique_integer, 0}, {otpbp_erlang, system_time}},
                               {{erlang, unique_integer, 1}, otpbp_erlang},
                               {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
@@ -147,6 +147,7 @@
 -endif.
 
 -ifdef(HAVE_maps__size_1).
+-spec is_empty(M::map()) -> boolean().
 is_empty(M) -> maps:size(M) =:= 0.
 -endif.
 
@@ -271,6 +272,8 @@ application_transform_guard(Node) ->
     end.
 
 -compile([{inline, [application_transform_guard/1]}]).
+
+-dialyzer({no_opaque, application_guard/3}).
 
 application_guard(Node, dict, size) ->
     [A] = application_arguments(Node),
