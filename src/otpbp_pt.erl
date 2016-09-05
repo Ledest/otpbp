@@ -18,6 +18,8 @@
 -module(otpbp_pt).
 -export([parse_transform/2]).
 
+-dialyzer({no_opaque, application_guard/3}).
+
 -define(TRANSFORM_FUNCTIONS, [{{[binary_to_integer, integer_to_binary, float_to_binary], [1, 2]}, otpbp_erlang},
                               {{binary_to_float, 1}, otpbp_erlang},
                               {{get_keys, 0}, otpbp_erlang},
@@ -272,8 +274,6 @@ application_transform_guard(Node) ->
     end.
 
 -compile([{inline, [application_transform_guard/1]}]).
-
--dialyzer({no_opaque, application_guard/3}).
 
 application_guard(Node, dict, size) ->
     [A] = application_arguments(Node),
