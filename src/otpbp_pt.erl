@@ -26,6 +26,7 @@
                               {{float_to_list, 2}, otpbp_erlang},
                               {{is_map, 1}, otpbp_erlang},
                               {{map_size, 1}, {dict, size}},
+                              {{[ceil, floor], 1}, otpbp_erlang},
                               {{erlang, delete_element, 2}, otpbp_erlang},
                               {{erlang, insert_element, 3}, otpbp_erlang},
                               {{erlang, convert_time_unit, 3}, otpbp_erlang},
@@ -91,7 +92,7 @@
                               {{maps, [get, update], 3}, otpbp_maps},
                               {{maps, put, 3}, {dict, store}},
                               {{maps, update_with, [3, 4]}, otpbp_maps},
-                              {{math, log2, 1}, otpbp_math},
+                              {{math, [ceil, floor, log2], 1}, otpbp_math},
                               {{orddict, is_empty, 1}, otpbp_orddict},
                               {{os, system_time, 1}, otpbp_os},
                               {{os, getenv, 2}, otpbp_os},
@@ -298,6 +299,17 @@ application_guard(Node, otpbp_erlang, is_map) ->
     copy_pos(Node,
              application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(module_qualifier_body(O), is_record))),
                          [A, atom(A, dict), integer(A, tuple_size(dict:new()))]));
+application_guard(Node, otpbp_erlang, F) when F =:= ceil; F =:= floor ->
+    [A] = application_arguments(Node),
+    O = application_operator(Node),
+    ML = module_qualifier_argument(O),
+    copy_pos(Node, application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(module_qualifier_body(O), round))),
+                               [copy_pos(ML, infix_expr(copy_pos(ML, A),
+                                                        copy_pos(ML, erl_syntax:operator(if
+                                                                                             F =:= ceil -> '+';
+                                                                                             true -> '-'
+                                                                                         end)),
+                                                        copy_pos(ML, erl_syntax:float(0.5))))]));
 application_guard(_, _, _) -> false.
 
 application_transform(#param{funs = L} = P, Node) ->
