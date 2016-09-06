@@ -86,6 +86,14 @@
 -export([is_map/1]).
 -endif.
 
+-ifndef(HAVE_erlang__ceil_1).
+-export([ceil/1]).
+-endif.
+
+-ifndef(HAVE_erlang__floor_1).
+-export([floor/1]).
+-endif.
+
 -ifndef(HAVE_erlang__binary_to_integer_1).
 binary_to_integer(Binary) -> list_to_integer(binary_to_list(Binary)).
 -endif.
@@ -236,4 +244,20 @@ unique_integer(O) -> erlang:error(badarg, [O]).
 
 -ifndef(HAVE_erlang__is_map_1).
 is_map(Map) -> is_record(Map, dict, tuple_size(dict:new())).
+-endif.
+
+-ifndef(HAVE_erlang__ceil_1).
+-ifdef(HAVE_math__ceil_1).
+ceil(X) -> erlang:round(math:ceil(X)).
+-else.
+ceil(X) -> erlang:round(X + 0.5).
+-endif.
+-endif.
+
+-ifndef(HAVE_erlang__floor_1).
+-ifdef(HAVE_math__floor_1).
+floor(X) -> erlang:round(math:floor(X)).
+-else.
+floor(X) -> erlang:round(X - 0.5).
+-endif.
 -endif.
