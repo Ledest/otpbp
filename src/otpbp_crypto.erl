@@ -82,6 +82,13 @@
 -export([sha512_mac/3]).
 -endif.
 
+-ifndef(HAVE_crypto__hmac_3).
+-export([hmac/3]).
+-endif.
+-ifndef(HAVE_crypto__hmac_4).
+-export([hmac/4]).
+-endif.
+
 -ifndef(HAVE_crypto__dss_sign_2).
 dss_sign(Data, Key) -> crypto:sign(dss, sha, Data, Key).
 -endif.
@@ -164,4 +171,23 @@ sha384_init() -> crypto:hash_init(sha384).
 -endif.
 -ifndef(HAVE_crypto__sha512_init_0).
 sha512_init() -> crypto:hash_init(sha512).
+-endif.
+
+-ifndef(HAVE_crypto__hmac_3).
+hmac(md5, Key, Data) -> crypto:md5_mac(Key, Data);
+hmac(sha, Key, Data) -> crypto:sha_mac(Key, Data);
+hmac(sha224, Key, Data) -> crypto:sha224_mac(Key, Data);
+hmac(sha256, Key, Data) -> crypto:sha256_mac(Key, Data);
+hmac(sha384, Key, Data) -> crypto:sha384_mac(Key, Data);
+hmac(sha512, Key, Data) -> crypto:sha512_mac(Key, Data).
+-endif.
+
+-ifndef(HAVE_crypto__hmac_4).
+hmac(md5, Key, Data, 16) -> crypto:md5_mac(Key, Data);
+hmac(md5, Key, Data, 12) -> crypto:md5_mac_96(Key, Data);
+hmac(sha, Key, Data, Size) -> crypto:sha_mac(Key, Data, Size);
+hmac(sha224, Key, Data, Size) -> crypto:sha224_mac(Key, Data, Size);
+hmac(sha256, Key, Data, Size) -> crypto:sha256_mac(Key, Data, Size);
+hmac(sha384, Key, Data, Size) -> crypto:sha384_mac(Key, Data, Size);
+hmac(sha512, Key, Data, Size) -> crypto:sha512_mac(Key, Data, Size).
 -endif.
