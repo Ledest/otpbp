@@ -16,7 +16,7 @@ log2(X) -> math:log(X) / math:log(2).
 -endif.
 
 -ifndef(HAVE_math__ceil_1).
--ifndef(HAVE_erlang__ceil_1).
+-ifdef(HAVE_erlang__ceil_1).
 ceil(X) -> float(erlang:ceil(X)).
 -else.
 ceil(X) -> float(round(X + 0.5)).
@@ -24,7 +24,7 @@ ceil(X) -> float(round(X + 0.5)).
 -endif.
 
 -ifndef(HAVE_math__floor_1).
--ifndef(HAVE_erlang__floor_1).
+-ifdef(HAVE_erlang__floor_1).
 floor(X) -> float(erlang:floor(X)).
 -else.
 floor(X) -> float(round(X - 0.5)).
