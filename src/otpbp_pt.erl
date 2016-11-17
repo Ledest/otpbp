@@ -37,6 +37,7 @@
                               {{erlang, unique_integer, 1}, otpbp_erlang},
                               {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
                               {{application, get_env, 3}, otpbp_application},
+                              {{crypto, hmac, [3, 4]}, otpbp_crypto},
                               {{crypto, rand_bytes, 1}, {crypto, strong_rand_bytes}},
                               {{crypto, [sha224, sha256, sha384, sha512], 1}, otpbp_crypto},
                               {{crypto, [sha224_final, sha256_final, sha384_final, sha512_final], 1},
