@@ -15,13 +15,27 @@ module_status(Module, PathFiles) ->
         false -> not_loaded;
         {file, Loaded} when Loaded =:= preloaded; Loaded =:= [] -> loaded;
         {file, Loaded} when Loaded =:= cover_compiled; is_list(Loaded) ->
-            case code:where_is_file(PathFiles, atom_to_list(Module) ++ code:objfile_extension()) of
+            case where_is_file(PathFiles, atom_to_list(Module) ++ code:objfile_extension()) of
                 non_existing -> removed;
                 Path -> case Loaded =:= cover_compiled orelse module_changed_on_disk(Module, Path) of
                             true -> modified;
                             false -> loaded
                         end
             end
+    end.
+
+where_is_file([], _) -> non_existing;
+where_is_file([{D, Files}|T], File) -> where_is_file(T, File, D, Files);
+where_is_file([D|T], File) ->
+    case erl_prim_loader:list_dir(D) of
+        {ok, Files} -> where_is_file(T, File, D, Files);
+        _Error -> where_is_file(T, File)
+    end.
+
+where_is_file(T, File, D, Files) ->
+    case lists:member(File, Files) of
+        true -> filename:append(D, File);
+        _false -> where_is_file(T, File)
     end.
 
 module_changed_on_disk(Module, Path) ->
