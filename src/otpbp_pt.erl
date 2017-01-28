@@ -48,25 +48,8 @@
                               {{crypto, [sha224_mac, sha256_mac, sha384_mac, sha512_mac], 2}, otpbp_crypto},
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
-                              {{dict, is_empty, 1}, otpbp_dict},
-                              {{dict, take, 2}, otpbp_dict},
-                              {{edlin, current_chars, 1}, otpbp_edlin},
-                              {{edlin, start, 2}, otpbp_edlin},
-                              {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
-                              {{erl_scan, [category, column, line, location, symbol, text, continuation_location], 1},
-                               otpbp_erl_scan},
-                              {{epp, parse_file, 2}, otpbp_epp},
                               {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
-                              {{ets, take, 2}, otpbp_ets},
                               {{file, [list_dir_all, read_link_all], 1}, otpbp_file},
-                              {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
-                              {{gb_trees, [iterator_from, take, take_any], 2}, otpbp_gb_trees},
-                              {{gen_event, system_get_state, 1}, otpbp_gen_event},
-                              {{gen_event, system_replace_state, 2}, otpbp_gen_event},
-                              {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
-                              {{gen_fsm, system_replace_state, 2}, otpbp_gen_fsm},
-                              {{gen_server, system_get_state, 1}, otpbp_gen_server},
-                              {{gen_server, system_replace_state, 2}, otpbp_gen_server},
                               {{inet, ntoa, 1}, inet_parse},
                               {{inet, parse_address, 1}, {inet_parse, address}},
                               {{inet, parse_ipv4_address, 1}, {inet_parse, ipv4_address}},
@@ -75,6 +58,22 @@
                               {{inet, parse_ipv6strict_address, 1}, {inet_parse, ipv6strict_address}},
                               {{inet, parse_strict_address, 1}, {otpbp_inet_parse, strict_address}},
                               {{inet_parse, strict_address, 1}, otpbp_inet_parse},
+                              {{edlin, current_chars, 1}, otpbp_edlin},
+                              {{edlin, start, 2}, otpbp_edlin},
+                              {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
+                              {{erl_scan, [category, column, line, location, symbol, text, continuation_location], 1},
+                               otpbp_erl_scan},
+                              {{epp, parse_file, 2}, otpbp_epp},
+                              {{ets, take, 2}, otpbp_ets},
+                              {{dict, is_empty, 1}, otpbp_dict},
+                              {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
+                              {{gb_trees, iterator_from, 2}, otpbp_gb_trees},
+                              {{gen_event, system_get_state, 1}, otpbp_gen_event},
+                              {{gen_event, system_replace_state, 2}, otpbp_gen_event},
+                              {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
+                              {{gen_fsm, system_replace_state, 2}, otpbp_gen_fsm},
+                              {{gen_server, system_get_state, 1}, otpbp_gen_server},
+                              {{gen_server, system_replace_state, 2}, otpbp_gen_server},
                               {{io_lib, deep_latin1_char_list, 1}, {io_lib, deep_char_list}},
                               {{io_lib, latin1_char_list, 1}, {io_lib, char_list}},
                               {{io_lib, printable_latin1_list, 1}, {io_lib, printable_list}},
@@ -98,7 +97,6 @@
                               {{maps, update_with, [3, 4]}, otpbp_maps},
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
                               {{orddict, is_empty, 1}, otpbp_orddict},
-                              {{orddict, take, 2}, otpbp_orddict},
                               {{os, system_time, 1}, otpbp_os},
                               {{os, getenv, 2}, otpbp_os},
                               {{rand, [export_seed, normal], 0}, otpbp_rand},
@@ -222,7 +220,7 @@ transform_function(Tree, P) ->
                                         false -> {E, F};
                                         N -> {N, true}
                                     end
-                                end, false, Tree) of
+                                end, true, Tree) of
         {T, true} -> revert(T);
         _ -> Tree
     end.
@@ -283,20 +281,8 @@ application_transform_guard(Node) ->
 
 application_guard(Node, dict, size) ->
     [A] = application_arguments(Node),
-    O = application_operator(Node),
-    ML = module_qualifier_argument(O),
-    NL = module_qualifier_body(O),
-    copy_pos(Node,
-             erl_syntax:parentheses(copy_pos(ML,
-                                             infix_expr(copy_pos(ML,
-                                                                 match_expr(atom(ML, true),
-                                                                            copy_pos(ML,
-                                                                                     application(otpbp_erlang, is_map,
-                                                                                                 ML, ML,
-                                                                                                 [copy_pos(ML, A)])))),
-                                                        copy_pos(ML, erl_syntax:operator('andalso')),
-                                                        copy_pos(NL, application(erlang, element, NL, NL,
-                                                                                 [integer(A, 2), A]))))));
+    NL = module_qualifier_body(application_operator(Node)),
+    copy_pos(Node, application(erlang, element, NL, NL, [integer(A, 2), A]));
 application_guard(Node, otpbp_erlang, is_map) ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
