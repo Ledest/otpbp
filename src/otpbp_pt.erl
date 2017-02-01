@@ -213,14 +213,14 @@ get_imports(AF) -> gl(imports, AF).
 
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
-                                    case do_transform(case F andalso type(E) of
+                                    case do_transform(case type(E) of
                                                           conjunction -> conjunction;
                                                           _ -> P
                                                       end, E) of
                                         false -> {E, F};
                                         N -> {N, true}
                                     end
-                                end, true, Tree) of
+                                end, false, Tree) of
         {T, true} -> revert(T);
         _ -> Tree
     end.
