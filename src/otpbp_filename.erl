@@ -1,10 +1,10 @@
 -module(otpbp_filename).
 
--ifndef(HAVE_safe_relative_path_1).
+-ifndef(HAVE_filename__safe_relative_path_1).
 -export([safe_relative_path/1]).
 -endif.
 
--ifndef(HAVE_safe_relative_path_1).
+-ifndef(HAVE_filename__safe_relative_path_1).
 safe_relative_path(Path) ->
     case filename:pathtype(Path) of
         relative -> safe_relative_path(filename:split(Path), []);
