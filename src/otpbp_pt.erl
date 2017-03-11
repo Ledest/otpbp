@@ -281,16 +281,20 @@ application_transform_guard(Node) ->
 -compile([{inline, [application_transform_guard/1]}]).
 
 application_guard(Node, dict, size) ->
-    [A] = application_arguments(Node),
-    NL = module_qualifier_body(application_operator(Node)),
-    copy_pos(Node, application(erlang, element, NL, NL, [integer(A, 2), A]));
+    AL = [A] = application_arguments(Node),
+    O = application_operator(Node),
+    ML = module_qualifier_argument(O),
+    NL = module_qualifier_body(O),
+    copy_pos(Node,
+             infix_expr(copy_pos(ML, infix_expr(copy_pos(ML, check_dict(ML, O, A)),
+                                                copy_pos(ML, erl_syntax:operator('andalso')),
+                                                copy_pos(NL, application(erlang, element, NL, NL, [integer(A, 2)|AL])))),
+                        copy_pos(A, erl_syntax:operator('+')),
+                        copy_pos(A, integer(A, 0))));
 application_guard(Node, otpbp_erlang, is_map) ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
-    ML = module_qualifier_argument(O),
-    copy_pos(Node,
-             application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(module_qualifier_body(O), is_record))),
-                         [A, atom(A, dict), integer(A, tuple_size(dict:new()))]));
+    copy_pos(Node, check_dict(module_qualifier_argument(O), O, A));
 application_guard(Node, otpbp_erlang, F) when F =:= ceil; F =:= floor ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
@@ -303,6 +307,10 @@ application_guard(Node, otpbp_erlang, F) when F =:= ceil; F =:= floor ->
                                                                                          end)),
                                                         copy_pos(ML, erl_syntax:float(0.5))))]));
 application_guard(_, _, _) -> false.
+
+check_dict(L, O, A) ->
+    application(copy_pos(L, module_qualifier(atom(L, erlang), atom(module_qualifier_body(O), is_record))),
+                [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
 
 application_transform(#param{funs = L} = P, Node) ->
     AA = erl_syntax_lib:analyze_application(Node),
