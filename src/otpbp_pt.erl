@@ -295,18 +295,17 @@ application_guard(Node, otpbp_erlang, is_map) ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
     copy_pos(Node, check_dict(module_qualifier_argument(O), O, A));
-application_guard(Node, otpbp_erlang, F) when F =:= ceil; F =:= floor ->
+application_guard(Node, otpbp_erlang, ceil) -> application_guard_ceil_floor(Node, '+');
+application_guard(Node, otpbp_erlang, floor) -> application_guard_ceil_floor(Node, '-');
+application_guard(_, _, _) -> false.
+
+application_guard_ceil_floor(Node, Op) ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
     ML = module_qualifier_argument(O),
     copy_pos(Node, application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(module_qualifier_body(O), round))),
-                               [copy_pos(ML, infix_expr(copy_pos(ML, A),
-                                                        copy_pos(ML, erl_syntax:operator(if
-                                                                                             F =:= ceil -> '+';
-                                                                                             true -> '-'
-                                                                                         end)),
-                                                        copy_pos(ML, erl_syntax:float(0.5))))]));
-application_guard(_, _, _) -> false.
+                               [copy_pos(ML, infix_expr(copy_pos(ML, A), copy_pos(ML, erl_syntax:operator(Op)),
+                                                        copy_pos(ML, erl_syntax:float(0.5))))])).
 
 check_dict(L, O, A) ->
     application(copy_pos(L, module_qualifier(atom(L, erlang), atom(module_qualifier_body(O), is_record))),
