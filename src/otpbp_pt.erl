@@ -265,7 +265,7 @@ do_transform(conjunction, Tree) ->
         {T, true} -> T;
         _ -> Tree
     end;
-do_transform(P, Node) when is_record(P, param) ->
+do_transform(#param{} = P, Node) ->
     case type(Node) of
         application -> application_transform(P, Node);
         implicit_fun -> implicit_fun_transform(P, Node);
