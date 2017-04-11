@@ -66,6 +66,7 @@
                                otpbp_erl_scan},
                               {{epp, parse_file, 2}, otpbp_epp},
                               {{ets, take, 2}, otpbp_ets},
+                              {{ets, update_counter, 4}, otpbp_ets},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
                               {{gb_trees, iterator_from, 2}, otpbp_gb_trees},
@@ -103,7 +104,8 @@
                               {{rand, [export_seed, normal], 0}, otpbp_rand},
                               {{rand, [export_seed_s, normal_s], 1}, otpbp_rand},
                               {{rand, [seed, seed_s, uniform_s], [1, 2]}, otpbp_rand},
-                              {{rand, uniform, [0, 1]}, otpbp_rand}]).
+                              {{rand, uniform, [0, 1]}, otpbp_rand},
+                              {{ssl, connection_information, [1, 2]}, otpbp_ssl}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
 -ifndef(buggy__revert_implicit_fun).
