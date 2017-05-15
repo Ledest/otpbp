@@ -191,10 +191,11 @@ get_keys() -> proplists:get_keys(get()).
 -ifndef(HAVE_erlang__convert_time_unit_3).
 convert_time_unit(Time, FromUnit, ToUnit) when is_integer(Time) ->
     FU = integer_time_unit(FromUnit),
-    (Time * integer_time_unit(ToUnit) - if
-                                            Time < 0 -> FU - 1;
-                                            true -> 0
-                                        end) div FU.
+    TU = integer_time_unit(ToUnit) * Time,
+    if
+        Time < 0 -> TU - FU + 1;
+        true -> TU
+    end div FU.
 
 integer_time_unit(native) -> 1000000;
 integer_time_unit(nano_seconds) -> 1000000000;
