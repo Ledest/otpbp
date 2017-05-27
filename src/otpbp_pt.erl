@@ -108,7 +108,15 @@
                               {{rand, [export_seed_s, normal_s], 1}, otpbp_rand},
                               {{rand, [seed, seed_s, uniform_s], [1, 2]}, otpbp_rand},
                               {{rand, uniform, [0, 1]}, otpbp_rand},
-                              {{ssl, connection_information, [1, 2]}, otpbp_ssl}]).
+                              {{ssl, connection_information, [1, 2]}, otpbp_ssl},
+                              {{string, [casefold, chomp, is_empty, length, lowercase, next_codepoint,
+                                         next_grapheme, reverse, titlecase, to_graphemes, uppercase], 1}, otpbp_string},
+                              {{string, [lexemes, prefix], 2}, otpbp_string},
+                              {{string, nth_lexeme, 3}, otpbp_string},
+                              {{string, [equal, pad, take], [2, 3, 4]}, otpbp_string},
+                              {{string, [find, slice, split], [2, 3]}, otpbp_string},
+                              {{string, replace, [3, 4]}, otpbp_string},
+                              {{string, trim, [1, 2, 3]}, otpbp_string}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
 -ifndef(buggy__revert_implicit_fun).
