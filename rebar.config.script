@@ -141,7 +141,8 @@ Funs = [{binary_to_integer, 2},
         {os, getenv, 2},
         {rand, seed, 1},
         {ssl, connection_information, 1},
-        {ssl, connection_information, 2}],
+        {ssl, connection_information, 2},
+        {string, length, 1}],
 
 lists:keystore(erl_opts, 1, CONFIG,
                {erl_opts,
@@ -172,4 +173,9 @@ lists:keystore(erl_opts, 1, CONFIG,
                                                                                {M, F, A} -> [M, F, A];
                                                                                {F, A} -> [erlang, F, A]
                                                                            end)))}
-                          end, lists:filter(Check, BIFs ++ Funs))}).
+                          end, lists:filter(Check, BIFs ++ Funs))}) ++
+case code:which(unicode_util) of
+    non_existing -> [{pre_hooks, [{compile, "sh -c \"cd src/uc_spec; escript gen_unicode_mod.escript\""}]},
+                     {post_hooks, [{clean, "rm -f src/uc_spec/*.erl"}]}];
+    _ -> []
+end.
