@@ -6,6 +6,7 @@ deps/*
 *.state
 /ebin
 /doc
+/src/uc_spec/*.erl
 .project
 .kateproject
 .settings/
