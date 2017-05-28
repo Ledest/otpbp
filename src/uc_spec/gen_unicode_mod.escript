@@ -175,12 +175,25 @@ gen_header(Fd) ->
     ok.
 
 gen_static(Fd) ->
-    io:put_chars(Fd, "-spec lookup(char()) -> #{'canon':=[{byte(),char()}], 'ccc':=byte(), "
-                 "'compat':=[] | {atom(),[{byte(),char()}]}}.\n"),
+    io:put_chars(Fd, case erlang:system_info(otp_release) of
+                         "19" ->
+                             "-spec lookup(char()) -> #{'canon' := [{byte(),char()}], 'ccc' := byte(), "
+                                                       "'compat' := []|{atom(),[{byte(),char()}]}}.\n";
+                         _ ->
+                             "-spec lookup(char()) -> #{'canon' => [{byte(),char()}], "
+                                                       "'ccc' => byte(), 'compat' => []|{atom(),[{byte(),char()}]}}.\n"
+                     end),
     io:put_chars(Fd, "lookup(Codepoint) ->\n"
                  "    {CCC,Can,Comp} = unicode_table(Codepoint),\n"
                  "    #{ccc=>CCC, canon=>Can, compat=>Comp}.\n\n"),
-    io:put_chars(Fd, "-spec get_case(char()) -> #{'fold':=gc(), 'lower':=gc(), 'title':=gc(), 'upper':=gc()}.\n"),
+    io:put_chars(Fd, case erlang:system_info(otp_release) of
+                         "19" ->
+                             "-spec get_case(char()) -> "
+                             "#{'fold' := gc(), 'lower' := gc(), 'title' := gc(), 'upper' := gc()}.\n";
+                         _ ->
+                             "-spec get_case(char()) -> "
+                             "#{'fold' => gc(), 'lower' => gc(), 'title' => gc(), 'upper' => gc()}.\n"
+                     end),
     io:put_chars(Fd, "get_case(Codepoint) ->\n"
                  "    case case_table(Codepoint) of\n"
                  "        {U,L} -> #{upper=>U,lower=>L,title=>U,fold=>L};\n"
