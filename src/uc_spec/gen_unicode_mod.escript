@@ -180,8 +180,7 @@ gen_static(Fd) ->
                              "-spec lookup(char()) -> #{'canon' := [{byte(),char()}], 'ccc' := byte(), "
                                                        "'compat' := []|{atom(),[{byte(),char()}]}}.\n";
                          "R" ++ _ ->
-                             "-spec lookup(char()) -> dict('canon'|'ccc'|'compat',
-                                                           [{byte(),char()}]|byte()|[]|{atom(),[{byte(),char()}]}).\n";
+                             "-spec lookup(char()) -> dict().\n";
                          _ ->
                              "-spec lookup(char()) -> #{'canon' => [{byte(),char()}], "
                                                        "'ccc' => byte(), 'compat' => []|{atom(),[{byte(),char()}]}}.\n"
@@ -199,7 +198,7 @@ gen_static(Fd) ->
                              "-spec get_case(char()) -> "
                              "#{'fold' := gc(), 'lower' := gc(), 'title' := gc(), 'upper' := gc()}.\n";
                          "R" ++ _ ->
-                             "-spec get_case(char()) -> dict('fold'|'lower'|'title'|'upper', gc()).\n";
+                             "-spec get_case(char()) -> dict().\n";
                          _ ->
                              "-spec get_case(char()) -> "
                              "#{'fold' => gc(), 'lower' => gc(), 'title' => gc(), 'upper' => gc()}.\n"
