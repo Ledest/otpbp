@@ -756,13 +756,10 @@ def_cp([], CP) -> CP;
 def_cp(CP, _) -> CP.
 
 gen_unicode_table(Fd, Data) ->
-    FixCanon = fun(_, #cp{class=CCC, dec=Dec, comp=Comp}) ->
-                   maps:from_list([{ccc, CCC}, {canonical, decompose(Dec, Data)}, {compat, Comp}])
-               end,
+    FixCanon = fun(_, #cp{dec = Dec} = CP0) -> CP0#cp{dec = decompose(Dec, Data)} end,
     AofMaps0 = array:sparse_map(FixCanon, Data),
-    FixCompat = fun(_, D) ->
-                    Comp = maps:get(compat, D),
-                    {maps:get(ccc, D), decompose_compat(maps:get(canonical, D), Comp, AofMaps0), Comp}
+    FixCompat = fun(_, #cp{class = CCC, dec = Canon, comp = Comp}) ->
+                    {CCC, decompose_compat(Canon, Comp, AofMaps0), Comp}
                 end,
     AofMaps1 = array:sparse_map(FixCompat, AofMaps0),
 
@@ -795,11 +792,9 @@ decompose_compat([], _Data) -> [];
 decompose_compat([CP|CPs], Data) when is_integer(CP) ->
     case array:get(CP, Data) of
         undefined -> [{0, CP}];
-        D -> case [maps:get(K, D, undefined) || K <- [ccc, canonical, compat]] of
-                 [CCC, [], []] -> [{CCC, CP}];
-                 [_, [], {_, Dec}] -> decompose_compat(Dec, Data);
-                 [_, Dec, _] -> decompose_compat(Dec, Data)
-             end
+        #cp{class = CCC, dec = [], comp = []} -> [{CCC, CP}];
+        #cp{dec = [], comp = {_, Dec}} -> decompose_compat(Dec, Data);
+        #cp{dec = Dec} -> decompose_compat(Dec, Data)
     end ++ decompose_compat(CPs, Data);
 decompose_compat([{_,CP}|CPs], Data) ->
     decompose_compat([CP|CPs], Data).
