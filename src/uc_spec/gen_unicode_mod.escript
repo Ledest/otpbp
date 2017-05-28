@@ -179,26 +179,42 @@ gen_static(Fd) ->
                          "19" ->
                              "-spec lookup(char()) -> #{'canon' := [{byte(),char()}], 'ccc' := byte(), "
                                                        "'compat' := []|{atom(),[{byte(),char()}]}}.\n";
+                         "R" ++ _ ->
+                             "-spec lookup(char()) -> dict('canon'|'ccc'|'compat',
+                                                           [{byte(),char()}]|byte()|[]|{atom(),[{byte(),char()}]}).\n";
                          _ ->
                              "-spec lookup(char()) -> #{'canon' => [{byte(),char()}], "
                                                        "'ccc' => byte(), 'compat' => []|{atom(),[{byte(),char()}]}}.\n"
                      end),
     io:put_chars(Fd, "lookup(Codepoint) ->\n"
-                 "    {CCC,Can,Comp} = unicode_table(Codepoint),\n"
-                 "    #{ccc=>CCC, canon=>Can, compat=>Comp}.\n\n"),
+                 "    {CCC,Can,Comp} = unicode_table(Codepoint),\n"),
+    io:put_chars(Fd, case erlang:system_info(otp_release) of
+                         "R" ++ _ ->
+                             "    maps:from_list({ccc, CCC}, {canon, Can}, {compat, Comp}).\n\n";
+                         _ ->
+                             "    #{ccc=>CCC, canon=>Can, compat=>Comp}.\n\n"
+                     end),
     io:put_chars(Fd, case erlang:system_info(otp_release) of
                          "19" ->
                              "-spec get_case(char()) -> "
                              "#{'fold' := gc(), 'lower' := gc(), 'title' := gc(), 'upper' := gc()}.\n";
+                         "R" ++ _ ->
+                             "-spec get_case(char()) -> dict('fold'|'lower'|'title'|'upper', gc()).\n";
                          _ ->
                              "-spec get_case(char()) -> "
                              "#{'fold' => gc(), 'lower' => gc(), 'title' => gc(), 'upper' => gc()}.\n"
                      end),
     io:put_chars(Fd, "get_case(Codepoint) ->\n"
-                 "    case case_table(Codepoint) of\n"
-                 "        {U,L} -> #{upper=>U,lower=>L,title=>U,fold=>L};\n"
-                 "        {U,L,T,F} -> #{upper=>U,lower=>L,title=>T,fold=>F}\n"
-                 "    end.\n\n"),
+                 "    case case_table(Codepoint) of\n"),
+    io:put_chars(Fd, case erlang:system_info(otp_release) of
+                         "R" ++ _ ->
+                             "        {U,L} -> maps:from_list({upper, U}, {lower, L}, {title, U}, {fold, L});\n"
+                             "        {U,L,T,F} -> maps:from_list({upper, U}, {lower, L}, {title, T}, {fold, F})\n";
+                         _ ->
+                             "        {U,L} -> #{upper=>U,lower=>L,title=>U,fold=>L};\n"
+                             "        {U,L,T,F} -> #{upper=>U,lower=>L,title=>T,fold=>F}\n"
+                     end),
+    io:put_chars(Fd, "    end.\n\n"),
     io:put_chars(Fd, "spec_version() -> {9,0}.\n\n\n"),
     io:put_chars(Fd, "class(Codepoint) -> {CCC,_,_} = unicode_table(Codepoint),\n    CCC.\n\n"),
     io:put_chars(Fd, "-spec uppercase(unicode:chardata()) -> "
