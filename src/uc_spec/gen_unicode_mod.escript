@@ -58,7 +58,7 @@ main(_) ->
 
     %% Make module
     {ok, Out} = file:open(?MOD++".erl", [write]),
-    gen_file(Out, Data, ExclData, maps:from_list(Props)),
+    gen_file(Out, Data, ExclData, dict:from_list(Props)),
     ok = file:close(Out),
     ok.
 
@@ -464,7 +464,7 @@ gen_norm(Fd) ->
     ok.
 
 gen_ws(Fd, Props) ->
-    WS0 = maps:get(pattern_white_space, Props),
+    WS0 = dict:fetch(pattern_white_space, Props),
     WS = merge_ranges(WS0, split),
     io:put_chars(Fd, "%% Useful non-breakable whitespace chars\n"
                  "%% defined as Pattern White Space in Unicode Standard Annex #31\n"),
@@ -515,45 +515,45 @@ gen_gc(Fd, GBP) ->
 
     io:put_chars(Fd, "%% Handle control\n"),
     GenControl = fun(Range) -> io:format(Fd, "gc_1~s R0;\n", [gen_clause(Range)]) end,
-    CRs0 = merge_ranges(maps:get(cr, GBP) ++ maps:get(lf, GBP) ++ maps:get(control, GBP), false),
+    CRs0 = merge_ranges(dict:fetch(cr, GBP) ++ dict:fetch(lf, GBP) ++ dict:fetch(control, GBP), false),
     [R1,R2,R3|Crs] = CRs0,
     [GenControl(CP) || CP <- merge_ranges([R1,R2,R3], split), CP =/= {$\r, undefined}],
     %%GenControl(R1),GenControl(R2),GenControl(R3),
     io:format(Fd, "gc_1([CP|R]) when CP < 255 -> gc_extend(R,CP);\n", []),
     [GenControl(CP) || CP <- Crs],
     %% One clause per CP
-    %% CRs0 = merge_ranges(maps:get(cr, GBP) ++ maps:get(lf, GBP) ++ maps:get(control, GBP)),
+    %% CRs0 = merge_ranges(dict:fetch(cr, GBP) ++ dict:fetch(lf, GBP) ++ dict:fetch(control, GBP)),
     %% [GenControl(CP) || CP <- CRs0, CP =/= {$\r, undefined}],
 
     io:put_chars(Fd, "%% Handle ZWJ\n"),
     GenZWJ = fun(Range) -> io:format(Fd, "gc_1~s gc_zwj(R1, [CP]);\n", [gen_clause(Range)]) end,
-    [GenZWJ(CP) || CP <- merge_ranges(maps:get(zwj,GBP))],
+    [GenZWJ(CP) || CP <- merge_ranges(dict:fetch(zwj, GBP))],
 
     io:put_chars(Fd, "%% Handle prepend\n"),
     GenPrepend = fun(Range) -> io:format(Fd, "gc_1~s gc_prepend(R1, CP);\n", [gen_clause(Range)]) end,
-    [GenPrepend(CP) || CP <- merge_ranges(maps:get(prepend,GBP))],
+    [GenPrepend(CP) || CP <- merge_ranges(dict:fetch(prepend, GBP))],
 
     io:put_chars(Fd, "%% Handle Hangul L\n"),
     GenHangulL = fun(Range) -> io:format(Fd, "gc_1~s gc_h_L(R1,[CP]);\n", [gen_clause(Range)]) end,
-    [GenHangulL(CP) || CP <- merge_ranges(maps:get(l,GBP))],
+    [GenHangulL(CP) || CP <- merge_ranges(dict:fetch(l, GBP))],
     io:put_chars(Fd, "%% Handle Hangul V\n"),
     GenHangulV = fun(Range) -> io:format(Fd, "gc_1~s gc_h_V(R1,[CP]);\n", [gen_clause(Range)]) end,
-    [GenHangulV(CP) || CP <- merge_ranges(maps:get(v,GBP))],
+    [GenHangulV(CP) || CP <- merge_ranges(dict:fetch(v, GBP))],
     io:put_chars(Fd, "%% Handle Hangul T\n"),
     GenHangulT = fun(Range) -> io:format(Fd, "gc_1~s gc_h_T(R1,[CP]);\n", [gen_clause(Range)]) end,
-    [GenHangulT(CP) || CP <- merge_ranges(maps:get(t,GBP))],
+    [GenHangulT(CP) || CP <- merge_ranges(dict:fetch(t, GBP))],
     io:put_chars(Fd, "%% Handle Hangul LV and LVT special, since they are large\n"),
     io:put_chars(Fd, "gc_1([CP|_]=R0) when 44000 < CP, CP < 56000 -> gc_h_lv_lvt(R0, []);\n"),
 
     io:put_chars(Fd, "%% Handle Regional\n"),
     GenRegional = fun(Range) -> io:format(Fd, "gc_1~s gc_regional(R1,[CP]);\n", [gen_clause(Range)]) end,
-    [GenRegional(CP) || CP <- merge_ranges(maps:get(regional_indicator,GBP))],
+    [GenRegional(CP) || CP <- merge_ranges(dict:fetch(regional_indicator, GBP))],
     io:put_chars(Fd, "%% Handle E_Base\n"),
     GenEBase = fun(Range) -> io:format(Fd, "gc_1~s gc_e_cont(R1,[CP]);\n", [gen_clause(Range)]) end,
-    [GenEBase(CP) || CP <- merge_ranges(maps:get(e_base,GBP))],
+    [GenEBase(CP) || CP <- merge_ranges(dict:fetch(e_base, GBP))],
     io:put_chars(Fd, "%% Handle EBG\n"),
     GenEBG = fun(Range) -> io:format(Fd, "gc_1~s gc_e_cont(R1,[CP]);\n", [gen_clause(Range)]) end,
-    [GenEBG(CP) || CP <- merge_ranges(maps:get(e_base_gaz,GBP))],
+    [GenEBG(CP) || CP <- merge_ranges(dict:fetch(e_base_gaz, GBP))],
 
     io:put_chars(Fd, "gc_1([CP|R]) -> gc_extend(R, CP);\n"),
     io:put_chars(Fd, "gc_1([]) -> [];\n"),
@@ -577,7 +577,7 @@ gen_gc(Fd, GBP) ->
                  "    end.\n\n"),
 
     IsCtrl = fun(Range) -> io:format(Fd, "is_control~s true;\n", [gen_single_clause(Range)]) end,
-    [IsCtrl(CP) || CP <- merge_ranges(maps:get(cr, GBP) ++ maps:get(lf, GBP) ++ maps:get(control, GBP))],
+    [IsCtrl(CP) || CP <- merge_ranges(dict:fetch(cr, GBP) ++ dict:fetch(lf, GBP) ++ dict:fetch(control, GBP))],
     io:put_chars(Fd, "is_control(_) -> false.\n\n"),
 
     io:put_chars(Fd, "%% Handle Extend\n"
@@ -615,11 +615,11 @@ gen_gc(Fd, GBP) ->
                  "gc_extend({error,R}, T, Acc0) ->\n"
                  "    gc_extend([], T, Acc0) ++ [R].\n\n"
                  ),
-    [ZWJ] = maps:get(zwj, GBP),
+    [ZWJ] = dict:fetch(zwj, GBP),
     GenExtend = fun(R) when R =:= ZWJ -> io:format(Fd, "is_extend~s zwj;\n", [gen_single_clause(ZWJ)]);
                    (Range) -> io:format(Fd, "is_extend~s true;\n", [gen_single_clause(Range)])
                 end,
-    Extends = merge_ranges(maps:get(extend,GBP)++maps:get(spacingmark, GBP) ++ maps:get(zwj, GBP), split),
+    Extends = merge_ranges(dict:fetch(extend, GBP) ++ dict:fetch(spacingmark, GBP) ++ dict:fetch(zwj, GBP), split),
     [GenExtend(CP) || CP <- Extends],
     io:put_chars(Fd, "is_extend(_) -> false.\n\n"),
 
@@ -653,24 +653,24 @@ gen_gc(Fd, GBP) ->
                  "    end.\n\n"),
 
     GenEMod = fun(Range) -> io:format(Fd, "is_emodifier~s true;\n", [gen_single_clause(Range)]) end,
-    EMods = merge_ranges(maps:get(e_modifier, GBP), split),
+    EMods = merge_ranges(dict:fetch(e_modifier, GBP), split),
     [GenEMod(CP) || CP <- EMods],
     io:put_chars(Fd, "is_emodifier(_) -> false.\n\n"),
 
     io:put_chars(Fd, "gc_zwj(R0, Acc) ->\n    case cp(R0) of\n"),
     GenZWJGlue = fun(Range) -> io:format(Fd, "~8c~s gc_extend(R1, R0, [CP|Acc]);\n",
                                          [$\s,gen_case_clause(Range)]) end,
-    [GenZWJGlue(CP) || CP <- merge_ranges(maps:get(glue_after_zwj,GBP))],
+    [GenZWJGlue(CP) || CP <- merge_ranges(dict:fetch(glue_after_zwj, GBP))],
     GenZWJEBG = fun(Range) -> io:format(Fd, "~8c~s gc_e_cont(R1, [CP|Acc]);\n",
                                         [$\s,gen_case_clause(Range)]) end,
-    [GenZWJEBG(CP) || CP <- merge_ranges(maps:get(e_base_gaz,GBP))],
+    [GenZWJEBG(CP) || CP <- merge_ranges(dict:fetch(e_base_gaz, GBP))],
     io:put_chars(Fd,"        R1 -> gc_extend(R1, R0, Acc)\n"
                  "    end.\n\n"),
 
 
     %% --------------------
     io:put_chars(Fd, "%% Handle Regional\n"),
-    [{RLess,RLarge}] = merge_ranges(maps:get(regional_indicator,GBP)),
+    [{RLess,RLarge}] = merge_ranges(dict:fetch(regional_indicator, GBP)),
     io:put_chars(Fd,"gc_regional(R0, Acc) ->\n"
                  "    case cp(R0) of\n"),
     io:format(Fd,   "        [CP|R1] when ~w =< CP,CP =< ~w-> gc_extend(R1,[CP|Acc]);~n",[RLess, RLarge]),
@@ -682,38 +682,38 @@ gen_gc(Fd, GBP) ->
     io:put_chars(Fd, "gc_h_L(R0, Acc) ->\n    case cp(R0) of\n"),
     GenHangulL_1 = fun(Range) -> io:format(Fd, "~8c~s gc_h_L(R1,[CP|Acc]);\n",
                                            [$\s,gen_case_clause(Range)]) end,
-    [GenHangulL_1(CP) || CP <- merge_ranges(maps:get(l,GBP))],
+    [GenHangulL_1(CP) || CP <- merge_ranges(dict:fetch(l, GBP))],
     GenHangulL_2 = fun(Range) -> io:format(Fd, "~8c~s gc_h_V(R1,[CP|Acc]);\n",
                                            [$\s,gen_case_clause(Range)]) end,
-    [GenHangulL_2(CP) || CP <- merge_ranges(maps:get(v,GBP))],
+    [GenHangulL_2(CP) || CP <- merge_ranges(dict:fetch(v, GBP))],
     io:put_chars(Fd, "        R1 -> gc_h_lv_lvt(R1, Acc)\n    end.\n\n"),
 
     io:put_chars(Fd, "%% Handle Hangul V\n"),
     io:put_chars(Fd, "gc_h_V(R0, Acc) ->\n    case cp(R0) of\n"),
     GenHangulV_1 = fun(Range) -> io:format(Fd, "~8c~s gc_h_V(R1,[CP|Acc]);\n",
                                            [$\s,gen_case_clause(Range)]) end,
-    [GenHangulV_1(CP) || CP <- merge_ranges(maps:get(v,GBP))],
+    [GenHangulV_1(CP) || CP <- merge_ranges(dict:fetch(v, GBP))],
     GenHangulV_2 = fun(Range) -> io:format(Fd, "~8c~s gc_h_T(R1,[CP|Acc]);\n",
                                            [$\s,gen_case_clause(Range)]) end,
-    [GenHangulV_2(CP) || CP <- merge_ranges(maps:get(t,GBP))],
+    [GenHangulV_2(CP) || CP <- merge_ranges(dict:fetch(t, GBP))],
     io:put_chars(Fd, "        R1 -> gc_extend(R1, R0, Acc)\n    end.\n\n"),
 
     io:put_chars(Fd, "%% Handle Hangul T\n"),
     io:put_chars(Fd, "gc_h_T(R0, Acc) ->\n    case cp(R0) of\n"),
     GenHangulT_1 = fun(Range) -> io:format(Fd, "~8c~s gc_h_T(R1,[CP|Acc]);\n",
                                            [$\s,gen_case_clause(Range)]) end,
-    [GenHangulT_1(CP) || CP <- merge_ranges(maps:get(t,GBP))],
+    [GenHangulT_1(CP) || CP <- merge_ranges(dict:fetch(t, GBP))],
     io:put_chars(Fd, "        R1 -> gc_extend(R1, R0, Acc)\n    end.\n\n"),
 
     io:put_chars(Fd, "gc_h_lv_lvt({error,_}=Error, Acc) -> gc_extend(Error, [], Acc);\n"),
     io:put_chars(Fd, "%% Handle Hangul LV\n"),
     GenHangulLV = fun(Range) -> io:format(Fd, "gc_h_lv_lvt~s gc_h_V(R1,[CP|Acc]);\n",
                                           [gen_clause2(Range)]) end,
-    [GenHangulLV(CP) || CP <- merge_ranges(maps:get(lv,GBP))],
+    [GenHangulLV(CP) || CP <- merge_ranges(dict:fetch(lv, GBP))],
     io:put_chars(Fd, "%% Handle Hangul LVT\n"),
     GenHangulLVT = fun(Range) -> io:format(Fd, "gc_h_lv_lvt~s gc_h_T(R1,[CP|Acc]);\n",
                                            [gen_clause2(Range)]) end,
-    [GenHangulLVT(CP) || CP <- merge_ranges(maps:get(lvt,GBP))],
+    [GenHangulLVT(CP) || CP <- merge_ranges(dict:fetch(lvt, GBP))],
     io:put_chars(Fd, "gc_h_lv_lvt([CP|R], []) -> gc_extend(R, CP);\n"), %% From gc_1/1
     io:put_chars(Fd, "gc_h_lv_lvt(R, Acc) -> gc_extend(R, Acc).\n\n"),
     ok.
