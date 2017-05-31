@@ -49,6 +49,8 @@
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
                               {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
+                              {{error_logger, get_format_depth, 0}, otpbp_error_logger},
+                              {{error_logger, limit_term, 1}, otpbp_error_logger},
                               {{file, [list_dir_all, read_link_all], 1}, otpbp_file},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
                               {{inet, ntoa, 1}, inet_parse},
