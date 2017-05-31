@@ -28,6 +28,7 @@ limit([H|T] = L, D) ->
             D1 = D - 1,
             [limit(H, D1)|limit_tail(T, D1)]
     end;
+limit({}, _D) -> {};
 limit(T, D) when is_tuple(T) -> limit_tuple(T, D);
 limit(Term, D) when is_map(Term) -> limit_map(Term, D);
 limit(Term, D) when is_bitstring(Term) -> limit_bitstring(Term, D);
@@ -40,7 +41,6 @@ limit_tail([H|T], D) ->
     [limit(H, D1)|limit_tail(T, D1)];
 limit_tail(Other, D) -> limit(Other, D - 1).
 
-limit_tuple({}, _D) -> {};
 limit_tuple(T, 1) when is_tuple(T) -> '...';
 limit_tuple(T, D) when is_tuple(T) ->
     D1 = D - 1,
@@ -80,6 +80,7 @@ test_limit([H|T] = L, D) when is_integer(D) ->
             test_limit(H, D1),
             test_limit_tail(T, D1)
     end;
+test_limit({}, _D) -> ok;
 test_limit(T, D) when is_tuple(T) -> test_limit_tuple(T, D);
 test_limit(Term, D) when is_map(Term) -> test_limit_map(Term, D);
 test_limit(Term, D) when is_bitstring(Term) -> test_limit_bitstring(Term, D);
@@ -93,7 +94,6 @@ test_limit_tail([H|T], D) ->
     test_limit_tail(T, D1);
 test_limit_tail(Other, D) -> test_limit(Other, D - 1).
 
-test_limit_tuple({}, _D) -> ok;
 test_limit_tuple(T, D) when is_tuple(T) -> test_limit_tuple(T, 1, tuple_size(T), D).
 
 test_limit_tuple(_T, I, Sz, _D) when I > Sz -> ok;
