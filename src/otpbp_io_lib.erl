@@ -1,5 +1,7 @@
 -module(otpbp_io_lib).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_io_lib__limit_term_2).
 -export([limit_term/2]).
 -endif.
@@ -26,13 +28,8 @@ limit([H|T] = L, D) ->
             D1 = D - 1,
             [limit(H, D1)|limit_tail(T, D1)]
     end;
+limit(T, D) when is_tuple(T) -> limit_tuple(T, D);
 limit(Term, D) when is_map(Term) -> limit_map(Term, D);
-limit({}, _D) -> {};
-limit(T, 1) when is_tuple(T) -> '...';
-limit(T, D) when is_tuple(T) ->
-    D1 = D - 1,
-    [H|R] = tuple_to_list(T),
-    list_to_tuple([limit(H, D1)|limit_tail(R, D1)]);
 limit(Term, D) when is_bitstring(Term) -> limit_bitstring(Term, D);
 limit(Term, _D) -> Term.
 
@@ -43,6 +40,14 @@ limit_tail([H|T], D) ->
     [limit(H, D1)|limit_tail(T, D1)];
 limit_tail(Other, D) -> limit(Other, D - 1).
 
+limit_tuple({}, _D) -> {};
+limit_tuple(T, 1) when is_tuple(T) -> '...';
+limit_tuple(T, D) when is_tuple(T) ->
+    D1 = D - 1,
+    [H|R] = tuple_to_list(T),
+    list_to_tuple([limit(H, D1)|limit_tail(R, D1)]).
+
+-ifdef(HAVE_erlang__is_map_1).
 %% Cannot limit maps properly since there is no guarantee that
 %% maps:from_list() creates a map with the same internal ordering of
 %% the selected associations as in Map.
@@ -58,6 +63,10 @@ limit_map(Map, D) ->
 
 %% limit_map_assoc(K, V, D) ->
 %%     {limit(K, D-1), limit(V, D-1)}.
+-compile({inline, [limit_tuple/2]}).
+-else.
+limit_map(Map, D) -> limit_tuple(Map, D).
+-endif.
 
 limit_bitstring(B, _D) -> B. %% Keeps all printable binaries.
 
@@ -71,9 +80,8 @@ test_limit([H|T] = L, D) when is_integer(D) ->
             test_limit(H, D1),
             test_limit_tail(T, D1)
     end;
+test_limit(T, D) when is_tuple(T) -> test_limit_tuple(T, D);
 test_limit(Term, D) when is_map(Term) -> test_limit_map(Term, D);
-test_limit({}, _D) -> ok;
-test_limit(T, D) when is_tuple(T) -> test_limit_tuple(T, 1, tuple_size(T), D);
 test_limit(Term, D) when is_bitstring(Term) -> test_limit_bitstring(Term, D);
 test_limit(_Term, _D) -> ok.
 
@@ -85,6 +93,9 @@ test_limit_tail([H|T], D) ->
     test_limit_tail(T, D1);
 test_limit_tail(Other, D) -> test_limit(Other, D - 1).
 
+test_limit_tuple({}, _D) -> ok;
+test_limit_tuple(T, D) when is_tuple(T) -> test_limit_tuple(T, 1, tuple_size(T), D).
+
 test_limit_tuple(_T, I, Sz, _D) when I > Sz -> ok;
 test_limit_tuple(_, _, _, 1) -> throw(limit);
 test_limit_tuple(T, I, Sz, D) ->
@@ -92,6 +103,7 @@ test_limit_tuple(T, I, Sz, D) ->
     test_limit(element(I, T), D1),
     test_limit_tuple(T, I + 1, Sz, D1).
 
+-ifdef(HAVE_erlang__is_map_1).
 test_limit_map(_Map, _D) -> ok.
 %%     test_limit_map_body(erts_internal:maps_to_list(Map, D), D).
 
@@ -105,6 +117,10 @@ test_limit_map(_Map, _D) -> ok.
 %% test_limit_map_assoc(K, V, D) ->
 %%     test_limit(K, D-1),
 %%     test_limit(V, D-1).
+-compile({inline, [test_limit_tuple/2]}).
+-else.
+test_limit_map(Map, D) -> test_limit_tuple(Map, D).
+-endif.
 
 test_limit_bitstring(_, _) -> ok.
 -endif.
