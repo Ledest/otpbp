@@ -85,6 +85,7 @@
                               {{io_lib, [write_char_as_latin1, write_latin1_char], 1}, {io_lib, write_char}},
                               {{io_lib, write_latin1_string, 1}, {io_lib, write_string}},
                               {{io_lib, write_string_as_latin1, [1, 2]}, {io_lib, write_string}},
+                              {{io_lib, limit_term, 2}, otpbp_io_lib},
                               {{lists, droplast, 1}, otpbp_lists},
                               {{lists, filtermap, 2}, {lists, zf}},
                               {{lists, join, 2}, otpbp_lists},
