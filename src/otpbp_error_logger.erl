@@ -1,5 +1,7 @@
 -module(otpbp_error_logger).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifdef(HAVE_error_logger__get_format_depth_0).
 -import(error_logger, [get_format_depth/0]).
 -endif.
