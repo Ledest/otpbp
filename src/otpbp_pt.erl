@@ -39,6 +39,7 @@
                               {{application, get_env, 3}, otpbp_application},
                               {{code, modified_modules, 0}, otpbp_code},
                               {{code, module_status, 1}, otpbp_code},
+                              {{compile, env_compiler_options, 0}, otpbp_compile},
                               {{crypto, hmac, [3, 4]}, otpbp_crypto},
                               {{crypto, rand_bytes, 1}, {crypto, strong_rand_bytes}},
                               {{crypto, [sha224, sha256, sha384, sha512], 1}, otpbp_crypto},
