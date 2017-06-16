@@ -41,7 +41,7 @@ ensure_all_started(Application) -> application:ensure_all_started(Application, t
 -endif.
 -endif.
 
--ifndef(HAVE_application__ensure_started_2).
+-ifndef(HAVE_application__ensure_all_started_2).
 ensure_all_started(Application, Type) ->
     case ensure_all_started(Application, Type, []) of
         {ok, Started} -> {ok, lists:reverse(Started)};
