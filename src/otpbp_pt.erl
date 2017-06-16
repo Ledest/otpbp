@@ -165,19 +165,32 @@
 -ifndef(HAVE_maps__size_1).
 -ifdef(HAVE_dict__is_empty_1).
 -import(dict, [is_empty/1]).
--else.
--import(otpbp_dict, [is_empty/1]).
 -endif.
+-endif.
+
+-ifdef(HAVE_maps__without_2).
+-import(maps, [without/2]).
 -endif.
 
 -ifdef(HAVE_maps__size_1).
 -spec is_empty(M::map()) -> boolean().
 is_empty(M) -> maps:size(M) =:= 0.
+-compile([{inline, [is_empty/1]}]).
+-else.
+-ifndef(HAVE_dict__is_empty_1).
+-spec is_empty(M::dict()) -> boolean().
+is_empty(M) -> dict:size(M) =:= 0.
+-compile([{inline, [is_empty/1]}]).
+-endif.
 -endif.
 
 -ifndef(HAVE_maps__put_3).
 put(K, V, M) -> dict:store(K, V, M).
 -compile([{inline, [put/3]}]).
+-endif.
+
+-ifndef(HAVE_maps__without_2).
+without(Ks, M) -> dict:filter(fun(K, _) -> not lists:member(K, Ks) end, M).
 -endif.
 
 -record(param, {options = [] :: list(),
@@ -207,8 +220,8 @@ parse_transform(Forms, Options) ->
                                                                                 end
                                                                              end, IA, Fs)
                                                                   end,
-                                                                  foldl(fun remove/2, TL, get_no_auto_import(AF)),
-                                                                  get_imports(AF))},
+                                                                  without(get_no_auto_import(AF), TL),
+                                                                  proplists:get_value(imports, AF, []))},
                                               Forms),
                      NF
             catch
@@ -220,14 +233,10 @@ parse_transform(Forms, Options) ->
             end
     end.
 
-gl(K, L) -> proplists:get_value(K, L, []).
-
 get_no_auto_import(AF) ->
-    lists:flatten(proplists:get_all_values(no_auto_import, proplists:get_all_values(compile, gl(attributes, AF)))).
+    proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
 
-get_imports(AF) -> gl(imports, AF).
-
--compile([{inline, [get_imports/1, get_no_auto_import/1]}]).
+-compile([{inline, [get_no_auto_import/1]}]).
 
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
@@ -378,12 +387,6 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
 integer(P, I) when is_tuple(P), is_integer(I) -> copy_pos(P, erl_syntax:integer(I)).
-
--ifdef(HAVE_maps__remove_2).
-remove(K, M) -> maps:remove(K, M).
--else.
-remove(K, M) -> dict:erase(K, M).
--endif.
 
 replace_message(_F, _NM, _NN, _Node, #param{verbose = false}) -> ok;
 replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, NM, NN, File, Node).
