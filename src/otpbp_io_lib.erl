@@ -48,13 +48,11 @@ limit_tuple(T, D) when is_tuple(T) ->
     list_to_tuple([limit(H, D1)|limit_tail(R, D1)]).
 
 -ifdef(HAVE_erlang__is_map_1).
-%% Cannot limit maps properly since there is no guarantee that
-%% maps:from_list() creates a map with the same internal ordering of
-%% the selected associations as in Map.
-limit_map(Map, D) ->
-%    maps:from_list(erts_internal:maps_to_list(Map, D)).
-    maps:with(lists:sublist(tuple_to_list(erts_internal:map_to_tuple_keys(Map)), D), D).
-%%     maps:from_list(limit_map_body(erts_internal:maps_to_list(Map, D), D)).
+limit_map(Map, D) when map_size(Map) =< D -> Map;
+limit_map(Map, D) -> limit_map(maps:to_list(Map), D, #{}).
+
+limit_map(_, 0, A) -> A;
+limit_map([{K, V}|T], D, A) -> limit_map(T, D - 1, A#{K => V}).
 
 %% limit_map_body(_, 0) -> [{'...', '...'}];
 %% limit_map_body([], _) -> [];
