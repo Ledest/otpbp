@@ -1,36 +1,5 @@
 -module(otpbp_erlang).
 
--ifndef(HAVE_erlang__monotonic_time_0).
--ifndef(NEED_erlang__system_time_0).
--define(NEED_erlang__system_time_0, true).
--endif.
--endif.
--ifndef(HAVE_erlang__monotonic_time_1).
--ifndef(NEED_erlang__system_time_1).
--define(NEED_erlang__system_time_1, true).
--endif.
--endif.
--ifndef(HAVE_erlang__system_time_0).
--ifndef(NEED_erlang__system_time_0).
--define(NEED_erlang__system_time_0, true).
--endif.
--endif.
--ifndef(HAVE_erlang__system_time_1).
--ifndef(NEED_erlang__system_time_1).
--define(NEED_erlang__system_time_1, true).
--endif.
--endif.
--ifndef(HAVE_erlang__unique_integer_0).
--ifndef(NEED_erlang__system_time_0).
--define(NEED_erlang__system_time_0, true).
--endif.
--endif.
--ifndef(HAVE_erlang__unique_integer_1).
--ifndef(NEED_erlang__system_time_0).
--define(NEED_erlang__system_time_0, true).
--endif.
--endif.
-
 -ifndef(HAVE_erlang__binary_to_integer_1).
 -export([binary_to_integer/1]).
 -endif.
@@ -67,17 +36,26 @@
 -ifndef(HAVE_erlang__convert_time_unit_3).
 -export([convert_time_unit/3]).
 -endif.
--ifdef(NEED_erlang__system_time_0).
+-ifndef(HAVE_erlang__system_time_0).
 -export([system_time/0]).
 -endif.
--ifdef(NEED_erlang__system_time_1).
+-ifndef(HAVE_erlang__system_time_1).
 -export([system_time/1]).
+-endif.
+-ifndef(HAVE_erlang__monotonic_time_0).
+-export([monotonic_time/0]).
+-endif.
+-ifndef(HAVE_erlang__monotonic_time_1).
+-export([monotonic_time/1]).
 -endif.
 -ifndef(HAVE_erlang__time_offset_0).
 -export([time_offset/0]).
 -endif.
 -ifndef(HAVE_erlang__time_offset_1).
 -export([time_offset/1]).
+-endif.
+-ifndef(HAVE_erlang__unique_integer_0).
+-export([unique_integer/0]).
 -endif.
 -ifndef(HAVE_erlang__unique_integer_1).
 -export([unique_integer/1]).
@@ -206,21 +184,38 @@ integer_time_unit(I) when is_integer(I), I > 0 -> I;
 integer_time_unit(BadRes) -> erlang:error(badarg, [BadRes]).
 -endif.
 
--ifdef(NEED_erlang__system_time_0).
+-ifndef(HAVE_erlang__system_time_0).
 system_time() ->
+    {MS, S, US} = os:timestamp(),
+    (MS * 1000000 + S) * 1000000 + US.
+-endif.
+
+-ifndef(HAVE_erlang__system_time_1).
+system_time(nano_seconds) -> system_time() * 1000;
+system_time(micro_seconds) -> system_time();
+system_time(milli_seconds) -> system_time() div 1000;
+system_time(seconds) ->
+    {MS, S, US} = os:timestamp(),
+    MS * 1000000 + S;
+system_time(I) when is_integer(I), I > 0 -> system_time() * I div 1000000;
+system_time(BadArg) -> erlang:error(badarg, [BadArg]).
+-endif.
+
+-ifndef(HAVE_erlang__monotonic_time_0).
+monotonic_time() ->
     {MS, S, US} = erlang:now(),
     (MS * 1000000 + S) * 1000000 + US.
 -endif.
 
--ifdef(NEED_erlang__system_time_1).
-system_time(nano_seconds) -> system_time() div 1000000000;
-system_time(micro_seconds) -> system_time();
-system_time(milli_seconds) -> system_time() div 1000;
-system_time(seconds) ->
-    {MS, S, _} = erlang:now(),
+-ifndef(HAVE_erlang__monotonic_time_1).
+monotonic_time(nano_seconds) -> monotonic_time() * 1000;
+monotonic_time(micro_seconds) -> monotonic_time();
+monotonic_time(milli_seconds) -> monotonic_time() div 1000;
+monotonic_time(seconds) ->
+    {MS, S, US} = erlang:now(),
     MS * 1000000 + S;
-system_time(I) when is_integer(I), I > 0 -> system_time() * I div 1000000000;
-system_time(BadArg) -> erlang:error(badarg, [BadArg]).
+monotonic_time(I) when is_integer(I), I > 0 -> monotonic_time() * I div 1000000;
+monotonic_time(BadArg) -> erlang:error(badarg, [BadArg]).
 -endif.
 
 -ifndef(HAVE_erlang__time_offset_0).
@@ -236,8 +231,12 @@ time_offset(I) when is_integer(I), I > 0 -> 0;
 time_offset(BadArg) -> erlang:error(badarg, [BadArg]).
 -endif.
 
+-ifndef(HAVE_erlang__unique_integer_0).
+unique_integer() -> unique_integer([]).
+-endif.
+
 -ifndef(HAVE_erlang__unique_integer_1).
-unique_integer([]) -> system_time();
+unique_integer([]) -> monotonic_time();
 unique_integer([positive|O]) -> unique_integer(O);
 unique_integer([monotonic|O]) -> unique_integer(O);
 unique_integer(O) -> erlang:error(badarg, [O]).
