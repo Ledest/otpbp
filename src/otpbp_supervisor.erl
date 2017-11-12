@@ -1,5 +1,7 @@
 -module(otpbp_supervisor).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_supervisor__get_childspec_2).
 -export([get_childspec/2]).
 -endif.
