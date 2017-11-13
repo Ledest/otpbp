@@ -195,7 +195,7 @@ system_time(nano_seconds) -> system_time() * 1000;
 system_time(micro_seconds) -> system_time();
 system_time(milli_seconds) -> system_time() div 1000;
 system_time(seconds) ->
-    {MS, S, US} = os:timestamp(),
+    {MS, S, _} = os:timestamp(),
     MS * 1000000 + S;
 system_time(I) when is_integer(I), I > 0 -> system_time() * I div 1000000;
 system_time(BadArg) -> erlang:error(badarg, [BadArg]).
@@ -212,7 +212,7 @@ monotonic_time(nano_seconds) -> monotonic_time() * 1000;
 monotonic_time(micro_seconds) -> monotonic_time();
 monotonic_time(milli_seconds) -> monotonic_time() div 1000;
 monotonic_time(seconds) ->
-    {MS, S, US} = erlang:now(),
+    {MS, S, _} = erlang:now(),
     MS * 1000000 + S;
 monotonic_time(I) when is_integer(I), I > 0 -> monotonic_time() * I div 1000000;
 monotonic_time(BadArg) -> erlang:error(badarg, [BadArg]).
