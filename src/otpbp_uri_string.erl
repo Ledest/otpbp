@@ -90,7 +90,7 @@ parse_hier(?STRING_REST("//", Rest), URI) ->
                    maps:put(host, decode_host(remove_brackets(calculate_parsed_host_port(Rest, T))), URI1)
            end};
 parse_hier(?STRING_REST($/, Rest), URI) -> segment(Rest, URI);
-parse_hier(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_hier(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_hier(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_hier(?STRING_REST(Char, Rest), URI) ->  % path-rootless
     case is_pchar(Char) of
@@ -102,7 +102,7 @@ parse_hier(?STRING_REST(Char, Rest), URI) ->  % path-rootless
 parse_hier(?STRING_EMPTY, URI) -> {<<>>, URI}.
 
 parse_segment(?STRING_REST($/, Rest), URI) -> parse_segment(Rest, URI);  % segment
-parse_segment(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_segment(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_segment(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_segment(?STRING_REST(Char, Rest), URI) ->
     case is_pchar(Char) of
@@ -125,9 +125,9 @@ parse_query(?STRING_REST(Char, Rest), URI) ->
     end;
 parse_query(?STRING_EMPTY, URI) -> {?STRING_EMPTY, URI}.
 
-query(Rest, URI) ->
+'query'(Rest, URI) ->
     {T, URI1} = parse_query(Rest, URI),
-    {Rest, maps:put(query, decode_query(calculate_parsed_query_fragment(Rest, T)), URI1)}.
+    {Rest, maps:put('query', decode_query(calculate_parsed_query_fragment(Rest, T)), URI1)}.
 
 parse_fragment(?STRING_REST(Char, Rest), URI) ->
     case is_fragment(Char) of
@@ -185,7 +185,7 @@ parse_relative_part(?STRING_REST("//", Rest), URI) ->
 parse_relative_part(?STRING_REST($/, Rest), URI) -> segment0(Rest, URI);
 parse_relative_part(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
-    maps:put(query, decode_query(calculate_parsed_query_fragment(Rest, T)), maybe_add_path(URI1));
+    maps:put('query', decode_query(calculate_parsed_query_fragment(Rest, T)), maybe_add_path(URI1));
 parse_relative_part(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     maps:put(fragment, decode_fragment(calculate_parsed_query_fragment(Rest, T)), maybe_add_path(URI1));
@@ -224,7 +224,7 @@ decode_userinfo(Cs) -> check_utf8(decode(Cs, fun is_userinfo/1, <<>>)).
 
 parse_host(?STRING_REST($:, Rest), URI) -> port(Rest, URI);
 parse_host(?STRING_REST($/, Rest), URI) -> segment(Rest, URI);
-parse_host(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_host(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_host(?STRING_REST($[, Rest), URI) -> parse_ipv6_bin(Rest, [], URI);
 parse_host(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_host(?STRING_REST(Char, Rest), URI) ->
@@ -256,7 +256,7 @@ decode_query(Cs) -> check_utf8(decode(Cs, fun is_query/1, <<>>)).
 get_parsed_binary(Input, Unparsed) -> binary:part(Input, 0, byte_size(Input) - byte_size_exl_head(Unparsed)).
 
 parse_segment_nz_nc(?STRING_REST($/, Rest), URI) -> parse_segment(Rest, URI);  % segment
-parse_segment_nz_nc(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_segment_nz_nc(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_segment_nz_nc(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_segment_nz_nc(?STRING_REST(Char, Rest), URI) ->
     case is_segment_nz_nc(Char) of
@@ -267,7 +267,7 @@ parse_segment_nz_nc(?STRING_EMPTY, URI) ->
     {?STRING_EMPTY, URI}.
 
 parse_port(?STRING_REST($/, Rest), URI) -> segment(Rest, URI);
-parse_port(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_port(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_port(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_port(?STRING_REST(Char, Rest), URI) ->
     case is_digit(Char) of
@@ -306,7 +306,7 @@ validate_ipv6_address(Addr) ->
 
 parse_ipv6_bin_end(?STRING_REST($:, Rest), URI) -> port(Rest, URI);
 parse_ipv6_bin_end(?STRING_REST($/, Rest), URI) -> segment(Rest, URI);
-parse_ipv6_bin_end(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_ipv6_bin_end(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_ipv6_bin_end(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_ipv6_bin_end(?STRING_REST(Char, Rest), URI) ->
     case is_ipv6(Char) of
@@ -323,7 +323,7 @@ parse_ipv4_bin(?STRING_REST($/, Rest), Acc, URI) ->
     segment(Rest, URI);
 parse_ipv4_bin(?STRING_REST($?, Rest), Acc, URI) ->
     _ = validate_ipv4_address(lists:reverse(Acc)),
-    query(Rest, URI);
+    'query'(Rest, URI);
 parse_ipv4_bin(?STRING_REST($#, Rest), Acc, URI) ->
     _ = validate_ipv4_address(lists:reverse(Acc)),
     fragment(Rest, URI);
@@ -344,7 +344,7 @@ validate_ipv4_address(Addr) ->
 
 parse_reg_name(?STRING_REST($:, Rest), URI) -> port(Rest, URI);
 parse_reg_name(?STRING_REST($/, Rest), URI) -> segment(Rest, URI);
-parse_reg_name(?STRING_REST($?, Rest), URI) -> query(Rest, URI);
+parse_reg_name(?STRING_REST($?, Rest), URI) -> 'query'(Rest, URI);
 parse_reg_name(?STRING_REST($#, Rest), URI) -> fragment(Rest, URI);
 parse_reg_name(?STRING_REST(Char, Rest), URI) ->
     case is_reg_name(Char) of
