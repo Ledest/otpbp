@@ -118,7 +118,8 @@
                               {{string, [find, slice, split], [2, 3]}, otpbp_string},
                               {{string, replace, [3, 4]}, otpbp_string},
                               {{string, trim, [1, 2, 3]}, otpbp_string},
-                              {{supervisor, get_childspec, 2}, otpbp_supervisor}]).
+                              {{supervisor, get_childspec, 2}, otpbp_supervisor},
+                              {{uri_string, [is_host, is_path], 2}, otpbp_uri_string}]).
 
 -ifdef(buggy__revert_implicit_fun_1a).
 -ifndef(buggy__revert_implicit_fun).
