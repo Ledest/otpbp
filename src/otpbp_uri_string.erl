@@ -40,7 +40,7 @@
 
 parse(URIString) when is_binary(URIString) ->
     try
-        parse_uri_reference(URIString, #{})
+        parse_uri_reference(URIString, maps:new())
     catch
         throw:{error, Atom, RestData} -> {error, Atom, RestData}
     end;
