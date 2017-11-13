@@ -33,21 +33,23 @@
 -define(STRING_EMPTY, <<>>).
 -define(STRING_REST(MatchStr, Rest), <<MatchStr/utf8, (Rest)/binary>>).
 -ifdef(HAVE_erlang__is_map_1).
+-define(map(), #{}).
 -define(map(K, V), #{K => V}).
 -else.
+-define(map(), maps:new()).
 -define(map(K, V), maps:from_list([{K, V}])).
 -endif.
 
 parse(URIString) when is_binary(URIString) ->
     try
-        parse_uri_reference(URIString, maps:new())
+        parse_uri_reference(URIString, ?map())
     catch
         throw:{error, Atom, RestData} -> {error, Atom, RestData}
     end;
 parse(URIString) when is_list(URIString) ->
     Binary = unicode:characters_to_binary(URIString),
     try
-        convert_mapfields_to_list(parse_uri_reference(Binary, #{}))
+        convert_mapfields_to_list(parse_uri_reference(Binary, ?map()))
     catch
         throw:{error, Atom, RestData} -> {error, Atom, RestData}
     end.
