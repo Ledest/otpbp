@@ -283,7 +283,7 @@ port(Rest, URI) ->
 get_port(<<>>) -> undefined;
 get_port(B) ->
     try
-        binary_to_integer(B)
+        erlang:binary_to_integer(B)
     catch
         error:badarg -> throw({error, invalid_uri, B})
     end.
