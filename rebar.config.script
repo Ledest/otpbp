@@ -188,6 +188,6 @@ lists:keystore(erl_opts, 1, CONFIG,
                           end, lists:filter(Check, BIFs ++ Funs))}) ++
 case string:to_integer(erlang:system_info(otp_release)) of
     {R, _} when is_integer(R), R >= 20 -> [];
-    _ -> [{pre_hooks, [{compile, "sh -c \"cd src/uc_spec; escript gen_unicode_mod.escript\""}]},
+    _ -> [{pre_hooks, [{compile, "make -s -C src/uc_spec unicode_util.erl"}]},
           {post_hooks, [{clean, "rm -f src/uc_spec/*.erl"}]}]
 end.
