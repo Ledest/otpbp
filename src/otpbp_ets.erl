@@ -17,7 +17,7 @@ update_counter(Tab, Key, Incr, Default) when is_tuple(Default) ->
 -ifndef(HAVE_ets__take_2).
 take(Tab, Key) ->
     case ets:lookup(Tab, Key) of
-        [] -> false;
+        [] -> [];
         Objects ->
             ets:delete(Tab, Key),
             Objects
