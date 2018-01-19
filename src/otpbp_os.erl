@@ -34,14 +34,13 @@ getenv(VarName, DefaultValue) ->
 -endif.
 
 -ifndef(HAVE_os__cmd_2).
-cmd(Cmd0, Opts) ->
-    Cmd = if
-             is_atom(Cmd0) -> atom_to_list(Cmd0);
-             true ->
-                 validate(Cmd0),
-                 Cmd0
-          end,
-    {SpawnCmd, SpawnOpts, SpawnInput, Eot} = mk_cmd(Cmd),
+cmd(Cmd, Opts) ->
+    {SpawnCmd, SpawnOpts, SpawnInput, Eot} = mk_cmd(if
+                                                        is_atom(Cmd) -> atom_to_list(Cmd);
+                                                        true ->
+                                                            validate(Cmd),
+                                                            Cmd
+                                                    end),
     Port = open_port({spawn, SpawnCmd}, [binary, stderr_to_stdout, stream, in, hide|SpawnOpts]),
     MonRef = erlang:monitor(port, Port),
     true = port_command(Port, SpawnInput),
