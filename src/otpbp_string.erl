@@ -325,10 +325,12 @@ casefold(CD) when is_binary(CD) ->
 %% Return the remaining string with prefix removed or else nomatch
 -spec prefix(String::unicode:chardata(), Prefix::unicode:chardata()) ->
                     'nomatch' | unicode:chardata().
-prefix(Str, []) -> Str;
 prefix(Str, Prefix0) ->
-    Prefix = unicode:characters_to_list(Prefix0),
-    case prefix_1(Str, Prefix) of
+    Result = case unicode:characters_to_list(Prefix0) of
+                 [] -> Str;
+                 Prefix -> prefix_1(Str, Prefix)
+             end,
+    case Result of
         [] when is_binary(Str) -> <<>>;
         Res -> Res
     end.
