@@ -98,7 +98,7 @@ float_to_binary(Float) -> list_to_binary(float_to_list(Float)).
 
 -ifndef(HAVE_erlang__float_to_binary_2).
 -ifdef(HAVE_erlang__float_to_binary_1).
-float_to_binary(Float, []) -> erlang:float_to_binary(Float);
+float_to_binary(Float, []) -> float_to_binary(Float);
 float_to_binary(Float, Options) -> list_to_binary(float_to_list(Float, Options)).
 -ifndef(NEED_erlang__float_to_list_2).
 -define(NEED_erlang__float_to_list_2, true).
@@ -115,7 +115,7 @@ float_to_binary(Float, Options) -> list_to_binary(float_to_list(Float, Options))
 -endif.
 
 -ifdef(NEED_erlang__float_to_list_2).
-float_to_list(Float, []) -> erlang:float_to_list(Float);
+float_to_list(Float, []) -> float_to_list(Float);
 float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
     case lists:foldl(fun(compact, {Format, Dec, _}) -> {Format, Dec, true};
                         ({decimals, D}, {_, _, Compact}) when is_integer(D), D >= 0, D =< 253 -> {decimals, D, Compact};
@@ -135,7 +135,7 @@ float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
                 C -> string:strip(S, right, $0);
                 true -> S
             end;
-        {none, _, _} -> erlang:float_to_list(Float)
+        {none, _, _} -> float_to_list(Float)
     end;
 float_to_list(Float, O) -> error(badarg, [Float, O]).
 -endif.
@@ -181,7 +181,7 @@ integer_time_unit(micro_seconds) -> 1000000;
 integer_time_unit(milli_seconds) -> 1000;
 integer_time_unit(seconds) -> 1;
 integer_time_unit(I) when is_integer(I), I > 0 -> I;
-integer_time_unit(BadRes) -> erlang:error(badarg, [BadRes]).
+integer_time_unit(BadRes) -> error(badarg, [BadRes]).
 -endif.
 
 -ifndef(HAVE_erlang__system_time_0).
@@ -198,12 +198,12 @@ system_time(seconds) ->
     {MS, S, _} = os:timestamp(),
     MS * 1000000 + S;
 system_time(I) when is_integer(I), I > 0 -> system_time() * I div 1000000;
-system_time(BadArg) -> erlang:error(badarg, [BadArg]).
+system_time(BadArg) -> error(badarg, [BadArg]).
 -endif.
 
 -ifndef(HAVE_erlang__monotonic_time_0).
 monotonic_time() ->
-    {MS, S, US} = erlang:now(),
+    {MS, S, US} = now(),
     (MS * 1000000 + S) * 1000000 + US.
 -endif.
 
@@ -212,10 +212,10 @@ monotonic_time(nano_seconds) -> monotonic_time() * 1000;
 monotonic_time(micro_seconds) -> monotonic_time();
 monotonic_time(milli_seconds) -> monotonic_time() div 1000;
 monotonic_time(seconds) ->
-    {MS, S, _} = erlang:now(),
+    {MS, S, _} = now(),
     MS * 1000000 + S;
 monotonic_time(I) when is_integer(I), I > 0 -> monotonic_time() * I div 1000000;
-monotonic_time(BadArg) -> erlang:error(badarg, [BadArg]).
+monotonic_time(BadArg) -> error(badarg, [BadArg]).
 -endif.
 
 -ifndef(HAVE_erlang__time_offset_0).
@@ -228,7 +228,7 @@ time_offset(micro_seconds) -> 0;
 time_offset(milli_seconds) -> 0;
 time_offset(seconds) -> 0;
 time_offset(I) when is_integer(I), I > 0 -> 0;
-time_offset(BadArg) -> erlang:error(badarg, [BadArg]).
+time_offset(BadArg) -> error(badarg, [BadArg]).
 -endif.
 
 -ifndef(HAVE_erlang__unique_integer_0).
@@ -239,7 +239,7 @@ unique_integer() -> unique_integer([]).
 unique_integer([]) -> monotonic_time();
 unique_integer([positive|O]) -> unique_integer(O);
 unique_integer([monotonic|O]) -> unique_integer(O);
-unique_integer(O) -> erlang:error(badarg, [O]).
+unique_integer(O) -> error(badarg, [O]).
 -endif.
 
 -ifndef(HAVE_erlang__is_map_1).
@@ -248,16 +248,16 @@ is_map(Map) -> is_record(Map, dict, tuple_size(dict:new())).
 
 -ifndef(HAVE_erlang__ceil_1).
 -ifdef(HAVE_math__ceil_1).
-ceil(X) -> erlang:round(math:ceil(X)).
+ceil(X) -> round(math:ceil(X)).
 -else.
-ceil(X) -> erlang:round(X + 0.5).
+ceil(X) -> round(X + 0.5).
 -endif.
 -endif.
 
 -ifndef(HAVE_erlang__floor_1).
 -ifdef(HAVE_math__floor_1).
-floor(X) -> erlang:round(math:floor(X)).
+floor(X) -> round(math:floor(X)).
 -else.
-floor(X) -> erlang:round(X - 0.5).
+floor(X) -> round(X - 0.5).
 -endif.
 -endif.
