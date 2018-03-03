@@ -7,7 +7,7 @@
 -ifndef(HAVE_error_handler__raise_undef_exception_3).
 raise_undef_exception(Module, Func, Args) ->
     try
-        erlang:error(undef)
+        error(undef)
     catch
         error:undef -> erlang:raise(error, undef, [{Module, Func, Args, []}|tl(erlang:get_stacktrace())])
     end.
