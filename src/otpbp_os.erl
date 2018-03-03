@@ -42,7 +42,7 @@ cmd(Cmd, Opts) ->
                                                             Cmd
                                                     end),
     Port = open_port({spawn, SpawnCmd}, [binary, stderr_to_stdout, stream, in, hide|SpawnOpts]),
-    MonRef = erlang:monitor(port, Port),
+    MonRef = monitor(port, Port),
     true = port_command(Port, SpawnInput),
     Bytes = get_data(Port, MonRef, Eot, [], 0, maps:get(max_size, Opts, infinity)),
     demonitor(MonRef, [flush]),
