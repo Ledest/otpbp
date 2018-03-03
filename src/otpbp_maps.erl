@@ -86,11 +86,11 @@ update_with(Key, Fun, Init, Map) when is_function(Fun, 1), is_map(Map) ->
         error -> maps:put(Key, Init, Map)
     end;
 update_with(Key, Fun, Init, Map) ->
-     erlang:error(if
-                      is_map(Map) -> badarg;
-                      true -> {badmap, Map}
-                 end,
-                 [Key, Fun, Init, Map]).
+     error(if
+               is_map(Map) -> badarg;
+               true -> {badmap, Map}
+           end,
+           [Key, Fun, Init, Map]).
 -else.
 update_with(Key, Fun, Init, Map) -> dict:update(Key, Fun, Init, Map).
 -endif.
@@ -101,14 +101,14 @@ update_with(Key, Fun, Init, Map) -> dict:update(Key, Fun, Init, Map).
 update_with(Key, Fun, Map) when is_function(Fun, 1), is_map(Map) ->
     case maps:find(Key, Map) of
         {ok, Val} -> maps:update(Key, Fun(Val), Map);
-        error -> erlang:error({badkey, Key}, [Key, Fun, Map])
+        error -> error({badkey, Key}, [Key, Fun, Map])
     end;
 update_with(Key, Fun, Map) ->
-     erlang:error(if
-                      is_map(Map) -> badarg;
-                      true -> {badmap, Map}
-                 end,
-                 [Key, Fun, Map]).
+     error(if
+               is_map(Map) -> badarg;
+               true -> {badmap, Map}
+           end,
+           [Key, Fun, Map]).
 -else.
 update_with(Key, Fun, Map) -> dict:update(Key, Fun, Map).
 -endif.
@@ -120,5 +120,5 @@ take(Key, Map) when is_map(Map) ->
         {ok, Val} -> {Val, maps:remove(Key, Map)};
         error -> error
     end;
-take(Key, Map) -> erlang:error({badmap, Map}, [Key, Map]).
+take(Key, Map) -> error({badmap, Map}, [Key, Map]).
 -endif.
