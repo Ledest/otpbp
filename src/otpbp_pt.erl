@@ -51,6 +51,7 @@
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
                               {{file, [list_dir_all, read_link_all], 1}, otpbp_file},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
+                              {{inet, ipv4_mapped_ipv6_address, 1}, otpbp_inet},
                               {{inet, ntoa, 1}, inet_parse},
                               {{inet, parse_address, 1}, {inet_parse, address}},
                               {{inet, parse_ipv4_address, 1}, {inet_parse, ipv4_address}},
