@@ -40,6 +40,10 @@
 -define(map(K, V), maps:from_list([{K, V}])).
 -endif.
 
+-ifndef(HAVE_erlang__binary_to_integer_1).
+-import(otpbp_erlang, [binary_to_integer/1]).
+-endif.
+
 parse(URIString) when is_binary(URIString) ->
     try
         parse_uri_reference(URIString, ?map())
