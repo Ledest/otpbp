@@ -1,4 +1,4 @@
-%%% Copyright 2015 Oleksandr Chumachenko <ledest@gmail.com>
+%%% Copyright 2015-2018 Oleksandr Chumachenko <ledest@gmail.com>
 %%%
 %%% This file is part of OTPBP.
 %%%
