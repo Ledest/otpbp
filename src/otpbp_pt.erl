@@ -89,7 +89,7 @@
                               {{io_lib, limit_term, 2}, otpbp_io_lib},
                               {{lists, droplast, 1}, otpbp_lists},
                               {{lists, filtermap, 2}, {lists, zf}},
-                              {{lists, join, 2}, otpbp_lists},
+                              {{lists, [join, search], 2}, otpbp_lists},
                               {{maps, new, 0}, dict},
                               {{maps, keys, 1}, {dict, fetch_keys}},
                               {{maps, [from_list, is_key, size, to_list], 1}, dict},
