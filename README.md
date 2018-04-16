@@ -3,6 +3,11 @@ otpbp: Parse transformer for use new OTP functions in old Erlang/OTP releases (R
 
 [![Build Status](https://secure.travis-ci.org/Ledest/otpbp.png)](http://travis-ci.org/Ledest/otpbp)
 
+**For what you need this parse transformer?**
+
+Example: cowboy released new version for erlang 22, but your project supports only erlang 16.
+You can convert new cowboy release to erlang 16. Cool, isn't in?
+
 ### Download repo
 ```
 git clone git://github.com/Ledest/otpbp.git
@@ -52,3 +57,4 @@ Open otpbp folder and compile project
 ```sh
 $ rebar compile
 ```
+
