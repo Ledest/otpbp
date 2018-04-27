@@ -34,6 +34,7 @@
                               {{erlang, timestamp, 0}, os},
                               {{application, [ensure_started, ensure_all_started], [1, 2]}, otpbp_application},
                               {{application, get_env, 3}, otpbp_application},
+                              {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2}, otpbp_calendar},
                               {{code, modified_modules, 0}, otpbp_code},
                               {{code, module_status, 1}, otpbp_code},
                               {{compile, env_compiler_options, 0}, otpbp_compile},
