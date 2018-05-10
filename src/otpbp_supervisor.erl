@@ -25,6 +25,6 @@ get_childspec(SupRef, Id)
     catch
         exit:{noproc, {sys, get_state, _}} ->
             exit({noproc, {gen_server, call, [SupRef, {get_childspec, Id}, infinity]}});
-        C:R -> C(R)
+        C:R -> erlang:C(R, [SupRef, Id])
     end.
 -endif.
