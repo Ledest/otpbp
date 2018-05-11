@@ -194,7 +194,7 @@ put(K, V, M) -> dict:store(K, V, M).
 -endif.
 
 -ifndef(HAVE_maps__without_2).
-without(Ks, M) -> dict:filter(fun(K, _) -> not lists:member(K, Ks) end, M).
+without(Ks, M) -> lists:foldl(fun(K, _, D) -> dict:erase(K, D) end, M, Ks).
 -endif.
 
 -record(param, {options = [] :: list(),
@@ -203,17 +203,12 @@ without(Ks, M) -> dict:filter(fun(K, _) -> not lists:member(K, Ks) end, M).
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
-    case is_empty(TL = transform_list()) of
+    TL = transform_list(),
+    case is_empty(TL) of
         true -> Forms;
         _ -> try erl_syntax_lib:analyze_forms(Forms) of
                  AF ->
-                     {NF, _} = lists:mapfoldl(fun(Tree, P) ->
-                                                  case type(Tree) of
-                                                      function -> {transform_function(Tree, P), P};
-                                                      attribute -> {Tree, transform_attribute(Tree, P)};
-                                                      _ -> {Tree, P}
-                                                  end
-                                              end,
+                     {NF, _} = lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, type(Tree)) end,
                                               #param{options = Options,
                                                      verbose = proplists:get_bool(verbose, Options),
                                                      funs = foldl(fun({M, Fs}, IA) ->
@@ -240,7 +235,11 @@ parse_transform(Forms, Options) ->
 get_no_auto_import(AF) ->
     proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
 
--compile([{inline, [get_no_auto_import/1]}]).
+-compile([{inline, [get_no_auto_import/1, transform/3]}]).
+
+transform(Tree, P, function) -> {transform_function(Tree, P), P};
+transform(Tree, P, attribute) -> {Tree, transform_attribute(Tree, P)};
+transform(Tree, P, _) -> {Tree, P}.
 
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
@@ -275,7 +274,12 @@ add_func(FA, MF, D) ->
         {_, _} -> store_func({erlang, FA}, MF, store_func(FA, MF, D))
     end.
 
-check_func({M, F, A}) -> erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true;
+check_func({M, F, A}) ->
+    erlang:is_builtin(M, F, A) orelse try M:module_info(exports) of
+                                          Exports -> lists:member({F, A}, Exports)
+                                      catch
+                                          _:_ -> false
+                                      end;
 check_func({F, A}) -> check_func({erlang, F, A}).
 
 store_func(F, {_, _} = MF, D) -> put(F, MF, D);
@@ -370,14 +374,10 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                  error -> false;
                  {ok, {M, N}} ->
                      Q = implicit_fun_name(Node),
-                     case type(Q) of
-                         arity_qualifier ->
-                             AQ = Q,
-                             MP = arity_qualifier_body(Q);
-                         module_qualifier ->
-                             AQ = module_qualifier_body(Q),
-                             MP = module_qualifier_argument(Q)
-                     end,
+                     {AQ, MP} = case type(Q) of
+                                    arity_qualifier -> {Q, arity_qualifier_body(Q)};
+                                    module_qualifier -> {module_qualifier_body(Q), module_qualifier_argument(Q)}
+                                end,
                      replace_message(F, M, N, Node, P),
                      copy_pos(Node,
                               implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N), arity_qualifier_argument(AQ)))
