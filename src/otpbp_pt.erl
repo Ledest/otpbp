@@ -194,7 +194,7 @@ put(K, V, M) -> dict:store(K, V, M).
 -endif.
 
 -ifndef(HAVE_maps__without_2).
-without(Ks, M) -> lists:foldl(fun(K, _, D) -> dict:erase(K, D) end, M, Ks).
+without(Ks, M) -> lists:foldl(fun dict:erase/2, M, Ks).
 -endif.
 
 -record(param, {options = [] :: list(),
