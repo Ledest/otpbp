@@ -25,6 +25,8 @@
                               {{get_keys, 0}, otpbp_erlang},
                               {{float_to_list, 2}, otpbp_erlang},
                               {{is_map, 1}, otpbp_erlang},
+                              {{is_map_key, 2}, {maps, is_key}},
+                              {{map_get, 2}, {maps, get}},
                               {{map_size, 1}, {dict, size}},
                               {{[ceil, floor], 1}, otpbp_erlang},
                               {{erlang, delete_element, 2}, otpbp_erlang},
