@@ -215,6 +215,8 @@ without(Ks, M) -> lists:foldl(fun dict:erase/2, M, Ks).
 
 -record(param, {options = [] :: list(),
                 verbose = false :: boolean(),
+                otp_release = otp_release() :: non_neg_integer(),
+                erts_version = erts_version() :: [non_neg_integer(),...],
                 funs,
                 file = "" :: string()}).
 
@@ -407,6 +409,16 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
 integer(P, I) when is_tuple(P), is_integer(I) -> copy_pos(P, erl_syntax:integer(I)).
+
+otp_release() ->
+    list_to_integer(case erlang:system_info(otp_release) of
+                        [$R|R] -> R;
+                        R -> R
+                    end).
+
+erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_info(version), ".")).
+
+-compile([{inline, [otp_release/0, erts_version/0]}]).
 
 replace_message(_F, _NM, _NN, _Node, #param{verbose = false}) -> ok;
 replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, NM, NN, File, Node).
