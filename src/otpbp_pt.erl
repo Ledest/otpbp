@@ -457,10 +457,11 @@ atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 integer(P, I) when is_tuple(P), is_integer(I) -> copy_pos(P, erl_syntax:integer(I)).
 
 otp_release() ->
-    list_to_integer(case erlang:system_info(otp_release) of
-                        [$R|R] -> R;
-                        R -> R
-                    end).
+    {R, _} = string:to_integer(case erlang:system_info(otp_release) of
+                                   [$R|S] -> S;
+                                   S -> S
+                               end),
+    R.
 
 erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_info(version), ".")).
 
