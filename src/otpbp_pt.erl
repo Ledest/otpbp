@@ -195,18 +195,18 @@
 -ifdef(HAVE_maps__size_1).
 -spec is_empty(M::map()) -> boolean().
 is_empty(M) -> maps:size(M) =:= 0.
--compile([{inline, [is_empty/1]}]).
+-compile({inline, [is_empty/1]}).
 -else.
 -ifndef(HAVE_dict__is_empty_1).
 -spec is_empty(M::dict()) -> boolean().
 is_empty(M) -> dict:size(M) =:= 0.
--compile([{inline, [is_empty/1]}]).
+-compile({inline, [is_empty/1]}).
 -endif.
 -endif.
 
 -ifndef(HAVE_maps__put_3).
 put(K, V, M) -> dict:store(K, V, M).
--compile([{inline, [put/3]}]).
+-compile({inline, [put/3]}).
 -endif.
 
 -ifndef(HAVE_maps__without_2).
@@ -253,7 +253,7 @@ parse_transform(Forms, Options) ->
 get_no_auto_import(AF) ->
     proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
 
--compile([{inline, [get_no_auto_import/1, transform/3]}]).
+-compile({inline, [get_no_auto_import/1, transform/3]}).
 
 transform(Tree, P, function) -> {transform_function(Tree, P), P};
 transform(Tree, P, attribute) -> {Tree, transform_attribute(Tree, P)};
@@ -279,7 +279,7 @@ transform_attribute(Tree, P) ->
         _ -> P
     end.
 
--compile([{inline, [transform_function/2, transform_attribute/2]}]).
+-compile({inline, [transform_function/2, transform_attribute/2]}).
 
 add_func(F, MF, D, I) -> foldl(fun(A, Acc) -> add_func(setelement(I, F, A), MF, Acc) end, D, element(I, F)).
 
@@ -305,7 +305,7 @@ store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
 transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, new(), ?TRANSFORM_FUNCTIONS).
--compile([{inline, [transform_list/0]}]).
+-compile({inline, [transform_list/0]}).
 
 do_transform(conjunction, Tree) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
@@ -321,6 +321,7 @@ do_transform(#param{} = P, Node) ->
     case type(Node) of
         application -> application_transform(P, Node);
         implicit_fun -> implicit_fun_transform(P, Node);
+        try_expr -> try_expr_transform(P, Node);
         _ -> false
     end.
 
@@ -330,7 +331,7 @@ application_transform_guard(Node) ->
         _ -> false
     end.
 
--compile([{inline, [application_transform_guard/1]}]).
+-compile({inline, [application_transform_guard/1]}).
 
 application_guard(Node, dict, size) ->
     AL = [A] = application_arguments(Node),
@@ -384,7 +385,7 @@ application(Node, AA, M, N) ->
 
 application(M, N, ML, NL, A) -> application(copy_pos(ML, module_qualifier(atom(ML, M), atom(NL, N))), A).
 
--compile([{inline, [application_transform/2, application/4, application/5]}]).
+-compile({inline, [application_transform/2, application/4, application/5]}).
 
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
@@ -404,7 +405,52 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
         throw:syntax_error -> false
     end.
 
--compile([{inline, [implicit_fun_transform/2]}]).
+-compile({inline, [implicit_fun_transform/2]}).
+
+try_expr_transform(#param{erts_version = V}, Node) ->
+    V < [10] andalso case lists:mapfoldr(fun(H, A) ->
+                                             case try_expr_handler_transform(H) of
+                                                 false -> {H, A};
+                                                 NH -> {NH, true}
+                                             end
+                                         end, false, erl_syntax:try_expr_handlers(Node)) of
+                         {Hs, true} -> copy_pos(Node, erl_syntax:try_expr(erl_syntax:try_expr_body(Node),
+                                                                          erl_syntax:try_expr_clauses(Node),
+                                                                          Hs, erl_syntax:try_expr_after(Node)));
+                         _ -> false
+                     end.
+
+try_expr_handler_transform(Node) ->
+    case type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
+        {P, [_|_] = B} ->
+            copy_pos(Node, erl_syntax:clause(P, erl_syntax:clause_guard(Node), B ++ erl_syntax:clause_body(Node)));
+        _ -> false
+    end.
+
+try_expr_clause_patterns_transform(Ps) ->
+    lists:mapfoldr(fun(P, A) ->
+                       case type(P) of
+                           class_qualifier ->
+                               B = erl_syntax:class_qualifier_body(P),
+                               case type(B) of
+                                   module_qualifier ->
+                                       M = module_qualifier_body(B),
+                                       case type(M) of
+                                           variable ->
+                                               S = copy_pos(M, erl_syntax:application(atom(M, erlang),
+                                                                                      atom(M, get_stacktrace), [])),
+                                               C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
+                                                                              erl_syntax:module_qualifier_argument(B)),
+                                               {copy_pos(P, C), [copy_pos(M, match_expr(M, S))|A]};
+                                           _ -> {P, A}
+                                       end;
+                                   _ -> {P, A}
+                               end;
+                           _ -> {P, A}
+                       end
+                   end, [], Ps).
+
+-compile({inline, [try_expr_transform/2, try_expr_handler_transform/1, try_expr_clause_patterns_transform/1]}).
 
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
@@ -418,7 +464,7 @@ otp_release() ->
 
 erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_info(version), ".")).
 
--compile([{inline, [otp_release/0, erts_version/0]}]).
+-compile({inline, [otp_release/0, erts_version/0]}).
 
 replace_message(_F, _NM, _NN, _Node, #param{verbose = false}) -> ok;
 replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, NM, NN, File, Node).
