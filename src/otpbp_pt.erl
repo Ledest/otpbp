@@ -423,13 +423,13 @@ try_expr_transform(#param{erts_version = [V|_]}, Node) ->
 
 try_expr_handler_transform(Node) ->
     case type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
-        {P, [_|_] = B} ->
+        {P, {true, B}} ->
             copy_pos(Node, erl_syntax:clause(P, erl_syntax:clause_guard(Node), B ++ erl_syntax:clause_body(Node)));
         _ -> false
     end.
 
 try_expr_clause_patterns_transform(Ps) ->
-    lists:mapfoldr(fun(P, A) ->
+    lists:mapfoldr(fun(P, {_, L} = A) ->
                        case type(P) of
                            class_qualifier ->
                                B = erl_syntax:class_qualifier_body(P),
@@ -442,14 +442,18 @@ try_expr_clause_patterns_transform(Ps) ->
                                                                                       atom(M, get_stacktrace), [])),
                                                C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
                                                                               erl_syntax:module_qualifier_argument(B)),
-                                               {copy_pos(P, C), [copy_pos(M, match_expr(M, S))|A]};
+                                               {copy_pos(P, C), {true, [copy_pos(M, match_expr(M, S))|L]}};
+                                           underscore ->
+                                               C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
+                                                                              erl_syntax:module_qualifier_argument(B)),
+                                               {copy_pos(P, C), {true, L}};
                                            _ -> {P, A}
                                        end;
                                    _ -> {P, A}
                                end;
                            _ -> {P, A}
                        end
-                   end, [], Ps).
+                   end, {false, []}, Ps).
 
 -compile({inline, [try_expr_transform/2, try_expr_handler_transform/1, try_expr_clause_patterns_transform/1]}).
 
