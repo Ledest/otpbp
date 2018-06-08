@@ -70,7 +70,7 @@
                               {{erl_error, format_exception, [6, 7]}, lib},
                               {{erl_error, format_fun, [1, 2]}, lib},
                               {{erl_error, [format_call, format_stacktrace], [4, 5]}, lib},
-                              {{erl_eval, [extended_parse_exprs, extended_parse_term], 1}, lib},
+                              {{erl_eval, [eval_str, extended_parse_exprs, extended_parse_term], 1}, lib},
                               {{erl_eval, subst_values_for_vars, 2}, lib},
                               {{erl_scan, [category, column, line, location, symbol, text, continuation_location], 1},
                                otpbp_erl_scan},
