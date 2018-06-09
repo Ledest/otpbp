@@ -163,8 +163,7 @@
                      atom_value/1,
                      application/2, application_arguments/1, application_operator/1,
                      infix_expr/3,
-                     match_expr/2,
-                     arity_qualifier_argument/1, arity_qualifier_body/1]).
+                     match_expr/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
@@ -394,13 +393,13 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                  {ok, {M, N}} ->
                      Q = erl_syntax:implicit_fun_name(Node),
                      {AQ, MP} = case type(Q) of
-                                    arity_qualifier -> {Q, arity_qualifier_body(Q)};
+                                    arity_qualifier -> {Q, erl_syntax:arity_qualifier_body(Q)};
                                     module_qualifier ->
                                         {erl_syntax:module_qualifier_body(Q), erl_syntax:module_qualifier_argument(Q)}
                                 end,
                      replace_message(F, M, N, Node, P),
-                     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N),
-                                                            arity_qualifier_argument(AQ)))
+                     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(erl_syntax:arity_qualifier_body(AQ), N),
+                                                            erl_syntax:arity_qualifier_argument(AQ)))
              end
     catch
         throw:syntax_error -> false
