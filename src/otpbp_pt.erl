@@ -160,8 +160,7 @@
 -endif.
 -import(erl_syntax, [type/1,
                      get_pos/1, copy_pos/2,
-                     application/2,
-                     match_expr/2]).
+                     application/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
@@ -442,7 +441,7 @@ try_expr_clause_patterns_transform(Ps) ->
                                                                                       atom(M, get_stacktrace), [])),
                                                C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
                                                                               erl_syntax:module_qualifier_argument(B)),
-                                               {copy_pos(P, C), {true, [copy_pos(M, match_expr(M, S))|L]}};
+                                               {copy_pos(P, C), {true, [copy_pos(M, erl_syntax:match_expr(M, S))|L]}};
                                            underscore ->
                                                C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
                                                                               erl_syntax:module_qualifier_argument(B)),
