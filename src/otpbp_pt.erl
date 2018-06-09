@@ -348,19 +348,14 @@ application_guard(_, _, _) -> false.
 application_guard_ceil_floor(Node, Op) ->
     [A] = erl_syntax:application_arguments(Node),
     O = erl_syntax:application_operator(Node),
-    ML = erl_syntax:module_qualifier_argument(O),
     copy_pos(Node,
-             erl_syntax:application(copy_pos(O, erl_syntax:module_qualifier(atom(ML, erlang),
-                                                                            atom(erl_syntax:module_qualifier_body(O),
-                                                                                 round))),
-                                    [copy_pos(A, erl_syntax:infix_expr(A, copy_pos(A, erl_syntax:operator(Op)),
-                                                                       copy_pos(A, erl_syntax:float(0.5))))])).
+             application(erlang, round, erl_syntax:module_qualifier_argument(O), erl_syntax:module_qualifier_body(O),
+                         [copy_pos(A, erl_syntax:infix_expr(A, copy_pos(A, erl_syntax:operator(Op)),
+                                                            copy_pos(A, erl_syntax:float(0.5))))])).
 
 check_dict(L, O, A) ->
-    erl_syntax:application(copy_pos(L,
-                                    erl_syntax:module_qualifier(atom(L, erlang),
-                                                                atom(erl_syntax:module_qualifier_body(O), is_record))),
-                           [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
+    application(erlang, is_record, L, erl_syntax:module_qualifier_body(O),
+                [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
 
 application_transform(#param{funs = L} = P, Node) ->
     AA = erl_syntax_lib:analyze_application(Node),
@@ -436,8 +431,7 @@ try_expr_clause_patterns_transform(Ps) ->
                                        M = erl_syntax:module_qualifier_body(B),
                                        case erl_syntax:type(M) of
                                            variable ->
-                                               S = copy_pos(M, erl_syntax:application(atom(M, erlang),
-                                                                                      atom(M, get_stacktrace), [])),
+                                               S = copy_pos(M, application(erlang, get_stacktrace, M, M, [])),
                                                C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
                                                                               erl_syntax:module_qualifier_argument(B)),
                                                {copy_pos(P, C), {true, [copy_pos(M, erl_syntax:match_expr(M, S))|L]}};
