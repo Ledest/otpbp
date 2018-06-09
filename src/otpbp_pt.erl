@@ -164,8 +164,7 @@
                      application/2, application_arguments/1, application_operator/1,
                      infix_expr/3,
                      match_expr/2,
-                     arity_qualifier_argument/1, arity_qualifier_body/1,
-                     module_qualifier/2, module_qualifier_argument/1, module_qualifier_body/1]).
+                     arity_qualifier_argument/1, arity_qualifier_body/1]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
@@ -335,8 +334,8 @@ application_transform_guard(Node) ->
 application_guard(Node, dict, size) ->
     AL = [A] = application_arguments(Node),
     O = application_operator(Node),
-    ML = module_qualifier_argument(O),
-    NL = module_qualifier_body(O),
+    ML = erl_syntax:module_qualifier_argument(O),
+    NL = erl_syntax:module_qualifier_body(O),
     copy_pos(Node,
              infix_expr(copy_pos(ML, infix_expr(copy_pos(ML, check_dict(ML, O, A)),
                                                 copy_pos(ML, erl_syntax:operator('andalso')),
@@ -346,7 +345,7 @@ application_guard(Node, dict, size) ->
 application_guard(Node, otpbp_erlang, is_map) ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
-    copy_pos(Node, check_dict(module_qualifier_argument(O), O, A));
+    copy_pos(Node, check_dict(erl_syntax:module_qualifier_argument(O), O, A));
 application_guard(Node, otpbp_erlang, ceil) -> application_guard_ceil_floor(Node, '+');
 application_guard(Node, otpbp_erlang, floor) -> application_guard_ceil_floor(Node, '-');
 application_guard(_, _, _) -> false.
@@ -354,13 +353,15 @@ application_guard(_, _, _) -> false.
 application_guard_ceil_floor(Node, Op) ->
     [A] = application_arguments(Node),
     O = application_operator(Node),
-    ML = module_qualifier_argument(O),
-    copy_pos(Node, application(copy_pos(ML, module_qualifier(atom(ML, erlang), atom(module_qualifier_body(O), round))),
+    ML = erl_syntax:module_qualifier_argument(O),
+    copy_pos(Node, application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, erlang),
+                               atom(erl_syntax:module_qualifier_body(O), round))),
                                [copy_pos(ML, infix_expr(copy_pos(ML, A), copy_pos(ML, erl_syntax:operator(Op)),
                                                         copy_pos(ML, erl_syntax:float(0.5))))])).
 
 check_dict(L, O, A) ->
-    application(copy_pos(L, module_qualifier(atom(L, erlang), atom(module_qualifier_body(O), is_record))),
+    application(copy_pos(L, erl_syntax:module_qualifier(atom(L, erlang),
+                                                        atom(erl_syntax:module_qualifier_body(O), is_record))),
                 [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
 
 application_transform(#param{funs = L} = P, Node) ->
@@ -376,13 +377,13 @@ application(Node, AA, M, N) ->
     O = application_operator(Node),
     case AA of
         {_, {_, _}} ->
-            ML = module_qualifier_argument(O),
-            NL = module_qualifier_body(O);
+            ML = erl_syntax:module_qualifier_argument(O),
+            NL = erl_syntax:module_qualifier_body(O);
         {_, _} -> ML = NL = O
     end,
     copy_pos(Node, application(M, N, ML, NL, application_arguments(Node))).
 
-application(M, N, ML, NL, A) -> application(copy_pos(ML, module_qualifier(atom(ML, M), atom(NL, N))), A).
+application(M, N, ML, NL, A) -> application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, M), atom(NL, N))), A).
 
 -compile({inline, [application_transform/2, application/4, application/5]}).
 
@@ -394,7 +395,8 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                      Q = erl_syntax:implicit_fun_name(Node),
                      {AQ, MP} = case type(Q) of
                                     arity_qualifier -> {Q, arity_qualifier_body(Q)};
-                                    module_qualifier -> {module_qualifier_body(Q), module_qualifier_argument(Q)}
+                                    module_qualifier ->
+                                        {erl_syntax:module_qualifier_body(Q), erl_syntax:module_qualifier_argument(Q)}
                                 end,
                      replace_message(F, M, N, Node, P),
                      copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N),
@@ -434,7 +436,7 @@ try_expr_clause_patterns_transform(Ps) ->
                                B = erl_syntax:class_qualifier_body(P),
                                case type(B) of
                                    module_qualifier ->
-                                       M = module_qualifier_body(B),
+                                       M = erl_syntax:module_qualifier_body(B),
                                        case type(M) of
                                            variable ->
                                                S = copy_pos(M, erl_syntax:application(atom(M, erlang),
