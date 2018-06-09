@@ -161,7 +161,6 @@
 -import(erl_syntax, [type/1,
                      get_pos/1, copy_pos/2,
                      application/2,
-                     infix_expr/3,
                      match_expr/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
@@ -335,11 +334,12 @@ application_guard(Node, dict, size) ->
     ML = erl_syntax:module_qualifier_argument(O),
     NL = erl_syntax:module_qualifier_body(O),
     copy_pos(Node,
-             infix_expr(copy_pos(ML, infix_expr(copy_pos(ML, check_dict(ML, O, A)),
-                                                copy_pos(ML, erl_syntax:operator('andalso')),
-                                                copy_pos(NL, application(erlang, element, NL, NL, [integer(A, 2)|AL])))),
-                        copy_pos(A, erl_syntax:operator('+')),
-                        copy_pos(A, integer(A, 0))));
+             erl_syntax:infix_expr(copy_pos(ML, erl_syntax:infix_expr(copy_pos(ML, check_dict(ML, O, A)),
+                                                                      copy_pos(ML, erl_syntax:operator('andalso')),
+                                                                      copy_pos(NL, application(erlang, element, NL, NL,
+                                                                                               [integer(A, 2)|AL])))),
+                                   copy_pos(A, erl_syntax:operator('+')),
+                                   copy_pos(A, integer(A, 0))));
 application_guard(Node, otpbp_erlang, is_map) ->
     [A] = erl_syntax:application_arguments(Node),
     O = erl_syntax:application_operator(Node),
@@ -354,8 +354,9 @@ application_guard_ceil_floor(Node, Op) ->
     ML = erl_syntax:module_qualifier_argument(O),
     copy_pos(Node, application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, erlang),
                                atom(erl_syntax:module_qualifier_body(O), round))),
-                               [copy_pos(ML, infix_expr(copy_pos(ML, A), copy_pos(ML, erl_syntax:operator(Op)),
-                                                        copy_pos(ML, erl_syntax:float(0.5))))])).
+                               [copy_pos(ML, erl_syntax:infix_expr(copy_pos(ML, A),
+                                                                   copy_pos(ML, erl_syntax:operator(Op)),
+                                                                   copy_pos(ML, erl_syntax:float(0.5))))])).
 
 check_dict(L, O, A) ->
     application(copy_pos(L, erl_syntax:module_qualifier(atom(L, erlang),
