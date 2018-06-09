@@ -161,7 +161,7 @@
 -import(erl_syntax, [type/1,
                      get_pos/1, copy_pos/2,
                      atom_value/1,
-                     application/2, application_arguments/1, application_operator/1,
+                     application/2,
                      infix_expr/3,
                      match_expr/2]).
 -import(lists, [foldl/3]).
@@ -331,8 +331,8 @@ application_transform_guard(Node) ->
 -compile({inline, [application_transform_guard/1]}).
 
 application_guard(Node, dict, size) ->
-    AL = [A] = application_arguments(Node),
-    O = application_operator(Node),
+    AL = [A] = erl_syntax:application_arguments(Node),
+    O = erl_syntax:application_operator(Node),
     ML = erl_syntax:module_qualifier_argument(O),
     NL = erl_syntax:module_qualifier_body(O),
     copy_pos(Node,
@@ -342,16 +342,16 @@ application_guard(Node, dict, size) ->
                         copy_pos(A, erl_syntax:operator('+')),
                         copy_pos(A, integer(A, 0))));
 application_guard(Node, otpbp_erlang, is_map) ->
-    [A] = application_arguments(Node),
-    O = application_operator(Node),
+    [A] = erl_syntax:application_arguments(Node),
+    O = erl_syntax:application_operator(Node),
     copy_pos(Node, check_dict(erl_syntax:module_qualifier_argument(O), O, A));
 application_guard(Node, otpbp_erlang, ceil) -> application_guard_ceil_floor(Node, '+');
 application_guard(Node, otpbp_erlang, floor) -> application_guard_ceil_floor(Node, '-');
 application_guard(_, _, _) -> false.
 
 application_guard_ceil_floor(Node, Op) ->
-    [A] = application_arguments(Node),
-    O = application_operator(Node),
+    [A] = erl_syntax:application_arguments(Node),
+    O = erl_syntax:application_operator(Node),
     ML = erl_syntax:module_qualifier_argument(O),
     copy_pos(Node, application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, erlang),
                                atom(erl_syntax:module_qualifier_body(O), round))),
@@ -373,14 +373,14 @@ application_transform(#param{funs = L} = P, Node) ->
     end.
 
 application(Node, AA, M, N) ->
-    O = application_operator(Node),
+    O = erl_syntax:application_operator(Node),
     case AA of
         {_, {_, _}} ->
             ML = erl_syntax:module_qualifier_argument(O),
             NL = erl_syntax:module_qualifier_body(O);
         {_, _} -> ML = NL = O
     end,
-    copy_pos(Node, application(M, N, ML, NL, application_arguments(Node))).
+    copy_pos(Node, application(M, N, ML, NL, erl_syntax:application_arguments(Node))).
 
 application(M, N, ML, NL, A) -> application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, M), atom(NL, N))), A).
 
