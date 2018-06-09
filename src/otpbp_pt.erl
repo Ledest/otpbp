@@ -350,12 +350,11 @@ application_guard_ceil_floor(Node, Op) ->
     O = erl_syntax:application_operator(Node),
     ML = erl_syntax:module_qualifier_argument(O),
     copy_pos(Node,
-             erl_syntax:application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, erlang),
-                                                                             atom(erl_syntax:module_qualifier_body(O),
-                                                                                  round))),
-                                    [copy_pos(ML, erl_syntax:infix_expr(copy_pos(ML, A),
-                                                                        copy_pos(ML, erl_syntax:operator(Op)),
-                                                                        copy_pos(ML, erl_syntax:float(0.5))))])).
+             erl_syntax:application(copy_pos(O, erl_syntax:module_qualifier(atom(ML, erlang),
+                                                                            atom(erl_syntax:module_qualifier_body(O),
+                                                                                 round))),
+                                    [copy_pos(A, erl_syntax:infix_expr(A, copy_pos(A, erl_syntax:operator(Op)),
+                                                                       copy_pos(A, erl_syntax:float(0.5))))])).
 
 check_dict(L, O, A) ->
     erl_syntax:application(copy_pos(L,
