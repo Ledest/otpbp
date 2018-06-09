@@ -382,7 +382,7 @@ application(Node, AA, M, N) ->
 application(M, N, ML, NL, A) ->
     erl_syntax:application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, M), atom(NL, N))), A).
 
--compile({inline, [application_transform/2, application/4, application/5]}).
+-compile({inline, [application_transform/2, application/4]}).
 
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
