@@ -368,10 +368,10 @@ application_transform(#param{funs = L} = P, Node) ->
 
 application(Node, AA, M, N) ->
     O = erl_syntax:application_operator(Node),
-    {ML, NL} =  case AA of
-                    {_, {_, _}} -> {erl_syntax:module_qualifier_argument(O), erl_syntax:module_qualifier_body(O)};
-                    {_, _} -> {O, O}
-                end,
+    {ML, NL} = case AA of
+                   {_, {_, _}} -> {erl_syntax:module_qualifier_argument(O), erl_syntax:module_qualifier_body(O)};
+                   {_, _} -> {O, O}
+               end,
     copy_pos(Node, application(M, N, ML, NL, erl_syntax:application_arguments(Node))).
 
 application(M, N, ML, NL, A) ->
