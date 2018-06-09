@@ -158,9 +158,7 @@
 -else.
 -import(erl_syntax, [revert/1]).
 -endif.
--import(erl_syntax, [type/1,
-                     get_pos/1, copy_pos/2,
-                     application/2]).
+-import(erl_syntax, [type/1, copy_pos/2, application/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
@@ -476,4 +474,4 @@ replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, N
 
 do_replace_message({M, {N, A}}, NM, NN, F, Node) -> do_replace_message({lists:concat([M, ":", N]), A}, NM, NN, F, Node);
 do_replace_message({N, A}, NM, NN, F, Node) ->
-    io:fwrite("~ts:~b: replace ~s/~b to ~s:~s/~b~n", [F, get_pos(Node), N, A, NM, NN, A]).
+    io:fwrite("~ts:~b: replace ~s/~b to ~s:~s/~b~n", [F, erl_syntax:get_pos(Node), N, A, NM, NN, A]).
