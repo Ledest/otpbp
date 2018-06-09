@@ -160,7 +160,6 @@
 -endif.
 -import(erl_syntax, [type/1,
                      get_pos/1, copy_pos/2,
-                     atom_value/1,
                      application/2,
                      infix_expr/3,
                      match_expr/2]).
