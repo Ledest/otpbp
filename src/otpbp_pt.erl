@@ -158,7 +158,7 @@
 -else.
 -import(erl_syntax, [revert/1]).
 -endif.
--import(erl_syntax, [type/1, copy_pos/2, application/2]).
+-import(erl_syntax, [type/1, copy_pos/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
@@ -349,16 +349,17 @@ application_guard_ceil_floor(Node, Op) ->
     [A] = erl_syntax:application_arguments(Node),
     O = erl_syntax:application_operator(Node),
     ML = erl_syntax:module_qualifier_argument(O),
-    copy_pos(Node, application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, erlang),
-                               atom(erl_syntax:module_qualifier_body(O), round))),
-                               [copy_pos(ML, erl_syntax:infix_expr(copy_pos(ML, A),
-                                                                   copy_pos(ML, erl_syntax:operator(Op)),
-                                                                   copy_pos(ML, erl_syntax:float(0.5))))])).
+    copy_pos(Node, erl_syntax:application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, erlang),
+                                                   atom(erl_syntax:module_qualifier_body(O), round))),
+                                          [copy_pos(ML, erl_syntax:infix_expr(copy_pos(ML, A),
+                                                                              copy_pos(ML, erl_syntax:operator(Op)),
+                                                                              copy_pos(ML, erl_syntax:float(0.5))))])).
 
 check_dict(L, O, A) ->
-    application(copy_pos(L, erl_syntax:module_qualifier(atom(L, erlang),
-                                                        atom(erl_syntax:module_qualifier_body(O), is_record))),
-                [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
+    erl_syntax:application(copy_pos(L,
+                                    erl_syntax:module_qualifier(atom(L, erlang),
+                                                                atom(erl_syntax:module_qualifier_body(O), is_record))),
+                           [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
 
 application_transform(#param{funs = L} = P, Node) ->
     AA = erl_syntax_lib:analyze_application(Node),
@@ -379,7 +380,8 @@ application(Node, AA, M, N) ->
     end,
     copy_pos(Node, application(M, N, ML, NL, erl_syntax:application_arguments(Node))).
 
-application(M, N, ML, NL, A) -> application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, M), atom(NL, N))), A).
+application(M, N, ML, NL, A) ->
+    erl_syntax:application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, M), atom(NL, N))), A).
 
 -compile({inline, [application_transform/2, application/4, application/5]}).
 
