@@ -164,7 +164,6 @@
                      application/2, application_arguments/1, application_operator/1,
                      infix_expr/3,
                      match_expr/2,
-                     implicit_fun/3, implicit_fun_name/1,
                      arity_qualifier_argument/1, arity_qualifier_body/1,
                      module_qualifier/2, module_qualifier_argument/1, module_qualifier_body/1]).
 -import(lists, [foldl/3]).
@@ -392,14 +391,14 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
         F -> case find(F, L) of
                  error -> false;
                  {ok, {M, N}} ->
-                     Q = implicit_fun_name(Node),
+                     Q = erl_syntax:implicit_fun_name(Node),
                      {AQ, MP} = case type(Q) of
                                     arity_qualifier -> {Q, arity_qualifier_body(Q)};
                                     module_qualifier -> {module_qualifier_body(Q), module_qualifier_argument(Q)}
                                 end,
                      replace_message(F, M, N, Node, P),
-                     copy_pos(Node,
-                              implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N), arity_qualifier_argument(AQ)))
+                     copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(arity_qualifier_body(AQ), N),
+                                                            arity_qualifier_argument(AQ)))
              end
     catch
         throw:syntax_error -> false
