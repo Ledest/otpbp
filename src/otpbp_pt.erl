@@ -158,7 +158,7 @@
 -else.
 -import(erl_syntax, [revert/1]).
 -endif.
--import(erl_syntax, [type/1, copy_pos/2]).
+-import(erl_syntax, [copy_pos/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
@@ -218,7 +218,7 @@ parse_transform(Forms, Options) ->
         true -> Forms;
         _ -> try erl_syntax_lib:analyze_forms(Forms) of
                  AF ->
-                     {NF, _} = lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, type(Tree)) end,
+                     {NF, _} = lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, erl_syntax:type(Tree)) end,
                                               #param{options = Options,
                                                      verbose = proplists:get_bool(verbose, Options),
                                                      funs = foldl(fun({M, Fs}, IA) ->
@@ -253,7 +253,7 @@ transform(Tree, P, _) -> {Tree, P}.
 
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
-                                    case do_transform(case type(E) of
+                                    case do_transform(case erl_syntax:type(E) of
                                                           conjunction -> conjunction;
                                                           _ -> P
                                                       end, E) of
@@ -301,7 +301,7 @@ transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, new(), ?T
 
 do_transform(conjunction, Tree) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
-                                    case type(E) =:= application andalso application_transform_guard(E) of
+                                    case erl_syntax:type(E) =:= application andalso application_transform_guard(E) of
                                         false -> {E, F};
                                         N -> {N, true}
                                     end
@@ -310,7 +310,7 @@ do_transform(conjunction, Tree) ->
         _ -> Tree
     end;
 do_transform(#param{} = P, Node) ->
-    case type(Node) of
+    case erl_syntax:type(Node) of
         application -> application_transform(P, Node);
         implicit_fun -> implicit_fun_transform(P, Node);
         try_expr -> try_expr_transform(P, Node);
@@ -391,7 +391,7 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                  error -> false;
                  {ok, {M, N}} ->
                      Q = erl_syntax:implicit_fun_name(Node),
-                     {AQ, MP} = case type(Q) of
+                     {AQ, MP} = case erl_syntax:type(Q) of
                                     arity_qualifier -> {Q, erl_syntax:arity_qualifier_body(Q)};
                                     module_qualifier ->
                                         {erl_syntax:module_qualifier_body(Q), erl_syntax:module_qualifier_argument(Q)}
@@ -421,7 +421,7 @@ try_expr_transform(#param{erts_version = [V|_]}, Node) ->
                    end.
 
 try_expr_handler_transform(Node) ->
-    case type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
+    case erl_syntax:type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
         {P, {true, B}} ->
             copy_pos(Node, erl_syntax:clause(P, erl_syntax:clause_guard(Node), B ++ erl_syntax:clause_body(Node)));
         _ -> false
@@ -429,13 +429,13 @@ try_expr_handler_transform(Node) ->
 
 try_expr_clause_patterns_transform(Ps) ->
     lists:mapfoldr(fun(P, {_, L} = A) ->
-                       case type(P) of
+                       case erl_syntax:type(P) of
                            class_qualifier ->
                                B = erl_syntax:class_qualifier_body(P),
-                               case type(B) of
+                               case erl_syntax:type(B) of
                                    module_qualifier ->
                                        M = erl_syntax:module_qualifier_body(B),
-                                       case type(M) of
+                                       case erl_syntax:type(M) of
                                            variable ->
                                                S = copy_pos(M, erl_syntax:application(atom(M, erlang),
                                                                                       atom(M, get_stacktrace), [])),
