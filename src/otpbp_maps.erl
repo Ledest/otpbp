@@ -82,7 +82,7 @@
 -define(PUT(K, V, M), M#{K => V}).
 -define(UPDATE_WITH(K, F, I, M, V, N),
         case M of
-            {K := V} -> maps:update(K, F(V), M);
+            #{K := V} -> maps:update(K, F(V), M);
             #{} -> N
         end).
 -endif.
@@ -268,7 +268,7 @@ without(Ks, Map) ->
 -ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Init, Map) when is_map(Map) ->
     if
-        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value, ?PUT(K, I, M));
+        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value, ?PUT(Key, Init, Map));
         true -> error(badarg, [Key, Fun, Init, Map])
     end;
 update_with(Key, Fun, Init, Map) -> error({badmap, Map}, [Key, Fun, Init, Map]).
