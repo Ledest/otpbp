@@ -187,6 +187,10 @@ Funs = [{binary_to_integer, 2},
 lists:keystore(erl_opts, 1, CONFIG,
                {erl_opts,
                 [{d, 'DICT_RECORD_SIZE', tuple_size(dict:new())}|proplists:get_value(erl_opts, CONFIG, [])] ++
+                case erlang:system_info(version) of
+                    "6." ++ _ -> [{d, 'HAVE_MAP_SYNTAX_6'}];
+                    _ -> []
+                end ++
                 case erl_syntax:revert({tree, implicit_fun, {attr, 0, [], none},
                                         {remote, 0, {var, 0, 'M'},
                                          {tree, arity_qualifier, {attr, 0, [], none},

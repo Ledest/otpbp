@@ -71,6 +71,22 @@
 -endif.
 -define(IS_DICT(D), is_record(D, dict, ?DICT_RECORD_SIZE)).
 
+-ifdef(HAVE_MAP_SYNTAX_6).
+-define(PUT(K, V, M), maps:put(K, V, M)).
+-define(UPDATE_WITH(K, F, I, M, V, N),
+        case maps:find(K, M) of
+            {ok, V} -> maps:update(K, F(V), M));
+            #{} -> N
+        end).
+-else.
+-define(PUT(K, V, M), M#{K => V}).
+-define(UPDATE_WITH(K, F, I, M, V, N),
+        case M of
+            {K := V} -> M#{K := F(V)};
+            #{} -> N
+        end).
+-endif.
+
 -ifndef(HAVE_maps__size_1).
 size(Map) ->
     case ?IS_DICT(Map) of
@@ -160,10 +176,10 @@ fold(Fun, Init, Map) ->
 -ifdef(HAVE_maps__fold_3).
 filter(Fun, Map) when is_map(Map) ->
     if
-        is_function(Fun, 2) -> maps:fold(fun(K, V, A) ->
-                                             case Fun(K, V) of
-                                                 true -> A#{K => V};
-                                                 false -> A
+        is_function(Fun, 2) -> maps:fold(fun(Key, Value, M) ->
+                                             case Fun(Key, Value) of
+                                                 true -> ?PUT(Key, Value, M);
+                                                 false -> M
                                              end
                                          end, #{}, Map);
         true -> error(badarg, [Fun, Map])
@@ -252,10 +268,7 @@ without(Ks, Map) ->
 -ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Init, Map) when is_map(Map) ->
     if
-        is_function(Fun, 1) -> case Map of
-                                   #{Key := Value} -> Map#{Key := Fun(Value)};
-                                   #{} -> Map#{Key => Init}
-                               end;
+        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value, ?PUT(K, I, M));
         true -> error(badarg, [Key, Fun, Init, Map])
     end;
 update_with(Key, Fun, Init, Map) -> error({badmap, Map}, [Key, Fun, Init, Map]).
@@ -273,10 +286,7 @@ update_with(Key, Fun, Init, Map) ->
 -ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Map) when is_map(Map) ->
     if
-        is_function(Fun, 1) -> case Map of
-                                   #{Key := Value} -> Map#{Key := Fun(Value)};
-                                   #{} -> error({badkey, Key}, [Key, Fun, Map])
-                               end;
+        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value, error({badkey, Key}, [Key, Fun, Map]));
         true -> error(badarg, [Key, Fun, Map])
     end;
 update_with(Key, Fun, Map) -> error({badmap, Map}, [Key, Fun, Map]).
