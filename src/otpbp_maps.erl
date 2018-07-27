@@ -82,7 +82,7 @@
 -define(PUT(K, V, M), M#{K => V}).
 -define(UPDATE_WITH(K, F, I, M, V, N),
         case M of
-            {K := V} -> M#{K := F(V)};
+            {K := V} -> maps:update(K, F(V), M);
             #{} -> N
         end).
 -endif.
