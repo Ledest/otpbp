@@ -301,6 +301,14 @@ update_with(Key, Fun, Map) ->
 -endif.
 
 -ifndef(HAVE_maps__take_2).
+-ifdef(HAVE_MAP_SYNTAX_6).
+take(Key, Map) when is_map(Map) ->
+    case maps:find(Map) of
+        {ok, Value} -> {Value, maps:remove(Key, Map)};
+        error -> error
+    end;
+take(Key, Map) -> error({badmap, Map}, [Key, Map]).
+-else.
 -ifdef(HAVE_maps__find_2).
 take(Key, Map) ->
     case Map of
@@ -308,6 +316,8 @@ take(Key, Map) ->
         #{} -> error;
         _ -> error({badmap, Map}, [Key, Map])
     end.
+-endif.
+-endif.
 -else.
 take(Key, Map) ->
     case ?IS_DICT(Map) of
@@ -317,5 +327,4 @@ take(Key, Map) ->
                 end;
         _ -> error({badmap, Map}, [Key, Map])
     end.
--endif.
 -endif.
