@@ -66,7 +66,10 @@
 -export([take/2]).
 -endif.
 
--define(IS_DICT(D), is_record(D, dict, tuple_size(dict:new()))).
+-ifndef(DICT_RECORD_SIZE).
+-define(DICT_RECORD_SIZE, tuple_size(dict:new())).
+-endif.
+-define(IS_DICT(D), is_record(D, dict, ?DICT_RECORD_SIZE)).
 
 -ifndef(HAVE_maps__size_1).
 size(Map) ->

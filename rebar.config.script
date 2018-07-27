@@ -184,6 +184,7 @@ Funs = [{binary_to_integer, 2},
         {zlib, gzip, 2},
         {zlib, zip, 2}],
 
+[{d, 'DICT_RECORD_SIZE', tuple_size(dict:new())}] ++
 lists:keystore(erl_opts, 1, CONFIG,
                {erl_opts,
                 proplists:get_value(erl_opts, CONFIG, []) ++
