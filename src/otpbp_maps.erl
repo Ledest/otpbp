@@ -76,7 +76,7 @@
 -define(UPDATE_WITH(K, F, I, M, V),
         case maps:find(K, M) of
             {ok, V} -> maps:update(K, F(V), M);
-            #{} -> maps:put(K, V, M)
+            #{} -> maps:put(K, I, M)
         end).
 -define(UPDATE_WITH(K, F, M, V),
         case maps:find(K, M) of
@@ -88,7 +88,7 @@
 -define(UPDATE_WITH(K, F, I, M, V),
         case M of
             #{K := V} -> maps:update(K, F(V), M);
-            #{} -> M#{K => V}
+            #{} -> M#{K => I}
         end).
 -define(UPDATE_WITH(K, F, M, V),
         case M of
