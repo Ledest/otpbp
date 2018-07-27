@@ -75,7 +75,7 @@
 -define(PUT(K, V, M), maps:put(K, V, M)).
 -define(UPDATE_WITH(K, F, I, M, V, N),
         case maps:find(K, M) of
-            {ok, V} -> maps:update(K, F(V), M));
+            {ok, V} -> maps:update(K, F(V), M);
             #{} -> N
         end).
 -else.
