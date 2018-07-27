@@ -198,7 +198,7 @@ with(Ks, Map) ->
                                        {ok, V} -> [{K, V}|A];
                                        error -> A
                                    end
-                               end, [], Ks).
+                               end, [], Ks)).
 -endif.
 
 -ifndef(HAVE_maps__without_2).
