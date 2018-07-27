@@ -73,17 +73,27 @@
 
 -ifdef(HAVE_MAP_SYNTAX_6).
 -define(PUT(K, V, M), maps:put(K, V, M)).
--define(UPDATE_WITH(K, F, I, M, V, N),
+-define(UPDATE_WITH(K, F, I, M, V),
         case maps:find(K, M) of
             {ok, V} -> maps:update(K, F(V), M);
-            #{} -> N
+            #{} -> maps:put(K, V, M)
+        end).
+-define(UPDATE_WITH(K, F, M, V),
+        case maps:find(K, M) of
+            {ok, V} -> maps:update(K, F(V), M);
+            #{} -> error({badkey, K}, [K, F, M])
         end).
 -else.
 -define(PUT(K, V, M), M#{K => V}).
--define(UPDATE_WITH(K, F, I, M, V, N),
+-define(UPDATE_WITH(K, F, I, M, V),
         case M of
             #{K := V} -> maps:update(K, F(V), M);
-            #{} -> N
+            #{} -> M#{K => V}
+        end).
+-define(UPDATE_WITH(K, F, M, V),
+        case M of
+            #{K := V} -> maps:update(K, F(V), M);
+            #{} -> error({badkey, K}, [K, F, M])
         end).
 -endif.
 
@@ -268,7 +278,7 @@ without(Ks, Map) ->
 -ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Init, Map) when is_map(Map) ->
     if
-        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value, ?PUT(Key, Init, Map));
+        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value);
         true -> error(badarg, [Key, Fun, Init, Map])
     end;
 update_with(Key, Fun, Init, Map) -> error({badmap, Map}, [Key, Fun, Init, Map]).
@@ -286,7 +296,7 @@ update_with(Key, Fun, Init, Map) ->
 -ifdef(HAVE_maps__update_3).
 update_with(Key, Fun, Map) when is_map(Map) ->
     if
-        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value, error({badkey, Key}, [Key, Fun, Map]));
+        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Map, Value);
         true -> error(badarg, [Key, Fun, Map])
     end;
 update_with(Key, Fun, Map) -> error({badmap, Map}, [Key, Fun, Map]).
@@ -316,8 +326,6 @@ take(Key, Map) ->
         #{} -> error;
         _ -> error({badmap, Map}, [Key, Map])
     end.
--endif.
--endif.
 -else.
 take(Key, Map) ->
     case ?IS_DICT(Map) of
@@ -327,4 +335,6 @@ take(Key, Map) ->
                 end;
         _ -> error({badmap, Map}, [Key, Map])
     end.
+-endif.
+-endif.
 -endif.
