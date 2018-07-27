@@ -291,10 +291,21 @@ update_with(Key, Fun, Map) ->
 -endif.
 
 -ifndef(HAVE_maps__take_2).
+-ifdef(HAVE_maps__find_2).
 take(Key, Map) ->
     case Map of
         #{Key := Value} -> {Value, maps:remove(Key, Map)};
         #{} -> error;
         _ -> error({badmap, Map}, [Key, Map])
     end.
+-else.
+take(Key, Map) ->
+    case ?IS_DICT(Map) of
+        true -> case dict:find(Key, Map) of
+                    {ok, Value} -> {Value, dict:erase(Key, Map)};
+                    error -> error
+                end;
+        _ -> error({badmap, Map}, [Key, Map])
+    end.
+-endif.
 -endif.
