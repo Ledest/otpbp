@@ -31,11 +31,17 @@ ordsets_test() ->
     ?assertNot(ordsets:is_empty(S)).
 
 gb_trees_test() ->
-    D = gb_trees:insert(a, 1, gb_trees:empty()),
-    ?assertEqual(gb_trees:take(a, D), {1, gb_trees:empty()}),
-    ?assertEqual(gb_trees:take_any(a, D), {1, gb_trees:empty()}),
+    D1 = gb_trees:from_orddict(orddict:from_list([{3, c}, {1, a}, {2, b}])),
+    ?assertEqual({1, a, gb_trees:iterator_from(2, D1)}, gb_trees:next(gb_trees:iterator(D1))),
+    D2 = gb_trees:insert(a, 1, gb_trees:empty()),
+    ?assertEqual(gb_trees:take(a, D2), {1, gb_trees:empty()}),
+    ?assertEqual(gb_trees:take_any(a, D2), {1, gb_trees:empty()}),
     ?assertEqual(gb_trees:take_any(a, gb_trees:empty()), error),
-    ?assertEqual(gb_trees:take_any(b, D), error).
+    ?assertEqual(gb_trees:take_any(b, D2), error).
+
+gb_sets_test() ->
+    S = gb_sets:from_ordset(ordsets:from_list([3, 1, 2])),
+    ?assertEqual({1, gb_sets:iterator_from(2, S)}, gb_sets:next(gb_sets:iterator(S))).
 
 lists_test() ->
     ?assertEqual(lists:droplast([1,2,3]), [1,2]),
