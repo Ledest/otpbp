@@ -13,4 +13,4 @@ otp_release:
   - R16B02
   - R16B01
   - R15B03
-script: rebar compile
+script: rebar compile && rebar eunit
