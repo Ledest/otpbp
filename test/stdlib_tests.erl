@@ -30,9 +30,6 @@ ordsets_test() ->
     ?assert(ordsets:is_empty(ordsets:new())),
     ?assertNot(ordsets:is_empty(S)).
 
-gb_sets() ->
-    ok.
-
 gb_trees_test() ->
     D = gb_trees:insert(a, 1, gb_trees:empty()),
     ?assertEqual(gb_trees:take(a, D), {1, gb_trees:empty()}),
