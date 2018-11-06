@@ -79,7 +79,7 @@
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{dict, take, 2}, otpbp_dict},
                               {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
-                              {{gb_trees, [iterator_from, take], 2}, otpbp_gb_trees},
+                              {{gb_trees, [iterator_from, take, take_any], 2}, otpbp_gb_trees},
                               {{gen, get_parent, 0}, otpbp_gen},
                               {{gen, [debug_options, get_proc_name, name, unregister_name], 1}, otpbp_gen},
                               {{gen, debug_options, 2}, otpbp_gen},
