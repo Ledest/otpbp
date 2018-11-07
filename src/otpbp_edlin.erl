@@ -8,7 +8,7 @@
 -endif.
 
 -ifndef(HAVE_edlin__current_chars_1).
-current_chars({line, _, {Bef, Aft}, _}) -> lists:reverse(Bef, Aft).
+current_chars({line, _, {Bef, Aft}, _}) -> unicode:characters_to_list(lists:reverse(Bef, Aft)).
 -endif.
 
 -ifndef(HAVE_edlin__start_2).
