@@ -11,4 +11,4 @@ application_test() ->
 code_test() ->
     ?assertEqual(code:module_status(?MODULE), loaded),
     ?assertEqual(code:module_status('TEST'), not_loaded),
-    ?assertEqual(code:modified_modules(), []).
+    ?assert(is_list(code:modified_modules())).
