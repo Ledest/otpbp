@@ -57,7 +57,7 @@ module_changed_on_disk(Module, Path) ->
 module_md5(Module) -> erlang:get_module_info(Module, md5).
 -else.
 module_md5(Module) ->
-    case lists:keyfind(vsn, erlang:get_module_info(Module, attributes)) of
+    case lists:keyfind(vsn, 1, erlang:get_module_info(Module, attributes)) of
         {_, [V]} when is_integer(V) -> binary:encode_unsigned(V);
         _ -> undefined
     end.
