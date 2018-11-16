@@ -39,19 +39,30 @@ where_is_file(T, File, D, Files) ->
     end.
 
 module_changed_on_disk(Module, Path) ->
-    erlang:get_module_info(Module, md5) =/=
-        case (Arch = erlang:system_info(hipe_architecture)) =/= undefined andalso code:is_module_native(Module) of
-            true -> try beam_lib:chunks(Path, [hipe_unified_loader:chunk_name(Arch)]) of
-                        {ok, {_, [{_, NativeCode}]}} when is_binary(NativeCode) -> erlang:md5(NativeCode)
-                    catch
-                        _:_ -> undefined
-                    end;
-            _false -> case beam_lib:md5(Path) of
-                          {ok, {_, MD5}} -> MD5;
-                          _ -> undefined
-                      end
-        end.
--compile([{inline, [module_changed_on_disk/2]}]).
+    Arch = erlang:system_info(hipe_architecture),
+    case Arch =/= undefined andalso code:is_module_native(Module) of
+        true -> try beam_lib:chunks(Path, [hipe_unified_loader:chunk_name(Arch)]) of
+                    {ok, {_, [{_, NativeCode}]}} when is_binary(NativeCode) -> erlang:md5(NativeCode)
+                catch
+                    _:_ -> undefined
+                end;
+        _false -> case beam_lib:md5(Path) of
+                      {ok, {_, MD5}} -> MD5;
+                      _ -> undefined
+                  end
+    end =/= module_md5(Module).
+-compile({inline, [module_changed_on_disk/2]}).
+
+-ifdef(HAVE_erlang__get_module_info__md5).
+module_md5(Module) -> erlang:get_module_info(Module, md5).
+-else.
+module_md5(Module) ->
+    case lists:keyfind(vsn, erlang:get_module_info(Module, attributes)) of
+        {_, [V]} when is_integer(V) -> binary:encode_unsigned(V);
+        _ -> undefined
+    end.
+-endif.
+-compile({inline, [module_md5/1]}).
 
 -ifndef(HAVE_code__modified_modules_0).
 modified_modules() ->

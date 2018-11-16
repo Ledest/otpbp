@@ -191,6 +191,10 @@ lists:keystore(erl_opts, 1, CONFIG,
                     "6." ++ _ -> [{d, 'HAVE_MAP_SYNTAX_6'}];
                     _ -> []
                 end ++
+                case lists:keymember(md5, 1, erlang:get_module_info(erlang)) of
+                    true -> [{s, 'HAVE_erlang__get_module_info__md5'}];
+                    _false -> []
+                end ++
                 case erl_syntax:revert({tree, implicit_fun, {attr, 0, [], none},
                                         {remote, 0, {var, 0, 'M'},
                                          {tree, arity_qualifier, {attr, 0, [], none},
