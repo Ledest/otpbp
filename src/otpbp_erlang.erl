@@ -124,7 +124,7 @@ float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
         {scientific, D, _} ->
             S = lists:flatten(io_lib:format("~.*e", [D + 1, Float])),
             case lists:reverse(S) of
-                [C, Sign|M] when Sign =:= $+; Sign =:= $- -> lists:reverse([C, $0, Sign|M]);
+                [C, Sign|M] when Sign =:= $+; Sign =:= $- -> lists:reverse(M, [Sign, $0, C]);
                 _ -> S
             end;
         {decimals, 0, _} -> integer_to_list(round(Float));
