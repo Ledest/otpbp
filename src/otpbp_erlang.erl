@@ -124,14 +124,18 @@ float_to_list(Float, Options) when is_float(Float), is_list(Options) ->
         {scientific, D, _} ->
             S = lists:flatten(io_lib:format("~.*e", [D + 1, Float])),
             case lists:reverse(S) of
-                [C, Sign|M] when Sign =:= $+ orelse Sign =:= $- -> lists:reverse([C, $0, Sign|M]);
+                [C, Sign|M] when Sign =:= $+; Sign =:= $- -> lists:reverse([C, $0, Sign|M]);
                 _ -> S
             end;
+        {decimals, 0, _} -> integer_to_list(round(Float));
         {decimals, D, C} ->
-            S = lists:flatten(io_lib:format("~.*f", [D, Float])),
-            if
-                C -> string:strip(S, right, $0);
-                true -> S
+            case lists:flatten(io_lib:format("~.*f", [D, Float])) of
+                S when C ->
+                    lists:foldr(fun($0, "") -> "";
+                                   ($., "") -> ".0";
+                                   (E, A) -> [E|A]
+                                end, "", S);
+                S -> S
             end;
         {none, _, _} -> float_to_list(Float)
     end;
