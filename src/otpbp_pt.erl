@@ -65,6 +65,7 @@
                               {{inet_parse, strict_address, 1}, otpbp_inet_parse},
                               {{edlin, current_chars, 1}, otpbp_edlin},
                               {{edlin, start, 2}, otpbp_edlin},
+                              {{erl_anno, new, 1}, otpbp_erl_anno},
                               {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
                               {{erl_error, format_fun, [1, 2]}, lib},
                               {{erl_error, [format_call, format_stacktrace], [4, 5]}, lib},
