@@ -1,5 +1,7 @@
 -module(otpbp_compile).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_compile__env_compiler_options_0).
 -export([env_compiler_options/0]).
 -endif.
