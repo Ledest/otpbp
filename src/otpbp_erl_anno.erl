@@ -5,7 +5,7 @@
 -endif.
 
 -ifndef(HAVE_erl_anno__new_1).
--type annotation() :: {file, file:filename_all}
+-type annotation() :: {file, file:filename_all()}
                     | {generated, boolean()}
                     | {location, location()}
                     | {record, boolean()}
