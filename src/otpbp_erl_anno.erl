@@ -5,21 +5,17 @@
 -endif.
 
 -ifndef(HAVE_erl_anno__new_1).
--type annotation() :: {file, filename()}
-                    | {generated, generated()}
+-type annotation() :: {file, file:filename_all}
+                    | {generated, boolean()}
                     | {location, location()}
-                    | {record, record()}
-                    | {text, text()}.
+                    | {record, boolean()}
+                    | {text, string()}.
 
 -type anno() :: location() | [annotation(),...].
 
 -type column() :: pos_integer().
--type generated() :: boolean().
--type filename() :: file:filename_all().
 -type line() :: integer().
 -type location() :: line() | {line(), column()}.
--type record() :: boolean().
--type text() :: string().
 
 -define(LN(L), is_integer(L)).
 -define(COL(C), (is_integer(C) andalso C >= 1)).
