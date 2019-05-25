@@ -142,22 +142,6 @@
                               {{uri_string, [is_host, is_path, parse], 1}, otpbp_uri_string},
                               {{zlib, [compress, gzip, zip], 2}, otpbp_zlib}]).
 
--ifdef(buggy__revert_implicit_fun_1a).
--ifndef(buggy__revert_implicit_fun).
--define(buggy__revert_implicit_fun, true).
--endif.
--endif.
--ifdef(buggy__revert_implicit_fun_1m).
--ifndef(buggy__revert_implicit_fun).
--define(buggy__revert_implicit_fun, true).
--endif.
--endif.
-
--ifdef(buggy__revert_implicit_fun).
--import(otpbp_erl_syntax, [revert/1]).
--else.
--import(erl_syntax, [revert/1]).
--endif.
 -import(erl_syntax, [copy_pos/2]).
 -import(lists, [foldl/3]).
 -ifdef(HAVE_maps__find_2).
@@ -261,7 +245,7 @@ transform_function(Tree, P) ->
                                         N -> {N, true}
                                     end
                                 end, false, Tree) of
-        {T, true} -> revert(T);
+        {T, true} -> erl_syntax:revert(T);
         _ -> Tree
     end.
 
