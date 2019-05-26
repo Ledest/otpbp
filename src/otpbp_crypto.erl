@@ -24,12 +24,6 @@
 -ifndef(HAVE_crypto__rsa_verify_4).
 -export([rsa_verify/4]).
 -endif.
--ifndef(HAVE_crypto__sign_4).
--export([sign/4]).
--endif.
--ifndef(HAVE_crypto__verify_5).
--export([verify/5]).
--endif.
 
 -ifndef(HAVE_crypto__sha224_1).
 -export([sha224/1]).
@@ -82,13 +76,6 @@
 -export([sha512_mac/3]).
 -endif.
 
--ifndef(HAVE_crypto__hmac_3).
--export([hmac/3]).
--endif.
--ifndef(HAVE_crypto__hmac_4).
--export([hmac/4]).
--endif.
-
 -ifndef(HAVE_crypto__supports_1).
 -export([supports/1]).
 -endif.
@@ -116,14 +103,6 @@ rsa_verify(Data, Signature, Key) -> crypto:verify(rsa, sha, Data, Signature, Key
 -endif.
 -ifndef(HAVE_crypto__rsa_verify_4).
 rsa_verify(Type, Data, Signature, Key) -> crypto:verify(rsa, Type, Data, Signature, Key).
--endif.
--ifndef(HAVE_crypto__sign_4).
-sign(dss, Type, Data, Key) -> crypto:dss_sign(Type, Data, Key);
-sign(rsa, Type, Data, Key) -> crypto:rsa_sign(Type, Data, Key).
--endif.
--ifndef(HAVE_crypto__verify_5).
-verify(dss, Type, Data, Signature, Key) -> crypto:dss_verify(Type, Data, Signature, Key);
-verify(rsa, Type, Data, Signature, Key) -> crypto:rsa_verify(Type, Data, Signature, Key).
 -endif.
 
 -ifndef(HAVE_crypto__sha224_1).
@@ -175,25 +154,6 @@ sha384_init() -> crypto:hash_init(sha384).
 -endif.
 -ifndef(HAVE_crypto__sha512_init_0).
 sha512_init() -> crypto:hash_init(sha512).
--endif.
-
--ifndef(HAVE_crypto__hmac_3).
-hmac(md5, Key, Data) -> crypto:md5_mac(Key, Data);
-hmac(sha, Key, Data) -> crypto:sha_mac(Key, Data);
-hmac(sha224, Key, Data) -> crypto:sha224_mac(Key, Data);
-hmac(sha256, Key, Data) -> crypto:sha256_mac(Key, Data);
-hmac(sha384, Key, Data) -> crypto:sha384_mac(Key, Data);
-hmac(sha512, Key, Data) -> crypto:sha512_mac(Key, Data).
--endif.
-
--ifndef(HAVE_crypto__hmac_4).
-hmac(md5, Key, Data, 16) -> crypto:md5_mac(Key, Data);
-hmac(md5, Key, Data, 12) -> crypto:md5_mac_96(Key, Data);
-hmac(sha, Key, Data, Size) -> crypto:sha_mac(Key, Data, Size);
-hmac(sha224, Key, Data, Size) -> crypto:sha224_mac(Key, Data, Size);
-hmac(sha256, Key, Data, Size) -> crypto:sha256_mac(Key, Data, Size);
-hmac(sha384, Key, Data, Size) -> crypto:sha384_mac(Key, Data, Size);
-hmac(sha512, Key, Data, Size) -> crypto:sha512_mac(Key, Data, Size).
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).

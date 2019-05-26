@@ -18,9 +18,6 @@
 -ifndef(HAVE_erl_scan__text_1).
 -export([text/1]).
 -endif.
--ifndef(HAVE_erl_scan__continuation_location_1).
--export([continuation_location/1]).
--endif.
 
 -ifndef(HAVE_erl_scan__category_1).
 category(Token) -> proplists:get_value(category, erl_scan:token_info(Token)).
@@ -44,9 +41,4 @@ symbol(Token) -> proplists:get_value(symbol, erl_scan:token_info(Token)).
 
 -ifndef(HAVE_erl_scan__text_1).
 text(Token) -> proplists:get_value(text, erl_scan:token_info(Token)).
--endif.
-
--ifndef(HAVE_erl_scan__continuation_location_1).
-continuation_location({erl_scan_continuation, _, no_col, _, Line, _, _, _}) -> Line;
-continuation_location({erl_scan_continuation, _, Col, _, Line, _, _, _}) -> {Line,Col}.
 -endif.

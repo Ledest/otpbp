@@ -18,15 +18,6 @@
 -ifndef(HAVE_lib__progname_0).
 -export([progname/0]).
 -endif.
--ifndef(HAVE_lib__format_call_5).
--export([format_call/5]).
--endif.
--ifndef(HAVE_lib__format_exception_7).
--export([format_exception/7]).
--endif.
--ifndef(HAVE_lib__format_stacktrace_5).
--export([format_stacktrace/5]).
--endif.
 
 -ifndef(HAVE_lib__nonl_1).
 nonl([$\n|T]) -> nonl(T);
@@ -64,32 +55,4 @@ progname() ->
         {ok, [[Prog]]} -> list_to_atom(Prog);
         _ -> no_prog_name
     end.
--endif.
-
--ifndef(HAVE_lib__format_call_5).
--ifdef(HAVE_erl_error__format_call_5).
-format_call(I, ForMForFun, As, FormatFun, Encoding) -> erl_error:format_call(I, ForMForFun, As, FormatFun, Encoding).
--else.
-format_call(I, ForMForFun, As, FormatFun, latin1) -> lib:format_call(I, ForMForFun, As, FormatFun).
--endif.
--endif.
-
--ifndef(HAVE_lib__format_exception_7).
--ifdef(HAVE_erl_error__format_exception_7).
-format_exception(I, Class, Reason, StackTrace, StackFun, FormatFun, Encoding) ->
-    erl_error:format_exception(I, Class, Reason, StackTrace, StackFun, FormatFun, Encoding).
--else.
-format_exception(I, Class, Reason, StackTrace, StackFun, FormatFun, latin1) ->
-    lib:format_exception(I, Class, Reason, StackTrace, StackFun, FormatFun).
--endif.
--endif.
-
--ifndef(HAVE_lib__format_stacktrace_5).
--ifdef(HAVE_erl_error__format_stacktrace_5).
-format_stacktrace(I, StackTrace, StackFun, FormatFun, Encoding) ->
-    erl_error:format_stacktrace(I, StackTrace, StackFun, FormatFun, Encoding).
--else.
-format_stacktrace(I, StackTrace, StackFun, FormatFun, latin1) ->
-    lib:format_stacktrace(I, StackTrace, StackFun, FormatFun).
--endif.
 -endif.

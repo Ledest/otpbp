@@ -48,6 +48,3 @@ lists_test() ->
     ?assertEqual(lists:droplast([1]), []),
     ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, []), false),
     ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, [1,2,3,4,5,6,7,8]), {value, 2}).
-
-edlin_test() ->
-    ?assertEqual(edlin:current_chars({line, 1, {"abcd", "xy"}, test}), "dcbaxy").
