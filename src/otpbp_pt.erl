@@ -94,7 +94,7 @@
                               {{io_lib, latin1_char_list, 1}, {io_lib, char_list}},
                               {{io_lib, printable_latin1_list, 1}, {io_lib, printable_list}},
                               {{io_lib, [write_char_as_latin1, write_latin1_char], 1}, {io_lib, write_char}},
-                              {{io_lib, write_latin1_string, 1}, {io_lib, write_string}},
+                              {{io_lib, write_latin1_string, [1, 2]}, {io_lib, write_string}},
                               {{io_lib, write_string_as_latin1, [1, 2]}, {io_lib, write_string}},
                               {{io_lib, limit_term, 2}, otpbp_io_lib},
                               {{lib, [flush_receive, progname], 0}, otpbp_lib},
