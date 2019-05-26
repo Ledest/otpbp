@@ -48,6 +48,8 @@
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
                               {{crypto, hmac, [3, 4]}, otpbp_crypto},
+                              {{crypto, sign, 4}, otpbp_crypto},
+                              {{crypto, verify, 5}, otpbp_crypto},
                               {{ct, get_progname, 0}, otpbp_ct},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{dict, take, 2}, otpbp_dict},
