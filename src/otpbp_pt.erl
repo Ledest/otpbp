@@ -65,6 +65,7 @@
                               {{erl_eval, subst_values_for_vars, 2}, lib},
                               {{erl_scan, [category, column, line, location, symbol, text, continuation_location], 1},
                                otpbp_erl_scan},
+                              {{erl_syntax, [char_literal, record_access, string_literal], 2}, otpbp_erl_syntax},
                               {{error_handler, raise_undef_exception, 3}, otpbp_error_handler},
                               {{error_logger, get_format_depth, 0}, otpbp_error_logger},
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
