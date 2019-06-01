@@ -5,8 +5,12 @@ deps/*
 *.swp
 *.state
 /ebin
+/priv
 /doc
 /.eunit
+/compile_commands.json
+/c_src/*.d
+/c_src/*.o
 /src/uc_spec/*.erl
 .project
 .kateproject
