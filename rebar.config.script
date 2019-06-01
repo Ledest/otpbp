@@ -34,6 +34,16 @@ Funs = [{binary_to_integer, 2},
         {application, ensure_all_started, 1},
         {application, ensure_all_started, 2},
         {application, get_env, 3},
+        {atomics, add, 3},
+        {atomics, add_get, 3},
+        {atomics, compare_exchange, 4},
+        {atomics, exchange, 3},
+        {atomics, get, 2},
+        {atomics, info, 1},
+        {atomics, new, 2},
+        {atomics, put, 3},
+        {atomics, sub, 3},
+        {atomics, sub_get, 3},
         {calendar, system_time_to_local_time, 2},
         {calendar, system_time_to_universal_time, 2},
         {code, modified_modules, 0},
@@ -199,7 +209,7 @@ lists:keystore(erl_opts, 1, CONFIG,
                 end ++
                 case lists:keymember(md5, 1, erlang:get_module_info(erlang)) of
                     true -> [{d, 'HAVE_erlang__get_module_info__md5'}];
-                    _false -> []
+                    _ -> []
                 end ++
                 case erl_syntax:revert({tree, implicit_fun, {attr, 0, [], none},
                                         {remote, 0, {var, 0, 'M'},
@@ -228,6 +238,10 @@ lists:keystore(erl_opts, 1, CONFIG,
                                                                                {F, A} -> [erlang, F, A]
                                                                            end)))}
                           end, lists:filter(Check, BIFs ++ Funs))}) ++
+case erlang:is_builtin(atomics, info, 1) of
+    true -> [{port_sources, []}];
+    _ -> []
+end ++
 case string:to_integer(erlang:system_info(otp_release)) of
     {R, _} when is_integer(R), R >= 20 -> [];
     _ -> [{pre_hooks, [{compile, "make -s -C src/uc_spec unicode_util.erl"}]},
