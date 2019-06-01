@@ -156,7 +156,7 @@ info(_Ref) -> erlang:nif_error(undef).
 -spec info(Ref::atomics_ref()) -> [{size|max|min|memory, integer()}].
 info(Ref) -> maps:from_list(info_1(Ref)).
 
--spec info(Ref::atomics_ref()) -> [{size|max|min|memory, integer()}].
+-spec info_1(Ref::atomics_ref()) -> [{size|max|min|memory, integer()}].
 info_1(_Ref) -> erlang:nif_error(undef).
 -endif.
 -endif.
