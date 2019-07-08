@@ -204,6 +204,9 @@ without(Ks, M) -> lists:foldl(fun dict:erase/2, M, Ks).
                 otp_release = otp_release() :: non_neg_integer(),
                 erts_version = erts_version() :: [non_neg_integer(),...],
                 funs,
+                function = sets:new() :: sets:set(),
+                behaviour = sets:new() :: sets:set(),
+                export = sets:new() :: sets:set(),
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
@@ -212,21 +215,28 @@ parse_transform(Forms, Options) ->
         true -> Forms;
         _ -> try erl_syntax_lib:analyze_forms(Forms) of
                  AF ->
-                     {NF, _} = lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, erl_syntax:type(Tree)) end,
-                                              #param{options = Options,
-                                                     verbose = proplists:get_bool(verbose, Options),
-                                                     funs = foldl(fun({M, Fs}, IA) ->
-                                                                      foldl(fun(FA, IAM) ->
-                                                                                case find({M, FA}, TL) of
-                                                                                    {ok, V} -> put(FA, V, IAM);
-                                                                                    _ -> IAM
-                                                                                end
-                                                                             end, IA, Fs)
-                                                                  end,
-                                                                  without(get_no_auto_import(AF), TL),
-                                                                  proplists:get_value(imports, AF, []))},
-                                              Forms),
-                     NF
+                     {NF, _} = lists:foldl(fun(Tree, {A, P}) ->
+                                               case transform(Tree, P, erl_syntax:type(Tree)) of
+                                                   {[], NP} -> {A, NP};
+                                                   {[_|_] = Ts, NP} -> {lists:reverse(Ts, A), NP};
+                                                   {T, NP} -> {[T|A], NP}
+                                               end
+                                           end,
+                                           {[],
+                                            #param{options = Options,
+                                                   verbose = proplists:get_bool(verbose, Options),
+                                                   funs = foldl(fun({M, Fs}, IA) ->
+                                                                    foldl(fun(FA, IAM) ->
+                                                                              case find({M, FA}, TL) of
+                                                                                  {ok, V} -> put(FA, V, IAM);
+                                                                                  _ -> IAM
+                                                                              end
+                                                                           end, IA, Fs)
+                                                                end,
+                                                                without(get_no_auto_import(AF), TL),
+                                                                proplists:get_value(imports, AF, []))}},
+                                            Forms),
+                     lists:reverse(NF)
             catch
                 C:E ->
                     io:fwrite(standard_error,
@@ -241,8 +251,10 @@ get_no_auto_import(AF) ->
 
 -compile({inline, [get_no_auto_import/1, transform/3]}).
 
-transform(Tree, P, function) -> {transform_function(Tree, P), P};
+transform(Tree, #param{function = F} = P, function) ->
+    {transform_function(Tree, P), P#param{function = sets:add_element(erl_syntax_lib:analyze_function(Tree), F)}};
 transform(Tree, P, attribute) -> {Tree, transform_attribute(Tree, P)};
+transform(Tree, P, eof_marker) -> transform_eof(Tree, P);
 transform(Tree, P, _) -> {Tree, P}.
 
 transform_function(Tree, P) ->
@@ -262,7 +274,25 @@ transform_function(Tree, P) ->
 transform_attribute(Tree, P) ->
     case erl_syntax_lib:analyze_attribute(Tree) of
         {file, {F, _}} -> P#param{file = F};
+        {A, {A, B}} when A =:= behaviour; A =:= behavior -> P#param{behaviour = sets:add_element(B, P#param.behaviour)};
         _ -> P
+    end.
+
+transform_eof(Tree, #param{behaviour = B} = P) ->
+    case sets:is_element(gen_server, B) of
+        true ->
+            io:fwrite("function: ~p~n", [sets:to_list(P#param.function)]),
+            case sets:is_element({terminate, 2}, P#param.function) of
+                true -> {Tree, P};
+                _false ->
+                    {[{attribute,6,export,[{terminate,2}]},
+                      revert(erl_syntax:function(erl_syntax:atom(terminate),
+                                                 [erl_syntax:clause(lists:duplicate(2, erl_syntax:underscore()), [],
+                                                  [erl_syntax:atom(ok)])])),
+                      Tree],
+                     P#param{export = set}}
+            end;
+        _false -> {Tree, P}
     end.
 
 -compile({inline, [transform_function/2, transform_attribute/2]}).
