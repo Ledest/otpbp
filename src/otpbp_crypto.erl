@@ -89,6 +89,10 @@
 -export([hmac/4]).
 -endif.
 
+-ifndef(HAVE_crypto__supports_1).
+-export([supports/1]).
+-endif.
+
 -ifndef(HAVE_crypto__dss_sign_2).
 dss_sign(Data, Key) -> crypto:sign(dss, sha, Data, Key).
 -endif.
@@ -190,4 +194,12 @@ hmac(sha224, Key, Data, Size) -> crypto:sha224_mac(Key, Data, Size);
 hmac(sha256, Key, Data, Size) -> crypto:sha256_mac(Key, Data, Size);
 hmac(sha384, Key, Data, Size) -> crypto:sha384_mac(Key, Data, Size);
 hmac(sha512, Key, Data, Size) -> crypto:sha512_mac(Key, Data, Size).
+-endif.
+
+-ifndef(HAVE_crypto__supports_1).
+supports(T) when T =:= hashs; T =:= ciphers; T =:= public_keys; T =:= macs; T =:= curves; T =:= rsa_opts ->
+    case lists:keyfind(T, 1, crypto:supports()) of
+        {_, Support} -> Support;
+        _ -> []
+    end.
 -endif.
