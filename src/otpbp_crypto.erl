@@ -76,6 +76,10 @@
 -export([sha512_mac/3]).
 -endif.
 
+-ifndef(HAVE_crypto__rand_seed_1).
+-export([rand_seed/1]).
+-endif.
+
 -ifndef(HAVE_crypto__supports_1).
 -export([supports/1]).
 -endif.
@@ -154,6 +158,12 @@ sha384_init() -> crypto:hash_init(sha384).
 -endif.
 -ifndef(HAVE_crypto__sha512_init_0).
 sha512_init() -> crypto:hash_init(sha512).
+-endif.
+
+-ifndef(HAVE_crypto__rand_seed_1).
+rand_seed(Seed) ->
+    is_binary(Seed) orelse error(badarg, [Seed]),
+    ok.
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
