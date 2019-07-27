@@ -51,7 +51,7 @@
                               {{crypto, hmac, [3, 4]}, otpbp_crypto},
                               {{crypto, sign, 4}, otpbp_crypto},
                               {{crypto, verify, 5}, otpbp_crypto},
-                              {{ct, get_progname, 0}, otpbp_ct},
+                              {{ct, [get_event_mgr_ref, get_progname], 0}, otpbp_ct},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{dict, take, 2}, otpbp_dict},
                               {{edlin, current_chars, 1}, otpbp_edlin},
