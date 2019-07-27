@@ -82,11 +82,8 @@
 -export([sha512_mac/3]).
 -endif.
 
--ifndef(HAVE_crypto__hmac_3).
--export([hmac/3]).
--endif.
--ifndef(HAVE_crypto__hmac_4).
--export([hmac/4]).
+-ifndef(HAVE_crypto__rand_seed_1).
+-export([rand_seed/1]).
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
@@ -177,23 +174,10 @@ sha384_init() -> crypto:hash_init(sha384).
 sha512_init() -> crypto:hash_init(sha512).
 -endif.
 
--ifndef(HAVE_crypto__hmac_3).
-hmac(md5, Key, Data) -> crypto:md5_mac(Key, Data);
-hmac(sha, Key, Data) -> crypto:sha_mac(Key, Data);
-hmac(sha224, Key, Data) -> crypto:sha224_mac(Key, Data);
-hmac(sha256, Key, Data) -> crypto:sha256_mac(Key, Data);
-hmac(sha384, Key, Data) -> crypto:sha384_mac(Key, Data);
-hmac(sha512, Key, Data) -> crypto:sha512_mac(Key, Data).
--endif.
-
--ifndef(HAVE_crypto__hmac_4).
-hmac(md5, Key, Data, 16) -> crypto:md5_mac(Key, Data);
-hmac(md5, Key, Data, 12) -> crypto:md5_mac_96(Key, Data);
-hmac(sha, Key, Data, Size) -> crypto:sha_mac(Key, Data, Size);
-hmac(sha224, Key, Data, Size) -> crypto:sha224_mac(Key, Data, Size);
-hmac(sha256, Key, Data, Size) -> crypto:sha256_mac(Key, Data, Size);
-hmac(sha384, Key, Data, Size) -> crypto:sha384_mac(Key, Data, Size);
-hmac(sha512, Key, Data, Size) -> crypto:sha512_mac(Key, Data, Size).
+-ifndef(HAVE_crypto__rand_seed_1).
+rand_seed(Seed) ->
+    is_binary(Seed) orelse error(badarg, [Seed]),
+    ok.
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
