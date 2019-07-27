@@ -42,7 +42,7 @@
                               {{crypto, [sha224_mac, sha256_mac, sha384_mac, sha512_mac], 2}, otpbp_crypto},
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
-                              {{ct, get_progname, 0}, otpbp_ct},
+                              {{ct, [get_event_mgr_ref, get_progname], 0}, otpbp_ct},
                               {{dict, is_empty, 1}, otpbp_dict},
                               {{dict, take, 2}, otpbp_dict},
                               {{epp, parse_file, 2}, otpbp_epp},
