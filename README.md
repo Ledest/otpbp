@@ -4,6 +4,6 @@ OTP Backports (otpbp)
 
 Parse transformer that implements some new OTP functions in old Erlang/OTP releases.
 
-Current version of Erlang/OTP: 21.
+Current version of Erlang/OTP: 22.
 
-Supported versions of Erlang/OTP: R15, R16, 17, 18, 19, 20.
+Supported versions of Erlang/OTP: R15, R16, 17, 18, 19, 20, 21, 22.
