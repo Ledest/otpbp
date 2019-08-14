@@ -119,11 +119,9 @@ to_list(Map) ->
 -endif.
 
 -ifndef(HAVE_maps__is_key_2).
-is_key(Key, Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:is_key(Key, Map);
-        _ -> error({badmap, Map}, [Key, Map])
-    end.
+is_key(K, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
+    dict:is_key(K, M).
 -endif.
 
 -ifndef(HAVE_maps__find_2).
