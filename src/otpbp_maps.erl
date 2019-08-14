@@ -98,11 +98,9 @@
 -endif.
 
 -ifndef(HAVE_maps__size_1).
-size(Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:size(Map);
-        _ -> error({badmap, Map}, [Map])
-    end.
+size(M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [M]),
+    dict:size(M).
 -endif.
 
 -ifndef(HAVE_maps__from_list_1).
