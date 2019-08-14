@@ -164,11 +164,9 @@ get(K, M, Default) ->
 -endif.
 
 -ifndef(HAVE_maps__remove_2).
-remove(Key, Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:erase(Key, Map);
-        _ -> error({badmap, Map}, [Key, Map])
-    end.
+remove(K, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
+    dict:erase(K, M).
 -endif.
 
 -ifndef(HAVE_maps__map_2).
