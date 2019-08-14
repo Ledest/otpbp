@@ -308,28 +308,26 @@ update_with(Key, Fun, Map) ->
 
 -ifndef(HAVE_maps__take_2).
 -ifdef(HAVE_MAP_SYNTAX_6).
-take(Key, Map) when is_map(Map) ->
-    case maps:find(Map) of
-        {ok, Value} -> {Value, maps:remove(Key, Map)};
+take(K, M) ->
+    is_map(M) orelse error({badmap, M}, [K, M]),
+    case maps:find(M) of
+        {ok, V} -> {V, maps:remove(K, M)};
         error -> error
-    end;
-take(Key, Map) -> error({badmap, Map}, [Key, Map]).
--else.
--ifdef(HAVE_maps__find_2).
-take(Key, Map) ->
-    case Map of
-        #{Key := Value} -> {Value, maps:remove(Key, Map)};
-        #{} -> error;
-        _ -> error({badmap, Map}, [Key, Map])
     end.
 -else.
-take(Key, Map) ->
-    case ?IS_DICT(Map) of
-        true -> case dict:find(Key, Map) of
-                    {ok, Value} -> {Value, dict:erase(Key, Map)};
-                    error -> error
-                end;
-        _ -> error({badmap, Map}, [Key, Map])
+-ifdef(HAVE_maps__find_2).
+take(K, M) ->
+    case M of
+        #{K := V} -> {V, maps:remove(K, M)};
+        #{} -> error;
+        _ -> error({badmap, M}, [K, M])
+    end.
+-else.
+take(K, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
+    case dict:find(K, M) of
+        {ok, V} -> {V, dict:erase(K, M)};
+        error -> error
     end.
 -endif.
 -endif.
