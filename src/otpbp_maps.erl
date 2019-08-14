@@ -127,11 +127,9 @@ is_key(Key, Map) ->
 -endif.
 
 -ifndef(HAVE_maps__find_2).
-find(Key, Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:find(Key, Map);
-        _ -> error({badmap, Map}, [Key, Map])
-    end.
+find(K, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
+    dict:find(K, M).
 -endif.
 
 -ifndef(HAVE_maps__get_2).
