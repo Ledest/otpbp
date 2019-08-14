@@ -272,19 +272,15 @@ without(Ks, Map) ->
 
 -ifndef(HAVE_maps__update_with_4).
 -ifdef(HAVE_maps__update_3).
-update_with(Key, Fun, Init, Map) when is_map(Map) ->
-    if
-        is_function(Fun, 1) -> ?UPDATE_WITH(Key, Fun, Init, Map, Value);
-        true -> error(badarg, [Key, Fun, Init, Map])
-    end;
-update_with(Key, Fun, Init, Map) -> error({badmap, Map}, [Key, Fun, Init, Map]).
+update_with(K, Fun, Init, M) ->
+    is_map(M) orelse error({badmap, M}, [K, Fun, Init, M]),
+    is_function(Fun, 1) orelse error(badarg, [K, Fun, Init, M]),
+    ?UPDATE_WITH(K, Fun, Init, M, V).
 -else.
-update_with(Key, Fun, Init, Map) ->
-    case ?IS_DICT(Map) of
-        true when is_function(Fun, 1) -> dict:update(Key, Fun, Init, Map);
-        true -> error(badarg, [Key, Fun, Init, Map]);
-        _ -> error({badmap, Map})
-    end.
+update_with(K, Fun, Init, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [K, Fun, Init, M]),
+    is_function(Fun, 1) orelse error(badarg, [K, Fun, Init, M]),
+    dict:update(K, Fun, Init, M).
 -endif.
 -endif.
 
