@@ -106,8 +106,9 @@ size(Map) ->
 -endif.
 
 -ifndef(HAVE_maps__from_list_1).
-from_list(List) when is_list(List) -> dict:from_list(List);
-from_list(List) -> error(badarg, [List]).
+from_list(L) ->
+    is_list(L) orelse error(badarg, [L]),
+    dict:from_list(L).
 -endif.
 
 -ifndef(HAVE_maps__to_list_1).
