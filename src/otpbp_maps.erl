@@ -281,6 +281,7 @@ update_with(K, Fun, M) ->
 update_with(K, Fun, M) ->
     ?IS_DICT(M) orelse error({badmap, M}, [K, Fun, M]),
     is_function(Fun, 1) orelse error(badarg, [K, Fun, M]),
+    dict:is_key(K, M) orelse error({badkey, K}, [K, Fun, M]),
     dict:update(K, Fun, M).
 -endif.
 -endif.
