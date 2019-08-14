@@ -262,12 +262,10 @@ with(Ks, M) ->
 -endif.
 
 -ifndef(HAVE_maps__without_2).
-without(Ks, Map) ->
-    case ?IS_DICT(Map) of
-        true when is_list(Ks) -> lists:foldl(fun dict:erase/2, Map, Ks);
-        true -> error(badarg, [Ks, Map]);
-        _ -> error({badmap, Map}, [Ks, Map])
-    end.
+without(Ks, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [Ks, M]),
+    is_list(Ks) orelse error(badarg, [Ks, M]),
+    lists:foldl(fun dict:erase/2, M, Ks).
 -endif.
 
 -ifndef(HAVE_maps__update_with_4).
