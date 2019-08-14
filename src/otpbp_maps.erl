@@ -146,14 +146,21 @@ get(Key, Map) ->
 -endif.
 
 -ifndef(HAVE_maps__get_3).
-get(Key, Map, Default) ->
-    case ?IS_DICT(Map) of
-        true -> case dict:find(Key, Map) of
-                    {ok, V} -> V;
-                    error -> Default
-                end;
-        _ -> error({badmap, Map}, [Key, Map, Default])
+-ifndef(HAVE_maps__find_2).
+get(K, M, Default) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [K, M, Default]),
+    case dict:find(K, M) of
+        {ok, V} -> V;
+        _error -> Default
     end.
+-else.
+get(K, M, Default) ->
+    is_map(M) orelse error({badmap, M}, [K, M, Default]),
+    case maps:find(K, M) of
+        {ok, V} -> V;
+        _error -> Default
+    end.
+-endif.
 -endif.
 
 -ifndef(HAVE_maps__remove_2).
@@ -184,24 +191,21 @@ fold(Fun, Init, Map) ->
 
 -ifndef(HAVE_maps__filter_2).
 -ifdef(HAVE_maps__fold_3).
-filter(Fun, Map) when is_map(Map) ->
-    if
-        is_function(Fun, 2) -> maps:fold(fun(Key, Value, M) ->
-                                             case Fun(Key, Value) of
-                                                 true -> ?PUT(Key, Value, M);
-                                                 false -> M
-                                             end
-                                         end, #{}, Map);
-        true -> error(badarg, [Fun, Map])
-    end;
-filter(Fun, Map) -> error({badmap, Map}, [Fun, Map]).
+filter(Fun, M) ->
+    is_map(M) orelse error({badmap, M}, [Fun, M]),
+    is_function(Fun, 2) orelse error(badarg, [Fun, M]),
+    maps:without(maps:fold(fun(K, V, A) ->
+                               case Fun(K, V) of
+                                   false -> [K|A];
+                                   true -> A
+                               end
+                           end, [], M),
+                 M).
 -else.
-filter(Fun, Map) ->
-    case ?IS_DICT(Map) of
-        true when is_function(Fun, 1) -> dict:filter(Fun, Map);
-        true -> error(badarg, [Fun, Map]);
-        _ -> error({badmap, Map}, [Fun, Map])
-    end.
+filter(Fun, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [Fun, M]),
+    is_function(Fun, 2) orelse error(badarg, [Fun, M]),
+    dict:filter(Fun, M).
 -endif.
 -endif.
 
