@@ -172,21 +172,17 @@ remove(Key, Map) ->
 -endif.
 
 -ifndef(HAVE_maps__map_2).
-map(Fun, Map) ->
-    case ?IS_DICT(Map) of
-        true when is_function(Fun, 1) -> dict:map(Fun, Map);
-        true -> error(badarg, [Fun, Map]);
-        _ -> error({badmap, Map}, [Fun, Map])
-    end.
+map(Fun, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [Fun, M]),
+    is_function(Fun, 2) orelse error(badarg, [Fun, M]),
+    dict:map(Fun, M).
 -endif.
 
 -ifndef(HAVE_maps__fold_3).
-fold(Fun, Init, Map) ->
-    case ?IS_DICT(Map) of
-        true when is_function(Fun, 2) -> dict:fold(Fun, Init, Map);
-        true -> error(badarg, [Fun, Init, Map]);
-        _ -> error({badmap, Map}, [Fun, Init, Map])
-    end.
+fold(Fun, Init, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [Fun, Init, M]),
+    is_function(Fun, 3) orelse error(badarg, [Fun, Init, M]),
+    dict:fold(Fun, Init, M).
 -endif.
 
 -ifndef(HAVE_maps__filter_2).
@@ -210,49 +206,35 @@ filter(Fun, M) ->
 -endif.
 
 -ifndef(HAVE_maps__merge_2).
-merge(Map1, Map2) ->
-    case ?IS_DICT(Map1) of
-        true -> case ?IS_DICT(Map2) of
-                    true -> dict:merge(fun(_, _, V2) -> V2 end, Map1, Map2);
-                    _ -> error({badmap, Map2}, [Map1, Map2])
-                end;
-        _ -> error({badmap, Map1}, [Map1, Map2])
-    end.
+merge(M1, M2) ->
+    ?IS_DICT(M1) orelse error({badmap, M1}, [M1, M2]),
+    ?IS_DICT(M2) orelse error({badmap, M2}, [M1, M2]),
+    dict:merge(fun(_, _, V2) -> V2 end, M1, M2).
 -endif.
 
 -ifndef(HAVE_maps__put_3).
-put(Key, Value, Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:store(Key, Value, Map);
-        _ -> error({badmap, Map})
-    end.
+put(K, V, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}),
+    dict:store(K, V, M).
 -endif.
 
 -ifndef(HAVE_maps__update_3).
-update(Key, Value, Map) ->
-    case ?IS_DICT(Map) of
-        true -> case dict:is_key(Key, Map) of
-                    true -> dict:store(Key, Value, Map);
-                    _ -> error({badkey, Key})
-                end;
-        _ -> error({badmap, Map})
-    end.
+update(K, V, M) ->
+    ?IS_DICT(M) orelse error({badmap, M}),
+    dict:is_key(K, M) orelse error({badkey, K}),
+    dict:store(K, V, M).
 -endif.
 
 -ifndef(HAVE_maps__keys_1).
-keys(Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:fetch_keys(Map);
-        _ -> error({badmap, Map}, [Map])
-    end.
+keys(M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [M]),
+    dict:fetch_keys(M).
 -endif.
 
 -ifndef(HAVE_maps__values_1).
-values(Map) ->
-    case ?IS_DICT(Map) of
-        true -> [V || {_, V} <- dict:to_list(Map)];
-        _ -> error({badmap, Map}, [Map])
-    end.
+values(M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [M]),
+    [V || {_, V} <- dict:to_list(M)].
 -endif.
 
 -ifndef(HAVE_maps__with_2).
