@@ -252,17 +252,27 @@ values(Map) ->
 -endif.
 
 -ifndef(HAVE_maps__with_2).
-with(Ks, Map) ->
-    case ?IS_DICT(Map) of
-        true when is_list(Ks) -> dict:from_list(lists:foldl(fun(K, A) ->
-                                                                case dict:find(K, Map) of
-                                                                    {ok, V} -> [{K, V}|A];
-                                                                    error -> A
-                                                                end
-                                                            end, [], Ks));
-        true -> error(badarg, [Ks, Map]);
-        _ -> error({badmap, Map}, [Ks, Map])
-    end.
+-ifndef(HAVE_maps__find_2).
+with(Ks, M) ->
+    is_list(Ks) orelse error(badarg, [Ks, M]),
+    ?IS_DICT(M) orelse  error({badmap, M}, [Ks, M]),
+    dict:from_list(lists:foldl(fun(K, A) ->
+                                   case dict:find(K, M) of
+                                       {ok, V} -> [{K, V}|A];
+                                       _error -> A
+                                   end
+                               end, [], Ks)).
+-else.
+with(Ks, M) ->
+    is_map(M) orelse error({badmap, M}, [Ks, M]),
+    is_list(Ks) orelse error(badarg, [Ks, M]),
+    maps:from_list(lists:foldl(fun(K, A) ->
+                                   case maps:find(K, M) of
+                                       {ok, V} -> [{K, V}|A];
+                                       _error -> A
+                                   end
+                               end, [], Ks)).
+-endif.
 -endif.
 
 -ifndef(HAVE_maps__without_2).
