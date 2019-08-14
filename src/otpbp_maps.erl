@@ -111,11 +111,9 @@ from_list(List) -> error(badarg, [List]).
 -endif.
 
 -ifndef(HAVE_maps__to_list_1).
-to_list(Map) ->
-    case ?IS_DICT(Map) of
-        true -> dict:to_list(Map);
-        _ -> error({badmap, Map}, [Map])
-    end.
+to_list(M) ->
+    ?IS_DICT(M) orelse error({badmap, M}, [M]),
+    dict:to_list(M).
 -endif.
 
 -ifndef(HAVE_maps__is_key_2).
