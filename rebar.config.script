@@ -5,7 +5,10 @@ Check = fun({F, A}) when is_atom(F), is_integer(A), A >= 0 ->
             erlang:is_builtin(M, F, A) orelse (catch lists:member({F, A}, M:module_info(exports))) =:= true
         end,
 
-BIFs = [{ceil, 1},
+BIFs = [{atom_to_binary, 1},
+        {binary_to_atom, 1},
+        {binary_to_existing_atom, 1},
+        {ceil, 1},
         {floor, 1},
         {get_keys, 0},
         {is_map, 1},

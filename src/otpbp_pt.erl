@@ -26,6 +26,7 @@
                               {{map_get, 2}, {maps, get}},
                               {{map_size, 1}, {dict, size}},
                               {{[ceil, floor], 1}, otpbp_erlang},
+                              {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
                               {{erlang, convert_time_unit, 3}, otpbp_erlang},
                               {{erlang, [monotonic_time, system_time, time_offset, unique_integer], [0, 1]}, otpbp_erlang},
                               {{erlang, timestamp, 0}, os},
