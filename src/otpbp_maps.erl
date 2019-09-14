@@ -290,7 +290,7 @@ update_with(K, Fun, M) ->
 -ifdef(HAVE_MAP_SYNTAX_6).
 take(K, M) ->
     is_map(M) orelse error({badmap, M}, [K, M]),
-    case maps:find(M) of
+    case maps:find(K, M) of
         {ok, V} -> {V, maps:remove(K, M)};
         error -> error
     end.
