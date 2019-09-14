@@ -189,7 +189,7 @@ gen_static(Fd) ->
                  "    {CCC,Can,Comp} = unicode_table(Codepoint),\n"),
     io:put_chars(Fd, case erlang:system_info(otp_release) of
                          "R" ++ _ ->
-                             "    maps:from_list({ccc, CCC}, {canon, Can}, {compat, Comp}).\n\n";
+                             "    dict:from_list([{ccc, CCC}, {canon, Can}, {compat, Comp}]).\n\n";
                          _ ->
                              "    #{ccc=>CCC, canon=>Can, compat=>Comp}.\n\n"
                      end),
@@ -207,8 +207,8 @@ gen_static(Fd) ->
                  "    case case_table(Codepoint) of\n"),
     io:put_chars(Fd, case erlang:system_info(otp_release) of
                          "R" ++ _ ->
-                             "        {U,L} -> maps:from_list({upper, U}, {lower, L}, {title, U}, {fold, L});\n"
-                             "        {U,L,T,F} -> maps:from_list({upper, U}, {lower, L}, {title, T}, {fold, F})\n";
+                             "        {U,L} -> dict:from_list([{upper, U}, {lower, L}, {title, U}, {fold, L}]);\n"
+                             "        {U,L,T,F} -> dict:from_list([{upper, U}, {lower, L}, {title, T}, {fold, F}])\n";
                          _ ->
                              "        {U,L} -> #{upper=>U,lower=>L,title=>U,fold=>L};\n"
                              "        {U,L,T,F} -> #{upper=>U,lower=>L,title=>T,fold=>F}\n"
