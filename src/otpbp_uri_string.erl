@@ -36,6 +36,10 @@
 -endif.
 -endif.
 
+-ifndef(HAVE_uri_string__dissect_query_1).
+-export([dissect_query/1]).
+-endif.
+
 -define(SUB_DELIM, "!$&'()*+,;=").
 
 -ifndef(HAVE_uri_string__parse_1).
@@ -526,4 +530,71 @@ html5_byte_encode(H, _Acc) -> throw({error, invalid_input, H}).
 is_url_char(C) ->
     C =:= 16#2A orelse C =:= 16#2D orelse C =:= 16#2E orelse C =:= 16#5F orelse
     16#30 =< C andalso C =< 16#39 orelse 16#41 =< C andalso C =< 16#5A orelse 16#61 =< C andalso C =< 16#7A.
+-endif.
+
+-ifndef(HAVE_uri_string__dissect_query_1).
+dissect_query(QueryString) when QueryString =:= <<>>; QueryString =:= [] -> [];
+dissect_query(QueryString) when is_list(QueryString) ->
+    try
+        dissect_query_key(convert_to_binary(QueryString, utf8, utf8), true, [], <<>>, <<>>)
+    catch
+        throw:{error, _Atom, _RestData} = R -> R
+    end;
+dissect_query(QueryString) ->
+    try
+        dissect_query_key(QueryString, false, [], <<>>, <<>>)
+    catch
+        throw:{error, _Atom, _RestData} = R -> R
+    end.
+
+dissect_query_key(<<$=, T/binary>>, IsList, Acc, Key, Value) -> dissect_query_value(T, IsList, Acc, Key, Value);
+dissect_query_key(<<"&#", T/binary>>, IsList, Acc, Key, Value) ->
+    dissect_query_key(T, IsList, Acc, <<Key/binary, "&#">>, Value);
+dissect_query_key(<<$&, _/binary>> = T, IsList, Acc, Key, <<>>) -> dissect_query_value(T, IsList, Acc, Key, true);
+dissect_query_key(<<H, T/binary>>, IsList, Acc, Key, Value) ->
+    dissect_query_key(T, IsList, Acc, <<Key/binary, H>>, Value);
+dissect_query_key(<<>>, IsList, Acc, Key, <<>>) -> dissect_query_value(<<>>, IsList, Acc, Key, true).
+
+dissect_query_value(<<$&, T/binary>>, IsList, Acc, Key, Value) ->
+    dissect_query_key(T, IsList, [{form_urldecode(IsList, Key), form_urldecode(IsList, Value)}|Acc], <<>>, <<>>);
+dissect_query_value(<<H, T/binary>>, IsList, Acc, Key, Value) ->
+    dissect_query_value(T, IsList, Acc, Key, <<Value/binary, H>>);
+dissect_query_value(<<>>, IsList, Acc, Key, Value) ->
+    lists:reverse([{form_urldecode(IsList, Key), form_urldecode(IsList, Value)}|Acc]).
+
+-define(HEX2DEC(X),
+        if
+            (X) >= $0, (X) =< $9 -> (X) - $0;
+            (X) >= $A, (X) =< $F -> (X) - ($A + 10);
+            (X) >= $a, (X) =< $f -> (X) - ($a + 10)
+        end).
+
+%% HTML 5.2 - 4.10.21.6 URL-encoded form data - WHATWG URL (10 Jan 2018) - UTF-8
+%% HTML 5.0 - 4.10.22.6 URL-encoded form data - decoding (non UTF-8)
+form_urldecode(_, true) -> true;
+form_urldecode(true, B) -> convert_to_list(base10_decode(form_urldecode(B, <<>>)), utf8);
+form_urldecode(false, B) -> base10_decode(form_urldecode(B, <<>>));
+form_urldecode(<<>>, Acc) -> Acc;
+form_urldecode(<<$+, T/binary>>, Acc) -> form_urldecode(T, <<Acc/binary, $\s>>);
+form_urldecode(<<$%, C0, C1, T/binary>>, Acc) ->
+    case is_hex_digit(C0) andalso is_hex_digit(C1) of
+        true -> form_urldecode(T, <<Acc/binary, (?HEX2DEC(C0) * 16 + ?HEX2DEC(C1))>>);
+        false -> throw({error, invalid_percent_encoding, convert_to_list(<<$%, C0, C1, T/binary>>, utf8)})
+    end;
+form_urldecode(<<H/utf8, T/binary>>, Acc) -> form_urldecode(T, <<Acc/binary, H/utf8>>);
+form_urldecode(<<H, _/binary>>, _Acc) -> throw({error, invalid_character, [H]}).
+
+base10_decode(Cs) -> base10_decode(Cs, <<>>).
+
+base10_decode(<<>>, Acc) -> Acc;
+base10_decode(<<"&#", T/binary>>, Acc) -> base10_decode_unicode(T, Acc);
+base10_decode(<<H/utf8, T/binary>>, Acc) -> base10_decode(T, <<Acc/binary, H/utf8>>);
+base10_decode(<<H, _/binary>>, _) -> throw({error, invalid_input, [H]}).
+
+base10_decode_unicode(B, Acc) -> base10_decode_unicode(B, 0, Acc).
+
+base10_decode_unicode(<<H/utf8, T/binary>>, Codepoint, Acc) when H >= $0, H =< $9 ->
+    base10_decode_unicode(T, Codepoint * 10 + (H - $0), Acc);
+base10_decode_unicode(<<$;, T/binary>>, Codepoint, Acc) -> base10_decode(T, <<Acc/binary, Codepoint/utf8>>);
+base10_decode_unicode(<<H, _/binary>>, _, _) -> throw({error, invalid_input, [H]}).
 -endif.
