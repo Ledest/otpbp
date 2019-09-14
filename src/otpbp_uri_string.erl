@@ -1,5 +1,7 @@
 -module(otpbp_uri_string).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_uri_string__parse_1).
 -ifdef(HAVE_uri_string__is_host_1).
 -import(uri_string, [is_host/1]).
