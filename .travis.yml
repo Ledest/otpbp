@@ -12,4 +12,4 @@ otp_release:
   - 18.3
   - 17.5
   - R16B03-1
-script: rebar compile && rebar eunit
+script: rebar compile && rebar xref && rebar eunit
