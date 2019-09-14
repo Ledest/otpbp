@@ -110,6 +110,7 @@
                                otpbp_string},
                               {{string, [equal, pad, replace, take], 4}, otpbp_string},
                               {{supervisor, get_childspec, 2}, otpbp_supervisor},
+                              {{uri_string, compose_query, [1, 2]}, otpbp_uri_string},
                               {{uri_string, [is_host, is_path, parse], 1}, otpbp_uri_string},
                               {{zlib, [compress, gzip, zip], 2}, otpbp_zlib}]).
 

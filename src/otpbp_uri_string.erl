@@ -19,6 +19,23 @@
 -export([is_path/1]).
 -endif.
 
+-ifndef(HAVE_uri_string__compose_query_1).
+-export([compose_query/1]).
+-ifdef(HAVE_uri_string__compose_query_2).
+-import(uri_string, [compose_query/2]).
+-else.
+-ifndef(NEED_uri_string__compose_query_2).
+-define(NEED_uri_string__compose_query_2, true).
+-endif.
+-endif.
+-endif.
+-ifndef(HAVE_uri_string__compose_query_2).
+-export([compose_query/2]).
+-ifndef(NEED_uri_string__compose_query_2).
+-define(NEED_uri_string__compose_query_2, true).
+-endif.
+-endif.
+
 -define(SUB_DELIM, "!$&'()*+,;=").
 
 -ifndef(HAVE_uri_string__parse_1).
@@ -418,4 +435,95 @@ is_alpha(C) -> C >= $A andalso C =< $Z orelse C >= $a andalso C =< $z.
 
 -ifdef(NEED_is_digit_1).
 is_digit(C) -> C >= $0 andalso C =< $9.
+-endif.
+
+-ifndef(HAVE_uri_string__compose_query_1).
+compose_query(List) -> compose_query(List, [{encoding, utf8}]).
+-endif.
+
+-ifdef(NEED_uri_string__compose_query_2).
+compose_query([], _Options) -> [];
+compose_query(List, Options) ->
+    try
+        compose_query(List, Options, false, <<>>)
+    catch
+        throw:{error, Atom, RestData} -> {error, Atom, RestData}
+    end.
+
+compose_query([{Key, true}|Rest], Options, IsList, Acc) ->
+    compose_query(Rest, Options,
+                  IsList orelse is_list(Key),
+                  <<Acc/binary, (form_urlencode(Key, Options))/binary, (get_separator(Rest))/binary>>);
+compose_query([{Key, Value}|Rest], Options, IsList, Acc) ->
+    compose_query(Rest, Options,
+                  IsList orelse is_list(Key) orelse is_list(Value),
+                  <<Acc/binary, (form_urlencode(Key, Options))/binary, $=, (form_urlencode(Value, Options))/binary,
+                    (get_separator(Rest))/binary>>);
+compose_query([], _Options, true, Acc) -> convert_to_list(Acc, utf8);
+compose_query([], _Options, false, Acc) -> Acc.
+
+%% Returns separator to be used between key-value pairs
+get_separator([]) -> <<>>;
+get_separator(_L) -> <<"&">>.
+
+convert_to_list(Binary, InEncoding) ->
+    case unicode:characters_to_list(Binary, InEncoding) of
+        {E, _List, RestData} when E =:= error; E =:= incomplete -> throw({error, invalid_input, RestData});
+        Result -> Result
+    end.
+
+convert_to_binary(Binary, InEncoding, OutEncoding) ->
+    case unicode:characters_to_binary(Binary, InEncoding, OutEncoding) of
+        {E, _List, RestData} when E =:= error; E =:= incomplete -> throw({error, invalid_input, RestData});
+        Result -> Result
+    end.
+
+%% For each character in the entry's name and value that cannot be expressed using
+%% the selected character encoding, replace the character by a string consisting of
+%% a U+0026 AMPERSAND character (&), a "#" (U+0023) character, one or more ASCII
+%% digits representing the Unicode code point of the character in base ten, and
+%% finally a ";" (U+003B) character.
+base10_encode(Cs) -> base10_encode(Cs, <<>>).
+
+base10_encode(<<>>, Acc) -> Acc;
+base10_encode(<<H/utf8, T/binary>>, Acc) when H > 255 ->
+    base10_encode(T, <<Acc/binary, "&#", (convert_to_binary(integer_to_list(H,10), utf8, utf8))/binary, $;>>);
+base10_encode(<<H/utf8, T/binary>>, Acc) -> base10_encode(T, <<Acc/binary, H>>).
+
+%% HTML 5.2 - 4.10.21.6 URL-encoded form data - WHATWG URL (10 Jan 2018) - UTF-8
+%% HTML 5.0 - 4.10.22.6 URL-encoded form data - encoding (non UTF-8)
+form_urlencode(Cs, [{encoding, latin1}]) when is_list(Cs) ->
+    html5_byte_encode(base10_encode(convert_to_binary(Cs, utf8, utf8)));
+form_urlencode(Cs, [{encoding, latin1}]) when is_binary(Cs) -> html5_byte_encode(base10_encode(Cs));
+form_urlencode(Cs, [{encoding, Encoding}]) when is_list(Cs), Encoding =:= utf8 orelse Encoding =:= unicode ->
+    html5_byte_encode(convert_to_binary(Cs, utf8, Encoding));
+form_urlencode(Cs, [{encoding, Encoding}]) when is_binary(Cs), Encoding =:= utf8 orelse Encoding =:= unicode ->
+    html5_byte_encode(Cs);
+form_urlencode(Cs, [{encoding, Encoding}]) when is_list(Cs); is_binary(Cs) -> throw({error, invalid_encoding, Encoding});
+form_urlencode(Cs, _) -> throw({error, invalid_input, Cs}).
+
+html5_byte_encode(B) -> html5_byte_encode(B, <<>>).
+
+-define(DEC2HEX(X),
+        if
+            (X) >= 0, (X) =< 9 -> (X) + $0;
+            (X) >= 10, (X) =< 15 -> (X) + ($A - 10)
+        end).
+
+html5_byte_encode(<<>>, Acc) -> Acc;
+html5_byte_encode(<<$ , T/binary>>, Acc) -> html5_byte_encode(T, <<Acc/binary, $+>>);
+html5_byte_encode(<<H, T/binary>>, Acc) ->
+    case is_url_char(H) of
+        true -> html5_byte_encode(T, <<Acc/binary, H>>);
+        false ->
+            <<A:4, B:4>> = <<H>>,
+            html5_byte_encode(T, <<Acc/binary, $%, (?DEC2HEX(A)), (?DEC2HEX(B))>>)
+    end;
+html5_byte_encode(H, _Acc) -> throw({error, invalid_input, H}).
+
+%% Return true if input char can appear in form-urlencoded string
+%% Allowed chararacters: 0x2A, 0x2D, 0x2E, 0x30 to 0x39, 0x41 to 0x5A, 0x5F, 0x61 to 0x7A
+is_url_char(C) ->
+    C =:= 16#2A orelse C =:= 16#2D orelse C =:= 16#2E orelse C =:= 16#5F orelse
+    16#30 =< C andalso C =< 16#39 orelse 16#41 =< C andalso C =< 16#5A orelse 16#61 =< C andalso C =< 16#7A.
 -endif.
