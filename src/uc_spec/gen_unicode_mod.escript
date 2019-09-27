@@ -24,7 +24,7 @@
 -mode(compile).
 
 -record(cp, {name, class, dec, comp, cs}).
--define(MOD, "unicode_util").
+-define(MOD, "otpbp_unicode_util").
 
 main(_) ->
     %%  Parse main table
