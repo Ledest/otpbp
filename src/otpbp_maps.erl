@@ -2,59 +2,16 @@
 
 -compile([{parse_transform, otpbp_pt}]).
 
--ifndef(HAVE_maps__size_1).
--export([size/1]).
--endif.
--ifndef(HAVE_maps__from_list_1).
--export([from_list/1]).
--endif.
--ifndef(HAVE_maps__to_list_1).
--export([to_list/1]).
--endif.
 -ifndef(HAVE_maps__filter_2).
 -export([filter/2]).
 -endif.
--ifndef(HAVE_maps__map_2).
--export([map/2]).
--endif.
--ifndef(HAVE_maps__fold_3).
--export([fold/3]).
--endif.
--ifndef(HAVE_maps__is_key_2).
--export([is_key/2]).
--endif.
--ifndef(HAVE_maps__find_2).
--export([find/2]).
--endif.
--ifndef(HAVE_maps__get_2).
--export([get/2]).
--endif.
 -ifndef(HAVE_maps__get_3).
+% OTP 17.1
 -export([get/3]).
 -endif.
--ifndef(HAVE_maps__remove_2).
--export([remove/2]).
--endif.
--ifndef(HAVE_maps__merge_2).
--export([merge/2]).
--endif.
--ifndef(HAVE_maps__put_3).
--export([put/3]).
--endif.
--ifndef(HAVE_maps__update_3).
--export([update/3]).
--endif.
--ifndef(HAVE_maps__keys_1).
--export([keys/1]).
--endif.
--ifndef(HAVE_maps__values_1).
--export([values/1]).
--endif.
 -ifndef(HAVE_maps__with_2).
+% OTP 17.3
 -export([with/2]).
--endif.
--ifndef(HAVE_maps__without_2).
--export([without/2]).
 -endif.
 -ifndef(HAVE_maps__update_with_3).
 -export([update_with/3]).
@@ -65,11 +22,6 @@
 -ifndef(HAVE_maps__take_2).
 -export([take/2]).
 -endif.
-
--ifndef(DICT_RECORD_SIZE).
--define(DICT_RECORD_SIZE, tuple_size(dict:new())).
--endif.
--define(IS_DICT(D), is_record(D, dict, ?DICT_RECORD_SIZE)).
 
 -ifdef(HAVE_MAP_SYNTAX_6).
 -define(PUT(K, V, M), maps:put(K, V, M)).
@@ -97,54 +49,7 @@
         end).
 -endif.
 
--ifndef(HAVE_maps__size_1).
-size(M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [M]),
-    dict:size(M).
--endif.
-
--ifndef(HAVE_maps__from_list_1).
-from_list(L) ->
-    is_list(L) orelse error(badarg, [L]),
-    dict:from_list(L).
--endif.
-
--ifndef(HAVE_maps__to_list_1).
-to_list(M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [M]),
-    dict:to_list(M).
--endif.
-
--ifndef(HAVE_maps__is_key_2).
-is_key(K, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
-    dict:is_key(K, M).
--endif.
-
--ifndef(HAVE_maps__find_2).
-find(K, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
-    dict:find(K, M).
--endif.
-
--ifndef(HAVE_maps__get_2).
-get(K, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
-    case dict:find(K, M) of
-        {ok, V} -> V;
-        error -> error({badkey, K}, [K, M])
-    end.
--endif.
-
 -ifndef(HAVE_maps__get_3).
--ifndef(HAVE_maps__find_2).
-get(K, M, Default) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, M, Default]),
-    case dict:find(K, M) of
-        {ok, V} -> V;
-        _error -> Default
-    end.
--else.
 get(K, M, Default) ->
     is_map(M) orelse error({badmap, M}, [K, M, Default]),
     case maps:find(K, M) of
@@ -152,30 +57,8 @@ get(K, M, Default) ->
         _error -> Default
     end.
 -endif.
--endif.
-
--ifndef(HAVE_maps__remove_2).
-remove(K, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
-    dict:erase(K, M).
--endif.
-
--ifndef(HAVE_maps__map_2).
-map(Fun, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [Fun, M]),
-    is_function(Fun, 2) orelse error(badarg, [Fun, M]),
-    dict:map(Fun, M).
--endif.
-
--ifndef(HAVE_maps__fold_3).
-fold(Fun, Init, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [Fun, Init, M]),
-    is_function(Fun, 3) orelse error(badarg, [Fun, Init, M]),
-    dict:fold(Fun, Init, M).
--endif.
 
 -ifndef(HAVE_maps__filter_2).
--ifdef(HAVE_maps__fold_3).
 filter(Fun, M) ->
     is_map(M) orelse error({badmap, M}, [Fun, M]),
     is_function(Fun, 2) orelse error(badarg, [Fun, M]),
@@ -186,58 +69,9 @@ filter(Fun, M) ->
                                end
                            end, [], M),
                  M).
--else.
-filter(Fun, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [Fun, M]),
-    is_function(Fun, 2) orelse error(badarg, [Fun, M]),
-    dict:filter(Fun, M).
--endif.
--endif.
-
--ifndef(HAVE_maps__merge_2).
-merge(M1, M2) ->
-    ?IS_DICT(M1) orelse error({badmap, M1}, [M1, M2]),
-    ?IS_DICT(M2) orelse error({badmap, M2}, [M1, M2]),
-    dict:merge(fun(_, _, V2) -> V2 end, M1, M2).
--endif.
-
--ifndef(HAVE_maps__put_3).
-put(K, V, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}),
-    dict:store(K, V, M).
--endif.
-
--ifndef(HAVE_maps__update_3).
-update(K, V, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}),
-    dict:is_key(K, M) orelse error({badkey, K}),
-    dict:store(K, V, M).
--endif.
-
--ifndef(HAVE_maps__keys_1).
-keys(M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [M]),
-    dict:fetch_keys(M).
--endif.
-
--ifndef(HAVE_maps__values_1).
-values(M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [M]),
-    [V || {_, V} <- dict:to_list(M)].
 -endif.
 
 -ifndef(HAVE_maps__with_2).
--ifndef(HAVE_maps__find_2).
-with(Ks, M) ->
-    is_list(Ks) orelse error(badarg, [Ks, M]),
-    ?IS_DICT(M) orelse  error({badmap, M}, [Ks, M]),
-    dict:from_list(lists:foldl(fun(K, A) ->
-                                   case dict:find(K, M) of
-                                       {ok, V} -> [{K, V}|A];
-                                       _error -> A
-                                   end
-                               end, [], Ks)).
--else.
 with(Ks, M) ->
     is_map(M) orelse error({badmap, M}, [Ks, M]),
     is_list(Ks) orelse error(badarg, [Ks, M]),
@@ -248,42 +82,19 @@ with(Ks, M) ->
                                    end
                                end, [], Ks)).
 -endif.
--endif.
-
--ifndef(HAVE_maps__without_2).
-without(Ks, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [Ks, M]),
-    is_list(Ks) orelse error(badarg, [Ks, M]),
-    lists:foldl(fun dict:erase/2, M, Ks).
--endif.
 
 -ifndef(HAVE_maps__update_with_4).
--ifdef(HAVE_maps__update_3).
 update_with(K, Fun, Init, M) ->
     is_map(M) orelse error({badmap, M}, [K, Fun, Init, M]),
     is_function(Fun, 1) orelse error(badarg, [K, Fun, Init, M]),
     ?UPDATE_WITH(K, Fun, Init, M, V).
--else.
-update_with(K, Fun, Init, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, Fun, Init, M]),
-    is_function(Fun, 1) orelse error(badarg, [K, Fun, Init, M]),
-    dict:update(K, Fun, Init, M).
--endif.
 -endif.
 
 -ifndef(HAVE_maps__update_with_3).
--ifdef(HAVE_maps__update_3).
 update_with(K, Fun, M) ->
     is_map(M) orelse error({badmap, M}, [K, Fun, M]),
     is_function(Fun, 1) orelse error(badarg, [K, Fun, M]),
     ?UPDATE_WITH(K, Fun, M, V).
--else.
-update_with(K, Fun, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, Fun, M]),
-    is_function(Fun, 1) orelse error(badarg, [K, Fun, M]),
-    dict:is_key(K, M) orelse error({badkey, K}, [K, Fun, M]),
-    dict:update(K, Fun, M).
--endif.
 -endif.
 
 -ifndef(HAVE_maps__take_2).
@@ -295,20 +106,11 @@ take(K, M) ->
         error -> error
     end.
 -else.
--ifdef(HAVE_maps__find_2).
 take(K, M) ->
     case M of
         #{K := V} -> {V, maps:remove(K, M)};
         #{} -> error;
         _ -> error({badmap, M}, [K, M])
     end.
--else.
-take(K, M) ->
-    ?IS_DICT(M) orelse error({badmap, M}, [K, M]),
-    case dict:find(K, M) of
-        {ok, V} -> {V, dict:erase(K, M)};
-        error -> error
-    end.
--endif.
 -endif.
 -endif.

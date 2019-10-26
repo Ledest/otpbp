@@ -77,11 +77,8 @@
                               {{lib, format_fun, [1, 2]}, erl_error},
                               {{lib, subst_values_for_vars, 2}, erl_eval},
                               {{lists, [join, search], 2}, otpbp_lists},
-                              {{maps, new, 0}, dict},
-                              {{maps, [from_list, keys, size, to_list, values], 1}, otpbp_maps},
-                              {{maps, [filter, find, get, is_key, map, merge, remove, take, with, without], 2},
-                               otpbp_maps},
-                              {{maps, [fold, get, put, update, update_with], 3}, otpbp_maps},
+                              {{maps, [filter, take, with], 2}, otpbp_maps},
+                              {{maps, [get, update_with], 3}, otpbp_maps},
                               {{maps, update_with, 4}, otpbp_maps},
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
                               {{orddict, take, 2}, otpbp_orddict},
@@ -113,44 +110,14 @@
 
 -import(erl_syntax, [copy_pos/2]).
 -import(lists, [foldl/3]).
--ifdef(HAVE_maps__find_2).
 -import(maps, [find/2]).
--else.
--import(dict, [find/2]).
--endif.
--ifdef(HAVE_maps__new_0).
 -import(maps, [new/0]).
--else.
--import(dict, [new/0]).
--endif.
--ifdef(HAVE_maps__put_3).
 -import(maps, [put/3]).
--endif.
-
--ifdef(HAVE_maps__without_2).
 -import(maps, [without/2]).
--endif.
 
--ifdef(HAVE_maps__size_1).
 -spec is_empty(M::map()) -> boolean().
 is_empty(M) -> maps:size(M) =:= 0.
 -compile({inline, [is_empty/1]}).
--else.
--ifndef(HAVE_dict__is_empty_1).
--spec is_empty(M::dict()) -> boolean().
-is_empty(M) -> dict:size(M) =:= 0.
--compile({inline, [is_empty/1]}).
--endif.
--endif.
-
--ifndef(HAVE_maps__put_3).
-put(K, V, M) -> dict:store(K, V, M).
--compile({inline, [put/3]}).
--endif.
-
--ifndef(HAVE_maps__without_2).
-without(Ks, M) -> lists:foldl(fun dict:erase/2, M, Ks).
--endif.
 
 -record(param, {options = [] :: list(),
                 verbose = false :: boolean(),
