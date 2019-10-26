@@ -36,7 +36,7 @@
                               {{code, module_status, 1}, otpbp_code},
                               {{compile, env_compiler_options, 0}, otpbp_compile},
                               {{crypto, rand_bytes, 1}, {crypto, strong_rand_bytes}},
-                              {{crypto, [rand_seed, supports], 1}, otpbp_crypto},
+                              {{crypto, supports, 1}, otpbp_crypto},
                               {{crypto, [sha224, sha256, sha384, sha512], 1}, otpbp_crypto},
                               {{crypto, [sha224_final, sha256_final, sha384_final, sha512_final], 1},
                                {crypto, hash_final}},
