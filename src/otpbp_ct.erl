@@ -1,6 +1,7 @@
 -module(otpbp_ct).
 
 -ifndef(HAVE_ct__get_event_mgr_ref_0).
+% OTP 17.5
 -export([get_event_mgr_ref/0]).
 -endif.
 
