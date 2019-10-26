@@ -70,8 +70,6 @@
                               {{gen_event, system_replace_state, 2}, otpbp_gen_event},
                               {{gen_fsm, system_get_state, 1}, otpbp_gen_fsm},
                               {{gen_fsm, system_replace_state, 2}, otpbp_gen_fsm},
-                              {{gen_server, system_get_state, 1}, otpbp_gen_server},
-                              {{gen_server, system_replace_state, 2}, otpbp_gen_server},
                               {{inet, ipv4_mapped_ipv6_address, 1}, otpbp_inet},
                               {{io_lib, limit_term, 2}, otpbp_io_lib},
                               {{lib, [flush_receive, progname], 0}, otpbp_lib},
