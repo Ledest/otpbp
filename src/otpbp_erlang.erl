@@ -30,9 +30,6 @@
 -ifndef(HAVE_erlang__unique_integer_1).
 -export([unique_integer/1]).
 -endif.
--ifndef(HAVE_erlang__is_map_1).
--export([is_map/1]).
--endif.
 -ifndef(HAVE_erlang__ceil_1).
 -export([ceil/1]).
 -endif.
@@ -127,10 +124,6 @@ unique_integer([]) -> monotonic_time();
 unique_integer([positive|O]) -> unique_integer(O);
 unique_integer([monotonic|O]) -> unique_integer(O);
 unique_integer(O) -> error(badarg, [O]).
--endif.
-
--ifndef(HAVE_erlang__is_map_1).
-is_map(Map) -> is_record(Map, dict, tuple_size(dict:new())).
 -endif.
 
 -ifndef(HAVE_erlang__ceil_1).
