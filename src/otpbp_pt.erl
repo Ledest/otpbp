@@ -1,4 +1,4 @@
-%%% Copyright 2015-2018 Oleksandr Chumachenko <ledest@gmail.com>
+%%% Copyright 2015-2019 Oleksandr Chumachenko <ledest@gmail.com>
 %%%
 %%% This file is part of OTPBP.
 %%%
@@ -21,10 +21,8 @@
 -dialyzer({no_opaque, application_guard/3}).
 
 -define(TRANSFORM_FUNCTIONS, [{{get_keys, 0}, otpbp_erlang},
-                              {{is_map, 1}, otpbp_erlang},
                               {{is_map_key, 2}, {maps, is_key}},
                               {{map_get, 2}, {maps, get}},
-                              {{map_size, 1}, {dict, size}},
                               {{[ceil, floor], 1}, otpbp_erlang},
                               {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
                               {{erlang, convert_time_unit, 3}, otpbp_erlang},
@@ -110,14 +108,6 @@
 
 -import(erl_syntax, [copy_pos/2]).
 -import(lists, [foldl/3]).
--import(maps, [find/2]).
--import(maps, [new/0]).
--import(maps, [put/3]).
--import(maps, [without/2]).
-
--spec is_empty(M::map()) -> boolean().
-is_empty(M) -> maps:size(M) =:= 0.
--compile({inline, [is_empty/1]}).
 
 -record(param, {options = [] :: list(),
                 verbose = false :: boolean(),
@@ -127,23 +117,22 @@ is_empty(M) -> maps:size(M) =:= 0.
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
-    TL = transform_list(),
-    case is_empty(TL) of
-        true -> Forms;
-        _ -> try erl_syntax_lib:analyze_forms(Forms) of
+    case transform_list() of
+        TL when map_size(TL) =/= 0 ->
+            try erl_syntax_lib:analyze_forms(Forms) of
                  AF ->
                      {NF, _} = lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, erl_syntax:type(Tree)) end,
                                               #param{options = Options,
                                                      verbose = proplists:get_bool(verbose, Options),
                                                      funs = foldl(fun({M, Fs}, IA) ->
                                                                       foldl(fun(FA, IAM) ->
-                                                                                case find({M, FA}, TL) of
-                                                                                    {ok, V} -> put(FA, V, IAM);
+                                                                                case maps:find({M, FA}, TL) of
+                                                                                    {ok, V} -> maps:put(FA, V, IAM);
                                                                                     _ -> IAM
                                                                                 end
                                                                              end, IA, Fs)
                                                                   end,
-                                                                  without(get_no_auto_import(AF), TL),
+                                                                  maps:without(get_no_auto_import(AF), TL),
                                                                   proplists:get_value(imports, AF, []))},
                                               Forms),
                      NF
@@ -153,7 +142,8 @@ parse_transform(Forms, Options) ->
                               ?MODULE_STRING ": error erl_syntax_lib:analyze_forms/1 {~p:~p}, see below.~n",
                               [C, E]),
                     Forms
-            end
+            end;
+        _ -> Forms
     end.
 
 get_no_auto_import(AF) ->
@@ -206,11 +196,11 @@ check_func({M, F, A}) ->
                                       end;
 check_func({F, A}) -> check_func({erlang, F, A}).
 
-store_func(F, {_, _} = MF, D) -> put(F, MF, D);
+store_func(F, {_, _} = MF, D) -> maps:put(F, MF, D);
 store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
-transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, new(), ?TRANSFORM_FUNCTIONS).
+transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, #{}, ?TRANSFORM_FUNCTIONS).
 -compile({inline, [transform_list/0]}).
 
 do_transform(conjunction, Tree) ->
@@ -239,22 +229,6 @@ application_transform_guard(Node) ->
 
 -compile({inline, [application_transform_guard/1]}).
 
-application_guard(Node, dict, size) ->
-    AL = [A] = erl_syntax:application_arguments(Node),
-    O = erl_syntax:application_operator(Node),
-    ML = erl_syntax:module_qualifier_argument(O),
-    NL = erl_syntax:module_qualifier_body(O),
-    copy_pos(Node,
-             erl_syntax:infix_expr(copy_pos(ML, erl_syntax:infix_expr(copy_pos(ML, check_dict(ML, O, A)),
-                                                                      copy_pos(ML, erl_syntax:operator('andalso')),
-                                                                      copy_pos(NL, application(erlang, element, NL, NL,
-                                                                                               [integer(A, 2)|AL])))),
-                                   copy_pos(A, erl_syntax:operator('+')),
-                                   copy_pos(A, integer(A, 0))));
-application_guard(Node, otpbp_erlang, is_map) ->
-    [A] = erl_syntax:application_arguments(Node),
-    O = erl_syntax:application_operator(Node),
-    copy_pos(Node, check_dict(erl_syntax:module_qualifier_argument(O), O, A));
 application_guard(Node, otpbp_erlang, ceil) -> application_guard_ceil_floor(Node, '+');
 application_guard(Node, otpbp_erlang, floor) -> application_guard_ceil_floor(Node, '-');
 application_guard(_, _, _) -> false.
@@ -267,13 +241,9 @@ application_guard_ceil_floor(Node, Op) ->
                          [copy_pos(A, erl_syntax:infix_expr(A, copy_pos(A, erl_syntax:operator(Op)),
                                                             copy_pos(A, erl_syntax:float(0.5))))])).
 
-check_dict(L, O, A) ->
-    application(erlang, is_record, L, erl_syntax:module_qualifier_body(O),
-                [A, atom(A, dict), integer(A, tuple_size(dict:new()))]).
-
 application_transform(#param{funs = L} = P, Node) ->
     AA = erl_syntax_lib:analyze_application(Node),
-    case find(AA, L) of
+    case maps:find(AA, L) of
         error -> false;
         {ok, {M, N}} ->
             replace_message(AA, M, N, Node, P),
@@ -291,7 +261,7 @@ application(M, N, ML, NL, A) ->
 
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
-        F -> case find(F, L) of
+        F -> case maps:find(F, L) of
                  error -> false;
                  {ok, {M, N}} ->
                      Q = erl_syntax:implicit_fun_name(Node),
@@ -358,8 +328,6 @@ try_expr_clause_patterns_transform(Ps) ->
 -compile({inline, [try_expr_transform/2, try_expr_handler_transform/1, try_expr_clause_patterns_transform/1]}).
 
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
-
-integer(P, I) when is_tuple(P), is_integer(I) -> copy_pos(P, erl_syntax:integer(I)).
 
 otp_release() ->
     {R, _} = string:to_integer(case erlang:system_info(otp_release) of
