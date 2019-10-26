@@ -90,7 +90,6 @@
                               {{maps, [fold, get, put, update, update_with], 3}, otpbp_maps},
                               {{maps, update_with, 4}, otpbp_maps},
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
-                              {{orddict, is_empty, 1}, otpbp_orddict},
                               {{orddict, take, 2}, otpbp_orddict},
                               {{ordsets, is_empty, 1}, otpbp_ordsets},
                               {{os, [cmd, getenv], 2}, otpbp_os},
