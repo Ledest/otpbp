@@ -45,7 +45,6 @@
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
                               {{ct, [get_event_mgr_ref, get_progname], 0}, otpbp_ct},
-                              {{dict, is_empty, 1}, otpbp_dict},
                               {{dict, take, 2}, otpbp_dict},
                               {{epp, open, 1}, otpbp_epp},
                               {{epp, parse_file, 2}, otpbp_epp},
@@ -134,12 +133,6 @@
 -endif.
 -ifdef(HAVE_maps__put_3).
 -import(maps, [put/3]).
--endif.
-
--ifndef(HAVE_maps__size_1).
--ifdef(HAVE_dict__is_empty_1).
--import(dict, [is_empty/1]).
--endif.
 -endif.
 
 -ifdef(HAVE_maps__without_2).
