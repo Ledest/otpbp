@@ -47,7 +47,6 @@
                               {{ct, [get_event_mgr_ref, get_progname], 0}, otpbp_ct},
                               {{dict, take, 2}, otpbp_dict},
                               {{epp, open, 1}, otpbp_epp},
-                              {{epp, parse_file, 2}, otpbp_epp},
                               {{erl_anno, new, 1}, otpbp_erl_anno},
                               {{erl_compile, compile_cmdline, 0}, otpbp_erl_compile},
                               {{erl_error, format_fun, [1, 2]}, lib},
