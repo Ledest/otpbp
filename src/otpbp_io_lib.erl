@@ -47,7 +47,6 @@ limit_tuple(T, D) when is_tuple(T) ->
     [H|R] = tuple_to_list(T),
     list_to_tuple([limit(H, D1)|limit_tail(R, D1)]).
 
--ifdef(HAVE_erlang__is_map_1).
 limit_map(Map, D) when map_size(Map) =< D -> Map;
 limit_map(Map, D) -> limit_map(maps:to_list(Map), D, #{}).
 
@@ -63,9 +62,6 @@ limit_map([{K, V}|T], D, A) -> limit_map(T, D - 1, maps:put(K, V, A)).
 %% limit_map_assoc(K, V, D) ->
 %%     {limit(K, D-1), limit(V, D-1)}.
 -compile({inline, [limit_tuple/2]}).
--else.
-limit_map(Map, D) -> limit_tuple(Map, D).
--endif.
 
 limit_bitstring(B, _D) -> B. %% Keeps all printable binaries.
 
@@ -102,7 +98,6 @@ test_limit_tuple(T, I, Sz, D) ->
     test_limit(element(I, T), D1),
     test_limit_tuple(T, I + 1, Sz, D1).
 
--ifdef(HAVE_erlang__is_map_1).
 test_limit_map(_Map, _D) -> ok.
 %%     test_limit_map_body(erts_internal:maps_to_list(Map, D), D).
 
@@ -117,9 +112,6 @@ test_limit_map(_Map, _D) -> ok.
 %%     test_limit(K, D-1),
 %%     test_limit(V, D-1).
 -compile({inline, [test_limit_tuple/2]}).
--else.
-test_limit_map(Map, D) -> test_limit_tuple(Map, D).
--endif.
 
 test_limit_bitstring(_, _) -> ok.
 -endif.
