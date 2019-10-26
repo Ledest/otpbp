@@ -84,7 +84,6 @@
                               {{lib, format_exception, [6, 7]}, erl_error},
                               {{lib, format_fun, [1, 2]}, erl_error},
                               {{lib, subst_values_for_vars, 2}, erl_eval},
-                              {{lists, droplast, 1}, otpbp_lists},
                               {{lists, [join, search], 2}, otpbp_lists},
                               {{maps, new, 0}, dict},
                               {{maps, [from_list, keys, size, to_list, values], 1}, otpbp_maps},
