@@ -50,7 +50,7 @@
 -endif.
 
 -ifndef(HAVE_erlang__get_keys_0).
-get_keys() -> proplists:get_keys(get()).
+get_keys() -> [K || {K, _} <- get()].
 -endif.
 
 -ifndef(HAVE_erlang__convert_time_unit_3).
