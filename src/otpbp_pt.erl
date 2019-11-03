@@ -247,14 +247,17 @@ application_transform(#param{funs = L} = P, Node) ->
         error -> false;
         {ok, {M, N}} ->
             replace_message(A, M, N, Node, P),
-            application(M, N, Node, erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node), A)
+            application(M, N, Node, A)
     end.
+
+application(M, N, Node, A) ->
+    application(M, N, Node, erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node), A).
 
 application(M, N, Node, O, A, {_, {_, _}}) ->
     copy_pos(Node, application(M, N, erl_syntax:module_qualifier_argument(O), erl_syntax:module_qualifier_body(O), A));
 application(M, N, Node, O, A, {_, _}) -> copy_pos(Node, application(M, N, O, O, A)).
 
--compile({inline, [application_transform/2, application/6]}).
+-compile({inline, [application_transform/2, application/4, application/6]}).
 
 application(M, N, ML, NL, A) ->
     erl_syntax:application(copy_pos(ML, erl_syntax:module_qualifier(atom(ML, M), atom(NL, N))), A).
