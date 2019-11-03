@@ -242,12 +242,12 @@ application_guard_ceil_floor(Node, Op) ->
                                                             copy_pos(A, erl_syntax:float(0.5))))])).
 
 application_transform(#param{funs = L} = P, Node) ->
-    AA = erl_syntax_lib:analyze_application(Node),
-    case maps:find(AA, L) of
+    A = erl_syntax_lib:analyze_application(Node),
+    case maps:find(A, L) of
         error -> false;
         {ok, {M, N}} ->
-            replace_message(AA, M, N, Node, P),
-            application(M, N, Node, erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node), AA)
+            replace_message(A, M, N, Node, P),
+            application(M, N, Node, erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node), A)
     end.
 
 application(M, N, Node, O, A, {_, {_, _}}) ->
