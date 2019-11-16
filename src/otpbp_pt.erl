@@ -359,19 +359,17 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
 
 -compile({inline, [implicit_fun_transform/2]}).
 
-try_expr_transform(#param{erts_version = [V|_]}, Node) ->
-    V < 10 andalso case lists:mapfoldr(fun(H, A) ->
-                                           case try_expr_handler_transform(H) of
-                                               false -> {H, A};
-                                               NH -> {NH, true}
-                                           end
-                                       end, false, erl_syntax:try_expr_handlers(Node)) of
-                       {_, false} -> false;
-                       {Hs, _} -> copy_pos(Node, erl_syntax:try_expr(erl_syntax:try_expr_body(Node),
-                                                                     erl_syntax:try_expr_clauses(Node),
-                                                                     Hs,
-                                                                     erl_syntax:try_expr_after(Node)))
-                   end.
+try_expr_transform(_P, Node) ->
+    case lists:mapfoldr(fun(H, A) ->
+                            case try_expr_handler_transform(H) of
+                                false -> {H, A};
+                                NH -> {NH, true}
+                            end
+                        end, false, erl_syntax:try_expr_handlers(Node)) of
+        {_, false} -> false;
+        {Hs, _} -> copy_pos(Node, erl_syntax:try_expr(erl_syntax:try_expr_body(Node), erl_syntax:try_expr_clauses(Node),
+                                                      Hs, erl_syntax:try_expr_after(Node)))
+    end.
 
 try_expr_handler_transform(Node) ->
     case erl_syntax:type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
