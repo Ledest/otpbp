@@ -227,6 +227,9 @@
 -ifndef(HAVE_maps__get_3).
 -compile([{parse_transform, otpbp_pt}]).
 -endif.
+-ifndef(HAVE_string__split_3).
+-compile([{parse_transform, otpbp_pt}]).
+-endif.
 -define(MAP(), #{}).
 -define(MAP(K, V), #{K => V}).
 

@@ -106,6 +106,7 @@
                               {{uri_string, [compose_query, normalize], [1, 2]}, otpbp_uri_string},
                               {{uri_string, [dissect_query, is_host, is_path, parse, recompose], 1}, otpbp_uri_string},
                               {{uri_string, transcode, 2}, otpbp_uri_string},
+                              {{uri_string, resolve, [2, 3]}, otpbp_uri_string},
                               {{zlib, [compress, gzip, zip], 2}, otpbp_zlib}]).
 
 -import(erl_syntax, [copy_pos/2]).
