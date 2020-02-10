@@ -5,10 +5,6 @@
 -ifndef(HAVE_maps__filter_2).
 -export([filter/2]).
 -endif.
--ifndef(HAVE_maps__get_3).
-% OTP 17.1
--export([get/3]).
--endif.
 -ifndef(HAVE_maps__with_2).
 % OTP 17.3
 -export([with/2]).
@@ -47,15 +43,6 @@
             #{K := V} -> maps:update(K, F(V), M);
             #{} -> error({badkey, K}, [K, F, M])
         end).
--endif.
-
--ifndef(HAVE_maps__get_3).
-get(K, M, Default) ->
-    is_map(M) orelse error({badmap, M}, [K, M, Default]),
-    case maps:find(K, M) of
-        {ok, V} -> V;
-        _error -> Default
-    end.
 -endif.
 
 -ifndef(HAVE_maps__filter_2).
