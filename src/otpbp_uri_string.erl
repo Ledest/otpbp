@@ -224,9 +224,6 @@
 -module(otpbp_uri_string).
 
 -ifndef(HAVE_uri_string__parse_1).
--define(MAP(), #{}).
--define(MAP(K, V), #{K => V}).
-
 %%-------------------------------------------------------------------------
 %% External API
 %%-------------------------------------------------------------------------
@@ -340,14 +337,14 @@ normalize(URIString, [return_map]) ->
       URIMap :: uri_map()
               | error().
 parse(URIString) when is_binary(URIString) ->
-    try parse_uri_reference(URIString, ?MAP())
+    try parse_uri_reference(URIString, #{})
     catch
         throw:{error, Atom, RestData} -> {error, Atom, RestData}
     end;
 parse(URIString) when is_list(URIString) ->
     try
         Binary = unicode:characters_to_binary(URIString),
-        Map = parse_uri_reference(Binary, ?MAP()),
+        Map = parse_uri_reference(Binary, #{}),
         convert_mapfields_to_list(Map)
     catch
         throw:{error, Atom, RestData} -> {error, Atom, RestData}
@@ -506,7 +503,7 @@ convert_mapfields_to_list(Map) ->
 %%    URI-reference = URI / relative-ref
 %%-------------------------------------------------------------------------
 -spec parse_uri_reference(binary(), uri_map()) -> uri_map().
-parse_uri_reference(<<>>, _) -> ?MAP(path, <<>>);
+parse_uri_reference(<<>>, _) -> #{path => <<>>};
 parse_uri_reference(URIString, URI) ->
     try parse_scheme_start(URIString, URI)
     catch
