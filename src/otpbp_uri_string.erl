@@ -224,9 +224,6 @@
 -module(otpbp_uri_string).
 
 -ifndef(HAVE_uri_string__parse_1).
--ifndef(HAVE_maps__get_3).
--compile([{parse_transform, otpbp_pt}]).
--endif.
 -define(MAP(), #{}).
 -define(MAP(K, V), #{K => V}).
 
