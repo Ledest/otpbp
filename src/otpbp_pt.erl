@@ -116,43 +116,101 @@
                 verbose = false :: boolean(),
                 otp_release = otp_release() :: non_neg_integer(),
                 erts_version = erts_version() :: [non_neg_integer(),...],
-                funs,
+                funs = #{} :: #{{module(), {atom(), arity()}} => {module(), atom()}},
+                behaviours = sets:new() :: sets:set(),
+                module :: module()|undefined,
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
-    case transform_list() of
-        TL when map_size(TL) =/= 0 ->
-            try erl_syntax_lib:analyze_forms(Forms) of
-                 AF ->
-                     {NF, _} = lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, erl_syntax:type(Tree)) end,
-                                              #param{options = Options,
-                                                     verbose = proplists:get_bool(verbose, Options),
-                                                     funs = foldl(fun({M, Fs}, IA) ->
-                                                                      foldl(fun(FA, IAM) ->
-                                                                                case maps:find({M, FA}, TL) of
-                                                                                    {ok, V} -> maps:put(FA, V, IAM);
-                                                                                    _ -> IAM
-                                                                                end
-                                                                             end, IA, Fs)
-                                                                  end,
-                                                                  maps:without(get_no_auto_import(AF), TL),
-                                                                  proplists:get_value(imports, AF, []))},
-                                              Forms),
-                     NF
-            catch
-                C:E ->
-                    io:fwrite(standard_error,
-                              ?MODULE_STRING ": error erl_syntax_lib:analyze_forms/1 {~p:~p}, see below.~n",
-                              [C, E]),
-                    Forms
-            end;
-        _ -> Forms
-    end.
+    {NF, _} = lists:foldl(fun(F, {Fs, P}) -> F(Fs, P) end,
+                          {Forms, #param{options = Options, verbose = proplists:get_bool(verbose, Options)}},
+                          [fun transform_functions/2, fun transform_behaviours/2]),
+    NF.
 
 get_no_auto_import(AF) ->
     proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
 
 -compile({inline, [get_no_auto_import/1, transform/3]}).
+
+transform_functions(Forms, Param) ->
+    case transform_list() of
+        TL when map_size(TL) =/= 0 ->
+            try erl_syntax_lib:analyze_forms(Forms) of
+                AF ->
+                    lists:mapfoldl(fun(Tree, P) -> transform(Tree, P, erl_syntax:type(Tree)) end,
+                                   Param#param{funs = foldl(fun({M, Fs}, IA) ->
+                                                                foldl(fun(FA, IAM) ->
+                                                                          case maps:find({M, FA}, TL) of
+                                                                              {ok, V} -> maps:put(FA, V, IAM);
+                                                                              _ -> IAM
+                                                                          end
+                                                                      end, IA, Fs)
+                                                            end,
+                                                            maps:without(get_no_auto_import(AF), TL),
+                                                            proplists:get_value(imports, AF, []))},
+                                   Forms)
+            catch
+                C:E ->
+                    io:fwrite(standard_error,
+                              ?MODULE_STRING ": error erl_syntax_lib:analyze_forms/1 {~p:~p}, see below.~n",
+                              [C, E]),
+                    {Forms, Param}
+            end;
+        _ -> {Forms, Param}
+    end.
+
+transform_behaviours(Forms, #param{behaviours = Bs} = Param) ->
+    case sets:size(Bs) of
+        0 -> {Forms, Param};
+        _ ->
+            {lists:foldl(fun(B, A) -> transform_behaviour(A, Param, B) end,
+                         Forms, [gen_server]),
+             Param}
+    end.
+
+transform_behaviour(Forms, #param{behaviours = Bs} = Param, B) ->
+    case sets:is_element(B, Bs) of
+        false -> Forms;
+        true ->
+            M = Param#param.module,
+            case lists:filtermap(fun(C) ->
+                                     case transform_behaviour_callback(Forms, M, C) of
+                                         false -> false;
+                                         F -> {true, F}
+                                     end
+                                 end, [handle_cast]) of
+                [] -> Forms;
+                Cs ->
+                    {Fs, EOF} = lists:splitwith(fun(T) -> erl_syntax:type(T) =/= eof_marker end, Forms),
+                    {Fs1, Fs2} = lists:splitwith(fun({attribute, _, export, _}) -> false;
+                                                    (_) -> true
+                                                 end, Fs),
+                    lists:append([Fs1,
+                                  [{attribute, 0, export, lists:map(fun erl_syntax_lib:analyze_function/1, Cs)}|Fs2],
+                                  lists:map(fun erl_syntax:revert/1, Cs),
+                                  EOF])
+            end
+    end.
+
+transform_behaviour_callback(Forms, M, C) ->
+    case lists:keyfind(functions, 1, erl_syntax_lib:analyze_forms(Forms)) of
+        {_, [_|_] = Fs} ->
+            case lists:member({C, 2}, Fs) of
+                true -> false;
+                _false ->
+                    B = [erl_syntax:application(erl_syntax:atom(error_logger),
+                                                erl_syntax:atom(warning_msg),
+                                                [erl_syntax:string(lists:concat(["** Undefined ", C, " in ~p~n"
+                                                                                 "** Unhandled message: ~p~n"])),
+                                                 erl_syntax:list([erl_syntax:atom(M),
+                                                                  erl_syntax:variable("Msg")])]),
+                         erl_syntax:tuple([erl_syntax:atom(noreply), erl_syntax:variable("State")])],
+                    erl_syntax:function(erl_syntax:atom(C),
+                                        [erl_syntax:clause([erl_syntax:variable("Msg"), erl_syntax:variable("State")],
+                                                           [], B)])
+            end;
+        _ -> false
+    end.
 
 transform(Tree, P, function) -> {transform_function(Tree, P), P};
 transform(Tree, P, attribute) -> {Tree, transform_attribute(Tree, P)};
@@ -175,7 +233,11 @@ transform_function(Tree, P) ->
 transform_attribute(Tree, P) ->
     case erl_syntax_lib:analyze_attribute(Tree) of
         {file, {F, _}} -> P#param{file = F};
-        _ -> P
+        {module, M} -> P#param{module = M};
+        {behaviour, {behaviour, B}} -> P#param{behaviours = sets:add_element(B, P#param.behaviours)};
+        A ->
+            io:format("A = ~p~nTree = ~p~n", [A, Tree]),
+            P
     end.
 
 -compile({inline, [transform_function/2, transform_attribute/2]}).
