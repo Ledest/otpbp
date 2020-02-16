@@ -44,8 +44,6 @@ gb_sets_test() ->
     ?assertEqual({1, gb_sets:iterator_from(2, S)}, gb_sets:next(gb_sets:iterator(S))).
 
 lists_test() ->
-    ?assertEqual(lists:droplast([1,2,3]), [1,2]),
-    ?assertEqual(lists:droplast([1]), []),
     ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, []), false),
     ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, [1,2,3,4,5,6,7,8]), {value, 2}).
 
@@ -70,15 +68,6 @@ maps_test() ->
     ?assertMatch(#{key3 := Init}, maps:update_with(key3,Fun,Init,Map)),
     ?assertError({badmap,b}, maps:update_with([a,b],a,Init,b)),
     ?assertError(badarg, maps:update_with([a,b],a,Init,#{})),
-    % size/1
-    ?assertEqual(maps:size(#{}), 0),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,10)])), 10),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,20)])), 20),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,30)])), 30),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,40)])), 40),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,50)])), 50),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,60)])), 60),
-    ?assertEqual(maps:size(maps:from_list([{{"k",I},I}||I<-lists:seq(1,600)])), 600),
     % Disabled for Erlang/OTP < 18
     %?assertError({badmap,a}, maps:size(a)),
     %?assertError({badmap,<<>>}, maps:size(<<>>)),
