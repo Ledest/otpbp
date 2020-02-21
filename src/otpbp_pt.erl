@@ -60,6 +60,7 @@
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
                               {{ets, take, 2}, otpbp_ets},
                               {{ets, update_counter, 4}, otpbp_ets},
+                              {{filelib, safe_relative_path, 2}, otpbp_filelib},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
                               {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
                               {{gb_trees, [iterator_from, take, take_any], 2}, otpbp_gb_trees},
