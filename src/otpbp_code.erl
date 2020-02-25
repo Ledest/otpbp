@@ -6,6 +6,9 @@
 -export([modified_modules/0]).
 -endif.
 -endif.
+-ifndef(HAVE_code__all_available_0).
+-export([all_available/0]).
+-endif.
 
 -ifndef(HAVE_code__module_status_1).
 module_status(Module) -> module_status(Module, code:get_path()).
@@ -74,4 +77,38 @@ modified_modules() ->
                             end, [], code:get_path()),
     [M || {M, _} <- code:all_loaded(), module_status(M, PathFiles) =:= modified].
 -endif.
+-endif.
+
+-ifndef(HAVE_code__all_available_0).
+all_available() ->
+    all_available(case code:get_mode() of
+                      interactive -> code:get_path();
+                      embedded -> []
+                  end,
+                  #{}).
+
+all_available([Path|Tail], Acc) ->
+    all_available(Tail,
+                  case erl_prim_loader:list_dir(Path) of
+                      {ok, Files} -> all_available(Path, Files, Acc);
+                      _Error ->  Acc
+                  end);
+all_available([], AllModules) ->
+    lists:umerge(fun comp_modules/2,
+                 lists:sort(fun comp_modules/2, [{atom_to_list(M), Path, true} || {M, Path} <- code:all_loaded()]),
+                 lists:sort(fun comp_modules/2,
+                            maps:fold(fun(File, Path, Acc) ->
+                                          [{filename:rootname(File), filename:append(Path, File), false}|Acc]
+                                      end, [], AllModules))).
+
+all_available(Path, [File|T], Acc) ->
+    all_available(Path, T,
+                  case filename:extension(File) =/= ".beam" orelse maps:is_key(File, Acc) of
+                      true -> Acc;
+                      false -> Acc#{File => Path}
+                  end);
+all_available(_Path, [], Acc) -> Acc.
+
+comp_modules({A, _, _}, {B, _, _}) -> comp_modules(A, B);
+comp_modules(A, B) -> A =< B.
 -endif.

@@ -32,7 +32,7 @@
                               {{application, set_env, [1, 2]}, otpbp_application},
                               {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2},
                                otpbp_calendar},
-                              {{code, modified_modules, 0}, otpbp_code},
+                              {{code, [all_available, modified_modules], 0}, otpbp_code},
                               {{code, module_status, 1}, otpbp_code},
                               {{compile, env_compiler_options, 0}, otpbp_compile},
                               {{crypto, rand_bytes, 1}, {crypto, strong_rand_bytes}},
