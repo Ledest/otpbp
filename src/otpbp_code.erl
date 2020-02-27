@@ -105,7 +105,7 @@ all_available(Path, [File|T], Acc) ->
     all_available(Path, T,
                   case filename:extension(File) =/= ".beam" orelse maps:is_key(File, Acc) of
                       true -> Acc;
-                      false -> Acc#{File => Path}
+                      false -> maps:put(File, Path, Acc)
                   end);
 all_available(_Path, [], Acc) -> Acc.
 
