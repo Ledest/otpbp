@@ -78,7 +78,7 @@
                               {{lib, format_fun, [1, 2]}, erl_error},
                               {{lib, subst_values_for_vars, 2}, erl_eval},
                               {{lists, [join, search], 2}, otpbp_lists},
-                              {{maps, [filter, take, with], 2}, otpbp_maps},
+                              {{maps, [filter, take], 2}, otpbp_maps},
                               {{maps, update_with, [3, 4]}, otpbp_maps},
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
                               {{orddict, take, 2}, otpbp_orddict},

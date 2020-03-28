@@ -6,10 +6,6 @@
 % OTP 18.0
 -export([filter/2]).
 -endif.
--ifndef(HAVE_maps__with_2).
-% OTP 17.3
--export([with/2]).
--endif.
 -ifndef(HAVE_maps__update_with_3).
 % OTP 19.0
 -export([update_with/3]).
@@ -60,18 +56,6 @@ filter(Fun, M) ->
                                end
                            end, [], M),
                  M).
--endif.
-
--ifndef(HAVE_maps__with_2).
-with(Ks, M) ->
-    is_map(M) orelse error({badmap, M}, [Ks, M]),
-    is_list(Ks) orelse error(badarg, [Ks, M]),
-    maps:from_list(lists:foldl(fun(K, A) ->
-                                   case maps:find(K, M) of
-                                       {ok, V} -> [{K, V}|A];
-                                       _error -> A
-                                   end
-                               end, [], Ks)).
 -endif.
 
 -ifndef(HAVE_maps__update_with_4).
