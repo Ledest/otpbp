@@ -1,17 +1,8 @@
 -module(otpbp_ct).
 
--ifndef(HAVE_ct__get_event_mgr_ref_0).
-% OTP 17.5
--export([get_event_mgr_ref/0]).
--endif.
-
 -ifndef(HAVE_ct__get_progname_0).
 % OTP 21.0
 -export([get_progname/0]).
--endif.
-
--ifndef(HAVE_ct__get_event_mgr_ref_0).
-get_event_mgr_ref() -> ct_event.
 -endif.
 
 -ifndef(HAVE_ct__get_progname_0).

@@ -44,7 +44,7 @@
                               {{crypto, [sha224_mac, sha256_mac, sha384_mac, sha512_mac], 2}, otpbp_crypto},
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
-                              {{ct, [get_event_mgr_ref, get_progname], 0}, otpbp_ct},
+                              {{ct, get_progname, 0}, otpbp_ct},
                               {{dict, take, 2}, otpbp_dict},
                               {{erl_anno, new, 1}, otpbp_erl_anno},
                               {{erl_error, format_fun, [1, 2]}, lib},
