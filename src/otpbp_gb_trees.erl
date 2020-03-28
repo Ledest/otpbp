@@ -1,14 +1,17 @@
 -module(otpbp_gb_trees).
 
 -ifndef(HAVE_gb_trees__iterator_from_2).
+% OTP 18.0
 -export([iterator_from/2]).
 -endif.
 
 -ifndef(HAVE_gb_trees__take_2).
+% OTP 20.0
 -export([take/2]).
 -endif.
 
 -ifndef(HAVE_gb_trees__take_any_2).
+% OTP 20.0
 -export([take_any/2]).
 -endif.
 

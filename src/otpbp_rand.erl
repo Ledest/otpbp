@@ -25,6 +25,7 @@
 -module(otpbp_rand).
 
 -ifndef(HAVE_rand__seed_1).
+% OTP 18.0
 -compile([{parse_transform, otpbp_pt}]).
 
 -export([seed_s/1, seed_s/2, seed/1, seed/2,

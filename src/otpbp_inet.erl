@@ -1,6 +1,7 @@
 -module(otpbp_inet).
 
 -ifndef(HAVE_inet__ipv4_mapped_ipv6_address_1).
+% OTP 21.0
 -export([ipv4_mapped_ipv6_address/1]).
 -endif.
 

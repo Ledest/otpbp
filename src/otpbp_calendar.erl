@@ -3,9 +3,11 @@
 -compile([{parse_transform, otpbp_pt}]).
 
 -ifndef(HAVE_calendar__system_time_to_universal_time_2).
+% OTP 21.0
 -export([system_time_to_universal_time/2]).
 -endif.
 -ifndef(HAVE_calendar__system_time_to_local_time_2).
+% OTP 21.0
 -export([system_time_to_local_time/2]).
 -ifdef(HAVE_calendar__system_time_to_universal_time_2).
 -import(calendar, [system_time_to_universal_time/2]).

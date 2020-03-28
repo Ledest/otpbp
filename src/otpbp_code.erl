@@ -1,12 +1,15 @@
 -module(otpbp_code).
 
 -ifndef(HAVE_code__module_status_1).
+% OTP 20.0
 -export([module_status/1]).
 -ifndef(HAVE_code__modified_modules_0).
+% OTP 20.0
 -export([modified_modules/0]).
 -endif.
 -endif.
 -ifndef(HAVE_code__all_available_0).
+% OTP 23.0
 -export([all_available/0]).
 -endif.
 

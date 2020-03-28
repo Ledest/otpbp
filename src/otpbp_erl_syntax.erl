@@ -1,6 +1,7 @@
 -module(otpbp_erl_syntax).
 
 -ifndef(HAVE_erl_syntax__record_access_2).
+% OTP < 18.0
 -export([record_access/2]).
 -endif.
 

@@ -2,6 +2,7 @@
 
 -ifndef(HAVE_application__set_env_2).
 -ifdef(HAVE_application_controller__set_env_2).
+% OTP 21.3
 -export([set_env/2]).
 -ifndef(NEED_application__set_env_2).
 -define(NEED_application__set_env_2, true).
@@ -11,10 +12,12 @@
 
 -ifndef(HAVE_application__set_env_1).
 -ifdef(HAVE_application__set_env_2).
+% OTP 21.3
 -export([set_env/1]).
 -import(application, [set_env/2]).
 -else.
 -ifdef(HAVE_application_controller__set_env_2).
+% OTP 21.3
 -export([set_env/1]).
 -ifndef(NEED_application__set_env_2).
 -define(NEED_application__set_env_2, true).

@@ -77,6 +77,7 @@
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
+% OTP 22.0
 -export([supports/1]).
 -endif.
 

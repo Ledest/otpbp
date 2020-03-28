@@ -3,6 +3,7 @@
 -compile([{parse_transform, otpbp_pt}]).
 
 -ifndef(HAVE_maps__filter_2).
+% OTP 18.0
 -export([filter/2]).
 -endif.
 -ifndef(HAVE_maps__with_2).
@@ -10,12 +11,15 @@
 -export([with/2]).
 -endif.
 -ifndef(HAVE_maps__update_with_3).
+% OTP 19.0
 -export([update_with/3]).
 -endif.
 -ifndef(HAVE_maps__update_with_4).
+% OTP 19.0
 -export([update_with/4]).
 -endif.
 -ifndef(HAVE_maps__take_2).
+% OTP 19.0
 -export([take/2]).
 -endif.
 

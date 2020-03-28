@@ -1,10 +1,12 @@
 -module(otpbp_ets).
 
 -ifndef(HAVE_ets__update_counter_4).
+% OTP 18.0
 -export([update_counter/4]).
 -endif.
 
 -ifndef(HAVE_ets__take_2).
+% OTP 18.0
 -export([take/2]).
 -endif.
 

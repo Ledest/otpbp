@@ -1,21 +1,27 @@
 -module(otpbp_gen).
 
 -ifndef(HAVE_gen__name_1).
+% OTP 19.0
 -export([name/1]).
 -endif.
 -ifndef(HAVE_gen__unregister_name_1).
+% OTP 19.0
 -export([unregister_name/1]).
 -endif.
 -ifndef(HAVE_gen__get_proc_name_1).
+% OTP 19.0
 -export([get_proc_name/1]).
 -endif.
 -ifndef(HAVE_gen__get_parent_0).
+% OTP 19.0
 -export([get_parent/0]).
 -endif.
 -ifndef(HAVE_gen__debug_options_2).
+% OTP 19.0
 -export([debug_options/2]).
 -endif.
 -ifndef(HAVE_gen__debug_options_1).
+% OTP < 19.0
 -export([debug_options/1]).
 -endif.
 

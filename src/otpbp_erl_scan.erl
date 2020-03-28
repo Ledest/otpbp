@@ -1,21 +1,27 @@
 -module(otpbp_erl_scan).
 
 -ifndef(HAVE_erl_scan__category_1).
+% OTP 18.0
 -export([category/1]).
 -endif.
 -ifndef(HAVE_erl_scan__column_1).
+% OTP 18.0
 -export([column/1]).
 -endif.
 -ifndef(HAVE_erl_scan__line_1).
+% OTP 18.0
 -export([line/1]).
 -endif.
 -ifndef(HAVE_erl_scan__location_1).
+% OTP 18.0
 -export([location/1]).
 -endif.
 -ifndef(HAVE_erl_scan__symbol_1).
+% OTP 18.0
 -export([symbol/1]).
 -endif.
 -ifndef(HAVE_erl_scan__text_1).
+% OTP 18.0
 -export([text/1]).
 -endif.
 

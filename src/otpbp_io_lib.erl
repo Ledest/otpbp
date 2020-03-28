@@ -1,6 +1,7 @@
 -module(otpbp_io_lib).
 
 -ifndef(HAVE_io_lib__limit_term_2).
+% OTP 20.0
 -export([limit_term/2]).
 -endif.
 

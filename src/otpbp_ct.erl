@@ -6,6 +6,7 @@
 -endif.
 
 -ifndef(HAVE_ct__get_progname_0).
+% OTP 21.0
 -export([get_progname/0]).
 -endif.
 

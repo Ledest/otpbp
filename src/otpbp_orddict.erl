@@ -1,6 +1,7 @@
 -module(otpbp_orddict).
 
 -ifndef(HAVE_orddict__take_2).
+% OTP 20.0
 -export([take/2]).
 -endif.
 

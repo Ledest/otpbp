@@ -1,6 +1,7 @@
 -module(otpbp_sets).
 
 -ifndef(HAVE_sets__is_empty_1).
+% OTP 21.0
 -export([is_empty/1]).
 -endif.
 

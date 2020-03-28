@@ -1,6 +1,7 @@
 -module(otpbp_file).
 
 -ifndef(HAVE_file__del_dir_r_1).
+% OTP 23.0
 -export([del_dir_r/1]).
 -endif.
 

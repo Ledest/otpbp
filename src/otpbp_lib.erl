@@ -1,21 +1,27 @@
 -module(otpbp_lib).
 
 -ifndef(HAVE_lib__nonl_1).
+% OTP < 21.0
 -export([nonl/1]).
 -endif.
 -ifndef(HAVE_lib__send_2).
+% OTP < 21.0
 -export([send/2]).
 -endif.
 -ifndef(HAVE_lib__sendw_2).
+% OTP < 21.0
 -export([sendw/2]).
 -endif.
 -ifndef(HAVE_lib__flush_receive_0).
+% OTP < 21.0
 -export([flush_receive/0]).
 -endif.
 -ifndef(HAVE_lib__error_message_2).
+% OTP < 21.0
 -export([error_message/2]).
 -endif.
 -ifndef(HAVE_lib__progname_0).
+% OTP < 21.0
 -export([progname/0]).
 -endif.
 

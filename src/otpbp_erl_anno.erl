@@ -1,6 +1,7 @@
 -module(otpbp_erl_anno).
 
 -ifndef(HAVE_erl_anno__new_1).
+% OTP 18.0
 -export([new/1]).
 -endif.
 

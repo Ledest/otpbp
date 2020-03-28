@@ -1,12 +1,15 @@
 -module(otpbp_os).
 
 -ifndef(HAVE_os__system_time_1).
+% OTP 18.0
 -export([system_time/1]).
 -endif.
 -ifndef(HAVE_os__getenv_2).
+% OTP 18.0
 -export([getenv/2]).
 -endif.
 -ifndef(HAVE_os__cmd_2).
+% OTP 20.2.3
 -export([cmd/2]).
 -ifndef(HAVE_maps__get_3).
 -compile([{parse_transform, otpbp_pt}]).

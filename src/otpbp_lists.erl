@@ -1,9 +1,11 @@
 -module(otpbp_lists).
 
 -ifndef(HAVE_lists__join_2).
+% OTP 19.0
 -export([join/2]).
 -endif.
 -ifndef(HAVE_lists__search_2).
+% OTP 21.0
 -export([search/2]).
 -endif.
 

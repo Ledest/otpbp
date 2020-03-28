@@ -1,6 +1,7 @@
 -module(otpbp_filelib).
 
 -ifndef(HAVE_filelib__safe_relative_path_2).
+% OTP 23.0
 -export([safe_relative_path/2]).
 -endif.
 

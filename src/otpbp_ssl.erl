@@ -5,10 +5,12 @@
 -endif.
 
 -ifndef(HAVE_ssl__connection_information_1).
+% OTP 18.0
 -export([connection_information/1]).
 -endif.
 
 -ifndef(HAVE_ssl__connection_information_2).
+% OTP 18.0
 -export([connection_information/2]).
 -endif.
 

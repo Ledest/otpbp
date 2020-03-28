@@ -3,21 +3,25 @@
 -compile([{parse_transform, otpbp_pt}]).
 
 -ifndef(HAVE_supervisor__get_childspec_2).
+% OTP 18.0
 -export([get_childspec/2]).
 -endif.
 -ifndef(HAVE_supervisor__try_again_restart_2).
+% OTP 18.0
 -export([try_again_restart/2]).
 -endif.
 -ifndef(HAVE_supervisor__get_callback_module_1).
 -ifndef(NEED_supervisor__state_record).
 -define(NEED_supervisor__state_record, true).
 -endif.
+% OTP 18.3
 -export([get_callback_module/1]).
 -endif.
 -ifndef(HAVE_supervisor__format_status_2).
 -ifndef(NEED_supervisor__state_record).
 -define(NEED_supervisor__state_record, true).
 -endif.
+% OTP 19.0
 -export([format_status/2]).
 -endif.
 

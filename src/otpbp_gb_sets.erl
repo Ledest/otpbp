@@ -1,6 +1,7 @@
 -module(otpbp_gb_sets).
 
 -ifndef(HAVE_gb_sets__iterator_from_2).
+% OTP 18.0
 -export([iterator_from/2]).
 -endif.
 
