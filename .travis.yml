@@ -23,8 +23,5 @@ otp_release:
   - 18.1
   - 18.0
   - 17.5
-  - 17.4
-  - 17.3
-  - 17.1
 before_script: kerl list installations
 script: rebar compile && rebar xref && rebar eunit
