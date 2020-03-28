@@ -1,6 +1,6 @@
 -module(otpbp_compile).
 
-% OTP < 19.0
+% OTP < 18.0
 -compile([{parse_transform, otpbp_pt}]).
 
 -ifndef(HAVE_compile__env_compiler_options_0).
