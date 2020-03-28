@@ -20,15 +20,10 @@
 
 -dialyzer({no_opaque, application_guard/3}).
 
--define(TRANSFORM_FUNCTIONS, [{{get_keys, 0}, otpbp_erlang},
-                              {{is_map_key, 2}, {maps, is_key}},
+-define(TRANSFORM_FUNCTIONS, [{{is_map_key, 2}, {maps, is_key}},
                               {{map_get, 2}, {maps, get}},
                               {{[ceil, floor], 1}, otpbp_erlang},
                               {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
-                              {{erlang, convert_time_unit, 3}, otpbp_erlang},
-                              {{erlang, [monotonic_time, system_time, time_offset, unique_integer], [0, 1]},
-                               otpbp_erlang},
-                              {{erlang, timestamp, 0}, os},
                               {{application, set_env, [1, 2]}, otpbp_application},
                               {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2},
                                otpbp_calendar},
