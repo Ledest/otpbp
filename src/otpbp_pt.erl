@@ -46,7 +46,6 @@
                                {crypto, hash_update}},
                               {{ct, [get_event_mgr_ref, get_progname], 0}, otpbp_ct},
                               {{dict, take, 2}, otpbp_dict},
-                              {{epp, open, 1}, otpbp_epp},
                               {{erl_anno, new, 1}, otpbp_erl_anno},
                               {{erl_error, format_fun, [1, 2]}, lib},
                               {{erl_error, [format_call, format_stacktrace], [4, 5]}, lib},
