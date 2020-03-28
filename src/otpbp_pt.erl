@@ -54,7 +54,6 @@
                               {{file, delete, 2}, otpbp_file},
                               {{filelib, safe_relative_path, 2}, otpbp_filelib},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
-                              {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
                               {{gb_trees, [iterator_from, take, take_any], 2}, otpbp_gb_trees},
                               {{gen, get_parent, 0}, otpbp_gen},
                               {{gen, [debug_options, get_proc_name, name, unregister_name], 1}, otpbp_gen},
