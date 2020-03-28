@@ -1,7 +1,5 @@
 -module(otpbp_io_lib).
 
--compile([{parse_transform, otpbp_pt}]).
-
 -ifndef(HAVE_io_lib__limit_term_2).
 -export([limit_term/2]).
 -endif.
