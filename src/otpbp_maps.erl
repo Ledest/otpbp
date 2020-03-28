@@ -2,10 +2,6 @@
 
 -compile([{parse_transform, otpbp_pt}]).
 
--ifndef(HAVE_maps__filter_2).
-% OTP 18.0
--export([filter/2]).
--endif.
 -ifndef(HAVE_maps__update_with_3).
 % OTP 19.0
 -export([update_with/3]).
@@ -73,19 +69,6 @@
             #{K := V} -> maps:update(K, F(V), M);
             #{} -> error({badkey, K}, [K, F, M])
         end).
--endif.
-
--ifndef(HAVE_maps__filter_2).
-filter(Fun, M) ->
-    is_map(M) orelse error({badmap, M}, [Fun, M]),
-    is_function(Fun, 2) orelse error(badarg, [Fun, M]),
-    maps:without(maps:fold(fun(K, V, A) ->
-                               case Fun(K, V) of
-                                   false -> [K|A];
-                                   true -> A
-                               end
-                           end, [], M),
-                 M).
 -endif.
 
 -ifndef(HAVE_maps__update_with_4).
