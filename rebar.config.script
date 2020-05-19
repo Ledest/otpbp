@@ -147,7 +147,17 @@ Funs = [{erlang, convert_time_unit, 3},
         {zlib, gzip, 2},
         {zlib, zip, 2}],
 
-lists:keystore(erl_opts, 1, CONFIG,
+lists:keystore(erl_opts, 1,
+               case string:to_integer(erlang:system_info(otp_release)) of
+                   {R, _} when is_integer(R), R >= 23 ->
+                       case lists:keyfind(xref_checks, 1, CONFIG) of
+                           {_, [_|_] = XRef} ->
+                               lists:keystore(xref_checks, 1, CONFIG,
+                                              {xref_checks, XRef -- [deprecated_function_calls, deprecated_functions]});
+                           _ -> CONFIG
+                       end;
+                   _ -> CONFIG
+               end,
                {erl_opts,
                 case erlang:system_info(version) of
                     "6." ++ _ -> [{d, 'HAVE_MAP_SYNTAX_6'}];
