@@ -59,6 +59,7 @@
                               {{ets, take, 2}, otpbp_ets},
                               {{ets, update_counter, 4}, otpbp_ets},
                               {{file, del_dir_r, 1}, otpbp_file},
+                              {{file, delete, 2}, otpbp_file},
                               {{filelib, safe_relative_path, 2}, otpbp_filelib},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
                               {{gb_sets, iterator_from, 2}, otpbp_gb_sets},
