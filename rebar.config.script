@@ -146,18 +146,26 @@ Funs = [{erlang, convert_time_unit, 3},
         {zlib, gzip, 2},
         {zlib, zip, 2}],
 
+OTPRelease = list_to_integer(erlang:system_info(otp_release)),
+
+ErlOpts = case lists:keyfind(erl_opts, 1, CONFIG) of
+              {_, EO} -> EO;
+              _ -> []
+          end,
+
 lists:keystore(erl_opts, 1,
-               case string:to_integer(erlang:system_info(otp_release)) of
-                   {R, _} when is_integer(R), R >= 23 ->
+               if
+                   OTPRelease >= 23 ->
                        case lists:keyfind(xref_checks, 1, CONFIG) of
                            {_, [_|_] = XRef} ->
                                lists:keystore(xref_checks, 1, CONFIG,
                                               {xref_checks, XRef -- [deprecated_function_calls, deprecated_functions]});
                            _ -> CONFIG
                        end;
-                   _ -> CONFIG
+                   true -> CONFIG
                end,
                {erl_opts,
+                ErlOpts ++
                 case erlang:system_info(version) of
                     "6." ++ _ -> [{d, 'HAVE_MAP_SYNTAX_6'}];
                     _ -> []
@@ -173,8 +181,8 @@ lists:keystore(erl_opts, 1,
                                                                                {F, A} -> [erlang, F, A]
                                                                            end)))}
                           end, lists:filter(Check, BIFs ++ Funs))}) ++
-case string:to_integer(erlang:system_info(otp_release)) of
-    {R, _} when is_integer(R), R >= 20 -> [];
-    _ -> [{pre_hooks, [{compile, "make -s -C src/uc_spec otpbp_unicode_util.erl"}]},
-          {post_hooks, [{clean, "rm -f src/uc_spec/*.erl"}]}]
+if
+    OTPRelease >= 20 -> [];
+    true -> [{pre_hooks, [{compile, "make -s -C src/uc_spec otpbp_unicode_util.erl"}]},
+             {post_hooks, [{clean, "rm -f src/uc_spec/*.erl"}]}]
 end.
