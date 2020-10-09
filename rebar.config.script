@@ -153,6 +153,11 @@ ErlOpts = case lists:keyfind(erl_opts, 1, CONFIG) of
               _ -> []
           end,
 
+SrcDirs = case lists:keyfind(src_dirs, 1, ErlOpts) of
+              {_, [_|_] = SD} -> SD;
+              _ -> ["src"]
+          end,
+
 lists:keystore(erl_opts, 1,
                if
                    OTPRelease >= 23 ->
@@ -165,7 +170,10 @@ lists:keystore(erl_opts, 1,
                    true -> CONFIG
                end,
                {erl_opts,
-                ErlOpts ++
+                lists:keystore(src_dirs, 1, ErlOpts, {src_dirs, case code:which(pg) of
+                                                                    non_existing -> SrcDirs ++ ["src_ext"];
+                                                                    _ -> SrcDirs -- ["src_ext"]
+                                                                end}) ++
                 case erlang:system_info(version) of
                     "6." ++ _ -> [{d, 'HAVE_MAP_SYNTAX_6'}];
                     _ -> []
