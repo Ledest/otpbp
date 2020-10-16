@@ -83,9 +83,8 @@
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
                               {{orddict, take, 2}, otpbp_orddict},
                               {{ordsets, is_empty, 1}, otpbp_ordsets},
-                              {{os, env, 0}, {os, list_env_vars}}, % OTP 24.0
-                              {{os, list_env_vars, 0}, {os, env}},
                               {{os, [cmd, getenv], 2}, otpbp_os},
+                              {{os, [env, list_env_vars], 0}, otpbp_os},
                               {{os, system_time, 1}, otpbp_os},
                               {{rand, [export_seed, normal, uniform], 0}, otpbp_rand},
                               {{rand, [export_seed_s, normal_s, seed, seed_s, uniform, uniform_s], 1}, otpbp_rand},
