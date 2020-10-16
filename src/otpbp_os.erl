@@ -11,9 +11,6 @@
 -ifndef(HAVE_os__cmd_2).
 % OTP 20.2.3
 -export([cmd/2]).
--ifndef(HAVE_maps__get_3).
--compile([{parse_transform, otpbp_pt}]).
--endif.
 -endif.
 
 -ifndef(HAVE_os__system_time_1).
