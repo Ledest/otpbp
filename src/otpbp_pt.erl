@@ -86,6 +86,8 @@
                               {{os, [cmd, getenv], 2}, otpbp_os},
                               {{os, [env, list_env_vars], 0}, otpbp_os},
                               {{os, system_time, 1}, otpbp_os},
+                              {{queue, filtermap, 2}, otpbp_queue},
+                              {{queue, fold, 3}, otpbp_queue},
                               {{rand, [export_seed, normal, uniform], 0}, otpbp_rand},
                               {{rand, [export_seed_s, normal_s, seed, seed_s, uniform, uniform_s], 1}, otpbp_rand},
                               {{rand, [seed, seed_s, uniform_s], 2}, otpbp_rand},

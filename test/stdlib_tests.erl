@@ -72,3 +72,20 @@ maps_test() ->
     %?assertError({badmap,a}, maps:size(a)),
     %?assertError({badmap,<<>>}, maps:size(<<>>)),
     ok.
+
+queue_test() ->
+    Q1 = queue:from_list([11, 22, 33, 44]),
+    ?assertEqual([11, 22 * 22, 33 * 33], queue:to_list(queue:filtermap(fun(X) when X < 17 -> true;
+                                                                          (X) when X > 37 -> false;
+                                                                          (X) -> {true, X*X}
+                                                                       end, Q1))),
+    ?assertEqual([22 * 22, 33 * 33, 44],
+                                         queue:to_list(queue:filtermap(fun(X) when X < 17 -> false;
+                                                                          (X) when X > 37 -> true;
+                                                                          (X) -> {true, X*X}
+                                                                       end, Q1))),
+    L = lists:seq(1, 2 * 50),
+    Q2 = queue:from_list(L),
+    ?assertEqual(lists:sum(L), queue:fold(fun(X, A) -> X + A end, 0, Q2)),
+    ?assertEqual([X * X || X <- L], lists:reverse(queue:fold(fun(X, A) -> [X * X|A] end, [], Q2))),
+    ok.
