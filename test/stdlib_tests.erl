@@ -112,6 +112,58 @@ maps_test() ->
     ?assertError({badmap, a}, maps:merge_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, a, #{})),
     ?assertError({badmap, b}, maps:merge_with(fun(_K, _V1, _V2) -> error(ok) end, #{}, b)),
     ?assertError({badmap, a}, maps:merge_with(fun(_K, _V1, _V2) -> error(ok) end, a, b)),
+    %% intersect/2
+    ?assertEqual(#{1 => 3, 2 => 2}, maps:intersect(Small, Large)),
+    % Swapping input maps can make a difference
+    ?assertEqual(#{1 => 1, 2 => 3}, maps:intersect(Large, Small)),
+    % Should conceptually compute the same thing as gb_sets:intersect/2 with the right combiner
+    IntersectFromGBSets = fun(M1, M2) ->
+                              lists:foldl(fun(Key, SoFar) -> SoFar#{Key => maps:get(Key, M2)} end,
+                                          #{},
+                                          gb_sets:to_list(gb_sets:intersection(gb_sets:from_list(maps:keys(M1)),
+                                                                               gb_sets:from_list(maps:keys(M2)))))
+                          end,
+    check_map_combiners_same_small(fun maps:intersect/2, IntersectFromGBSets, 11),
+    check_map_combiners_same_large(fun maps:intersect/2, IntersectFromGBSets, 13),
+    % Empty maps
+    ?assertEqual(#{}, maps:intersect(Large, #{})),
+    ?assertEqual(#{}, maps:intersect(#{}, Large)),
+    ?assertEqual(#{}, maps:intersect(#{}, #{})),
+    % Errors
+    ?assertError({badmap, a}, maps:intersect(a, #{})),
+    ?assertError({badmap, b}, maps:intersect(#{}, b)),
+    ?assertError({badmap, a}, maps:intersect(a, b)),
+    %% intersect_with/3
+    ?assertEqual(#{1 => {1, 3}, 2 => {3, 2}},
+                 maps:intersect_with(fun(1, 1, 3) -> {1, 3};
+                                        (2, 3, 2) -> {3, 2}
+                                     end,
+                                     Small, Large)),
+    % Swapping input maps should reverse tuples
+    ?assertEqual(#{1 => {3, 1}, 2 => {2, 3}},
+                 maps:intersect_with(fun(1, Val1, Val2) -> {Val1, Val2};
+                                        (2, Val1, Val2) -> {Val1, Val2}
+                                     end,
+                                     Large, Small)),
+    % Swapping parameters in the output of the fun should also reverse tuples
+    ?assertEqual(#{1 => {3, 1}, 2 => {2, 3}},
+                 maps:intersect_with(fun(1, Val1, Val2) -> {Val2, Val1};
+                                        (2, Val1, Val2) -> {Val2, Val1}
+                                     end,
+                                     Small, Large)),
+    % Should give the same result as intersect/2 with the right combiner
+    Intersect2FromIntersect3 = fun(M1, M2) -> maps:intersect_with(fun(_, _, Val2) -> Val2 end, M1, M2) end,
+    check_map_combiners_same_small(fun maps:intersect/2, Intersect2FromIntersect3, 7),
+    check_map_combiners_same_large(fun maps:intersect/2, Intersect2FromIntersect3, 8),
+    % Empty maps
+    ?assertEqual(#{}, maps:intersect_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, Large, #{})),
+    ?assertEqual(#{}, maps:intersect_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, #{}, Large)),
+    ?assertEqual(#{}, maps:intersect_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, #{}, #{})),
+    % Errors
+    ?assertError(badarg, maps:intersect_with(not_a_fun, #{}, #{})),
+    ?assertError({badmap, a}, maps:intersect_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, a, #{})),
+    ?assertError({badmap, b}, maps:intersect_with(fun(_K, _V1, _V2) -> error(ok) end, #{}, b)),
+    ?assertError({badmap, a}, maps:intersect_with(fun(_K, _V1, _V2) -> error(ok) end, a, b)),
     ok.
 
 check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->

@@ -22,6 +22,14 @@
 % OTP 24.0
 -export([merge_with/3]).
 -endif.
+-ifndef(HAVE_maps__intersect_with_3).
+% OTP 24.0
+-export([intersect_with/3]).
+-endif.
+-ifndef(HAVE_maps__intersect_2).
+% OTP 24.0
+-export([intersect/2]).
+-endif.
 
 -ifdef(HAVE_MAP_SYNTAX_6).
 -define(PUT(K, V, M), maps:put(K, V, M)).
@@ -100,4 +108,39 @@ merge_with(C, M1, M2) ->
     is_map(M1) orelse error({badmap, M1}, [C, M1, M2]),
     is_map(M2) orelse error({badmap, M2}, [C, M1, M2]),
     maps:fold(fun(K, V2, A) -> maps:update_with(K, fun(V1) -> C(K, V1, V2) end, V2, A) end, M1, M2).
+-endif.
+
+-ifndef(HAVE_maps__intersect_with_3).
+-ifdef(HAVE_MAP_SYNTAX_6).
+intersect_with(C, M1, M2) ->
+    is_function(C, 3) orelse error(badarg, [C, M1, M2]),
+    is_map(M1) orelse error({badmap, M1}, [C, M1, M2]),
+    is_map(M2) orelse error({badmap, M2}, [C, M1, M2]),
+    maps:fold(fun(K, V2, A) ->
+                  case maps:find(K, M1) of
+                      {ok, V1} -> maps:put(K, C(K, V1, V2), A);
+                      _error -> maps:remove(K, A)
+                  end
+              end,
+              M2, M2).
+-else.
+intersect_with(C, M1, M2) ->
+    is_function(C, 3) orelse error(badarg, [C, M1, M2]),
+    is_map(M1) orelse error({badmap, M1}, [C, M1, M2]),
+    is_map(M2) orelse error({badmap, M2}, [C, M1, M2]),
+    maps:fold(fun(K, V2, A) ->
+                  case M1 of
+                      #{K := V1} -> A#{K := C(K, V1, V2)};
+                      _ -> maps:remove(K, A)
+                  end
+              end,
+              M2, M2).
+-endif.
+-endif.
+
+-ifndef(HAVE_maps__intersect_2).
+intersect(M1, M2) ->
+    is_map(M1) orelse error({badmap, M1}, [M1, M2]),
+    is_map(M2) orelse error({badmap, M2}, [M1, M2]),
+    maps:with(maps:keys(M1), M2).
 -endif.
