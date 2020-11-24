@@ -48,30 +48,102 @@ lists_test() ->
     ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, [1,2,3,4,5,6,7,8]), {value, 2}).
 
 maps_test() ->
-    % update_with/3
+    %% update_with/3
     V1 = value1,
     V2 = <<"value2">>,
     V3 = "value3",
-    Map = #{ key1 => V1, key2 => V2, "key3" => V3 },
-    Fun = fun(V) -> [V,V,{V,V}] end,
-    ?assertMatch(#{key1 := [V1,V1,{V1,V1}]}, maps:update_with(key1,Fun,Map)),
-    ?assertMatch(#{key2 := [V2,V2,{V2,V2}]}, maps:update_with(key2,Fun,Map)),
-    ?assertMatch(#{"key3" := [V3,V3,{V3,V3}]}, maps:update_with("key3",Fun,Map)),
-    ?assertError({badmap,b}, maps:update_with([a,b],a,b)),
-    ?assertError(badarg, maps:update_with([a,b],a,#{})),
-    ?assertError({badkey,[a,b]}, maps:update_with([a,b],Fun,#{})),
-    % update_with/4
+    Map = #{key1 => V1, key2 => V2, "key3" => V3},
+    Fun = fun(V) -> [V, V, {V, V}] end,
+    ?assertMatch(#{key1 := [V1, V1, {V1, V1}]}, maps:update_with(key1, Fun, Map)),
+    ?assertMatch(#{key2 := [V2, V2, {V2, V2}]}, maps:update_with(key2, Fun, Map)),
+    ?assertMatch(#{"key3" := [V3, V3, {V3, V3}]}, maps:update_with("key3", Fun, Map)),
+    ?assertError({badmap, b}, maps:update_with([a, b], a, b)),
+    ?assertError(badarg, maps:update_with([a, b], a, #{})),
+    ?assertError({badkey, [a, b]}, maps:update_with([a, b], Fun, #{})),
+    %% update_with/4
     Init = 3,
-    ?assertMatch(#{key1 := [V1,V1,{V1,V1}]}, maps:update_with(key1,Fun,Init,Map)),
-    ?assertMatch(#{key2 := [V2,V2,{V2,V2}]}, maps:update_with(key2,Fun,Init,Map)),
-    ?assertMatch(#{"key3" := [V3,V3,{V3,V3}]}, maps:update_with("key3",Fun,Init,Map)),
-    ?assertMatch(#{key3 := Init}, maps:update_with(key3,Fun,Init,Map)),
-    ?assertError({badmap,b}, maps:update_with([a,b],a,Init,b)),
-    ?assertError(badarg, maps:update_with([a,b],a,Init,#{})),
+    ?assertMatch(#{key1 := [V1, V1, {V1, V1}]}, maps:update_with(key1, Fun, Init, Map)),
+    ?assertMatch(#{key2 := [V2, V2, {V2, V2}]}, maps:update_with(key2, Fun, Init, Map)),
+    ?assertMatch(#{"key3" := [V3, V3, {V3, V3}]}, maps:update_with("key3", Fun, Init, Map)),
+    ?assertMatch(#{key3 := Init}, maps:update_with(key3, Fun, Init, Map)),
+    ?assertError({badmap, b}, maps:update_with([a, b], a, Init, b)),
+    ?assertError(badarg, maps:update_with([a, b], a, Init, #{})),
     % Disabled for Erlang/OTP < 18
     %?assertError({badmap,a}, maps:size(a)),
     %?assertError({badmap,<<>>}, maps:size(<<>>)),
+    %% merge_with/3
+    Small = #{1 => 1, 2 => 3},
+    Large = #{1 => 3, 2 => 2, 10 => 10},
+    ?assertEqual(#{1 => {1, 3}, 2 => {3, 2}, 10 => 10},
+                 maps:merge_with(fun(1, 1, 3) -> {1, 3};
+                                    (2, 3, 2) -> {3, 2}
+                                 end,
+                                 Small, Large)),
+    % Swapping input maps should reverse tuples
+    ?assertEqual(#{1 => {3, 1}, 2 => {2, 3}, 10 => 10},
+                 maps:merge_with(fun(1, Val1, Val2) -> {Val1, Val2};
+                                    (2, Val1, Val2) -> {Val1, Val2}
+                                 end,
+                                 Large, Small)),
+    % Swapping parameters in the output of the fun should also reverse tuples
+    ?assertEqual(#{1 => {3, 1}, 2 => {2, 3}, 10 => 10},
+                 maps:merge_with(fun(1, Val1, Val2) -> {Val2, Val1};
+                                    (2, Val1, Val2) -> {Val2, Val1}
+                                 end,
+                                 Small, Large)),
+    % Should give the same result as maps:merge/2 with the right combiner
+    Merge2FromMerge3 = fun(M1, M2) -> maps:merge_with(fun(_, _, Val2) -> Val2 end, M1, M2) end,
+    check_map_combiners_same_small(fun maps:merge/2, Merge2FromMerge3, 1),
+    check_map_combiners_same_large(fun maps:merge/2, Merge2FromMerge3, 2),
+    % Should conceptually compute the same thing as lists:ukey_merge/2 with the right combiner
+    MergeFromUKeyMerge = fun(M1, M2) ->
+                             % ukeymerge takes from the first when collision
+                             maps:from_list(lists:ukeymerge(1,
+                                                            lists:sort(maps:to_list(M2)), lists:sort(maps:to_list(M1))))
+                         end,
+    check_map_combiners_same_small(MergeFromUKeyMerge, Merge2FromMerge3, 3),
+    check_map_combiners_same_large(MergeFromUKeyMerge, Merge2FromMerge3, 4),
+    % Empty maps
+    ?assertEqual(Large, maps:merge_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, Large, #{})),
+    ?assertEqual(Large, maps:merge_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, #{}, Large)),
+    ?assertEqual(#{}, maps:merge_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, #{}, #{})),
+    % Errors
+    ?assertError(badarg, maps:merge_with(not_a_fun, #{}, #{})),
+    ?assertError({badmap, a}, maps:merge_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, a, #{})),
+    ?assertError({badmap, b}, maps:merge_with(fun(_K, _V1, _V2) -> error(ok) end, #{}, b)),
+    ?assertError({badmap, a}, maps:merge_with(fun(_K, _V1, _V2) -> error(ok) end, a, b)),
     ok.
+
+check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->
+    lists:foreach(fun(SizeConstant) ->
+                      lists:foreach(fun(SeedMult) ->
+                                        RandMap1 = random_map(SizeConstant, SizeConstant + 100000 * SeedMult + Seed),
+                                        RandMap2 = random_map(SizeConstant, SizeConstant + 200000 * SeedMult + Seed),
+                                        ?assertEqual(MapCombiner1(RandMap1, RandMap2), MapCombiner2(RandMap1, RandMap2))
+                                    end,
+                                    lists:seq(1, 100))
+
+                  end,
+                  lists:seq(1, 10)).
+
+check_map_combiners_same_large(MapCombiner1, MapCombiner2, Seed) ->
+    lists:foreach(fun(SizeConstant) ->
+                      RandMap1 = random_map(SizeConstant, SizeConstant + Seed),
+                      RandMap2 = random_map(SizeConstant, SizeConstant + Seed),
+                      ?assertEqual(MapCombiner1(RandMap1, RandMap2), MapCombiner2(RandMap1, RandMap2))
+                  end,
+                  [1000, 10000]).
+
+random_map(SizeConstant, InitSeed) ->
+    {Ret, _} = lists:foldl(fun(_, {Map, Seed}) ->
+                               rand:uniform_s(Seed),
+                               {K, Seed2} = rand:uniform_s(SizeConstant, Seed),
+                               {V, Seed3} = rand:uniform_s(SizeConstant * 100, Seed2),
+                               {Map#{K => V}, Seed3}
+                           end,
+                           {#{}, rand:seed_s(exsplus, SizeConstant + InitSeed)},
+                           lists:seq(1, SizeConstant)),
+    Ret.
 
 queue_test() ->
     Q1 = queue:from_list([11, 22, 33, 44]),

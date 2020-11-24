@@ -18,6 +18,10 @@
 % OTP 19.0
 -export([take/2]).
 -endif.
+-ifndef(HAVE_maps__merge_with_3).
+% OTP 24.0
+-export([merge_with/3]).
+-endif.
 
 -ifdef(HAVE_MAP_SYNTAX_6).
 -define(PUT(K, V, M), maps:put(K, V, M)).
@@ -88,4 +92,12 @@ take(K, M) ->
         _ -> error({badmap, M}, [K, M])
     end.
 -endif.
+-endif.
+
+-ifndef(HAVE_maps__merge_with_3).
+merge_with(C, M1, M2) ->
+    is_function(C, 3) orelse error(badarg, [C, M1, M2]),
+    is_map(M1) orelse error({badmap, M1}, [C, M1, M2]),
+    is_map(M2) orelse error({badmap, M2}, [C, M1, M2]),
+    maps:fold(fun(K, V2, A) -> maps:update_with(K, fun(V1) -> C(K, V1, V2) end, V2, A) end, M1, M2).
 -endif.
