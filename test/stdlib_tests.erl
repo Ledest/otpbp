@@ -118,7 +118,7 @@ maps_test() ->
     ?assertEqual(#{1 => 1, 2 => 3}, maps:intersect(Large, Small)),
     % Should conceptually compute the same thing as gb_sets:intersect/2 with the right combiner
     IntersectFromGBSets = fun(M1, M2) ->
-                              lists:foldl(fun(Key, SoFar) -> SoFar#{Key => maps:get(Key, M2)} end,
+                              lists:foldl(fun(Key, SoFar) -> maps:put(Key, maps:get(Key, M2), SoFar) end,
                                           #{},
                                           gb_sets:to_list(gb_sets:intersection(gb_sets:from_list(maps:keys(M1)),
                                                                                gb_sets:from_list(maps:keys(M2)))))
@@ -191,7 +191,7 @@ random_map({SizeConstant, _, _} = InitSeed) ->
                                rand:uniform_s(Seed),
                                {K, Seed2} = rand:uniform_s(SizeConstant, Seed),
                                {V, Seed3} = rand:uniform_s(SizeConstant * 100, Seed2),
-                               {Map#{K => V}, Seed3}
+                               {maps:put(K, V, Map), Seed3}
                            end,
                            {#{}, rand:seed_s(exsplus, InitSeed)},
                            lists:seq(1, SizeConstant)),
