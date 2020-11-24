@@ -169,8 +169,8 @@ maps_test() ->
 check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->
     lists:foreach(fun(SizeConstant) ->
                       lists:foreach(fun(SeedMult) ->
-                                        RandMap1 = random_map(SizeConstant, SizeConstant + 100000 * SeedMult + Seed),
-                                        RandMap2 = random_map(SizeConstant, SizeConstant + 200000 * SeedMult + Seed),
+                                        RandMap1 = random_map({SizeConstant, 100000 * SeedMult, Seed}),
+                                        RandMap2 = random_map({SizeConstant, 200000 * SeedMult, Seed}),
                                         ?assertEqual(MapCombiner1(RandMap1, RandMap2), MapCombiner2(RandMap1, RandMap2))
                                     end,
                                     lists:seq(1, 100))
@@ -180,20 +180,20 @@ check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->
 
 check_map_combiners_same_large(MapCombiner1, MapCombiner2, Seed) ->
     lists:foreach(fun(SizeConstant) ->
-                      RandMap1 = random_map(SizeConstant, SizeConstant + Seed),
-                      RandMap2 = random_map(SizeConstant, SizeConstant + Seed),
+                      RandMap1 = random_map({SizeConstant, SizeConstant, Seed}),
+                      RandMap2 = random_map({SizeConstant, SizeConstant, Seed}),
                       ?assertEqual(MapCombiner1(RandMap1, RandMap2), MapCombiner2(RandMap1, RandMap2))
                   end,
                   [1000, 10000]).
 
-random_map(SizeConstant, InitSeed) ->
+random_map({SizeConstant, _, _} = InitSeed) ->
     {Ret, _} = lists:foldl(fun(_, {Map, Seed}) ->
                                rand:uniform_s(Seed),
                                {K, Seed2} = rand:uniform_s(SizeConstant, Seed),
                                {V, Seed3} = rand:uniform_s(SizeConstant * 100, Seed2),
                                {Map#{K => V}, Seed3}
                            end,
-                           {#{}, rand:seed_s(exsplus, SizeConstant + InitSeed)},
+                           {#{}, rand:seed_s(exsplus, InitSeed)},
                            lists:seq(1, SizeConstant)),
     Ret.
 
