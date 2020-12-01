@@ -175,8 +175,7 @@ delete_front(_, []) -> false.
 -compile({inline, {delete_rear, 2}}).
 delete_rear(Item, [X|Rest]) ->
     case delete_rear(Item, Rest) of
-        false when X =:= Item -> Rest;
-        false -> false;
+        false -> X =:= Item andalso Rest;
         R -> [X|R]
     end;
 delete_rear(_, []) -> false.
@@ -200,11 +199,7 @@ delete_with_front(_, []) -> false.
 -compile({inline, {delete_with_rear, 2}}).
 delete_with_rear(Pred, [X|Rest]) ->
     case delete_with_rear(Pred, Rest) of
-        false ->
-            case Pred(X) of
-                true -> Rest;
-                false -> false
-            end;
+        false -> Pred(X) andalso Rest;
         R -> [X|R]
     end;
 delete_with_rear(_, []) -> false.
