@@ -15,9 +15,6 @@
 -ifndef(HAVE_queue__delete_r_2).
 % OTP 24.0 ?
 -export([delete_r/2]).
--ifdef(HAVE_queue__delete_2).
--import(queue, [delete/2]).
--endif.
 -endif.
 -ifndef(HAVE_queue__delete_with_2).
 % OTP 24.0 ?
@@ -26,9 +23,6 @@
 -ifndef(HAVE_queue__delete_with_r_2).
 % OTP 24.0 ?
 -export([delete_with_r/2]).
--ifdef(HAVE_queue__delete_with_2).
--import(queue, [delete_with/2]).
--endif.
 -endif.
 -ifndef(HAVE_queue__fold_3).
 % OTP 24.0 ?
@@ -50,8 +44,12 @@ any(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_2).
+-ifndef(NEED__delete_front_2).
 -define(NEED__delete_front_2, true).
+-endif.
+-ifndef(NEED__delete_rear_2).
 -define(NEED__delete_rear_2, true).
+-endif.
 -ifndef(NEED__f2r_1).
 -define(NEED__f2r_1, true).
 -endif.
@@ -73,15 +71,39 @@ delete(Item, Q) -> error(badarg, [Item, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_r_2).
-delete_r(Item, {R0, F0}) when is_list(R0), is_list(F0) ->
-    {F1, R1} = delete(Item, {F0, R0}),
-    {R1, F1};
+-ifndef(NEED__delete_front_2).
+-define(NEED__delete_front_2, true).
+-endif.
+-ifndef(NEED__delete_rear_2).
+-define(NEED__delete_rear_2, true).
+-endif.
+-ifndef(NEED__f2r_1).
+-define(NEED__f2r_1, true).
+-endif.
+-ifndef(NEED__r2f_1).
+-define(NEED__r2f_1, true).
+-endif.
+delete_r(Item, {R0, F0} = Q) when is_list(R0), is_list(F0) ->
+    case delete_front(Item, R0) of
+        false ->
+            case delete_rear(Item, F0) of
+                false -> Q;
+                [] -> r2f(R0);
+                F1 -> {R0, F1}
+            end;
+        [] -> f2r(F0);
+        R1 -> {R1, F0}
+    end;
 delete_r(Item, Q) -> error(badarg, [Item, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_with_2).
+-ifndef(NEED__delete_with_front_2).
 -define(NEED__delete_with_front_2, true).
+-endif.
+-ifndef(NEED__delete_with_rear_2).
 -define(NEED__delete_with_rear_2, true).
+-endif.
 -ifndef(NEED__f2r_1).
 -define(NEED__f2r_1, true).
 -endif.
@@ -103,9 +125,29 @@ delete_with(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_with_r_2).
-delete_with_r(Pred, {R0, F0}) when is_function(Pred, 1), is_list(R0), is_list(F0) ->
-    {F1, R1} = delete_with(Pred, {F0, R0}),
-    {R1, F1};
+-ifndef(NEED__delete_with_front_2).
+-define(NEED__delete_with_front_2, true).
+-endif.
+-ifndef(NEED__delete_with_rear_2).
+-define(NEED__delete_with_rear_2, true).
+-endif.
+-ifndef(NEED__f2r_1).
+-define(NEED__f2r_1, true).
+-endif.
+-ifndef(NEED__r2f_1).
+-define(NEED__r2f_1, true).
+-endif.
+delete_with_r(Pred, {R0, F0} = Q) when is_function(Pred, 1), is_list(R0), is_list(F0) ->
+    case delete_with_front(Pred, R0) of
+        false ->
+            case delete_with_rear(Pred, F0) of
+                false -> Q;
+                [] -> r2f(R0);
+                F1 -> {R0, F1}
+            end;
+        [] -> f2r(F0);
+        R1 -> {R1, F0}
+    end;
 delete_with_r(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
@@ -161,7 +203,6 @@ f2r(List) ->
 -endif.
 
 -ifdef(NEED__delete_front_2).
--compile({inline, {delete_front, 2}}).
 delete_front(Item, [Item|Rest]) -> Rest;
 delete_front(Item, [X|Rest]) ->
     case delete_front(Item, Rest) of
@@ -172,7 +213,6 @@ delete_front(_, []) -> false.
 -endif.
 
 -ifdef(NEED__delete_rear_2).
--compile({inline, {delete_rear, 2}}).
 delete_rear(Item, [X|Rest]) ->
     case delete_rear(Item, Rest) of
         false -> X =:= Item andalso Rest;
@@ -182,7 +222,6 @@ delete_rear(_, []) -> false.
 -endif.
 
 -ifdef(NEED__delete_with_front_2).
--compile({inline, {delete_with_front, 2}}).
 delete_with_front(Pred, [X|Rest]) ->
     case Pred(X) of
         true -> Rest;
@@ -196,7 +235,6 @@ delete_with_front(_, []) -> false.
 -endif.
 
 -ifdef(NEED__delete_with_rear_2).
--compile({inline, {delete_with_rear, 2}}).
 delete_with_rear(Pred, [X|Rest]) ->
     case delete_with_rear(Pred, Rest) of
         false -> Pred(X) andalso Rest;
