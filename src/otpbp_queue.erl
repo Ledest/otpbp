@@ -4,32 +4,26 @@
 % OTP 24.0 ?
 -export([all/2]).
 -endif.
-
 -ifndef(HAVE_queue__any_2).
 % OTP 24.0 ?
 -export([any/2]).
 -endif.
-
 -ifndef(HAVE_queue__delete_2).
 % OTP 24.0 ?
 -export([delete/2]).
 -endif.
-
 -ifndef(HAVE_queue__delete_r_2).
 % OTP 24.0 ?
 -export([delete_r/2]).
 -endif.
-
 -ifndef(HAVE_queue__delete_with_2).
 % OTP 24.0 ?
 -export([delete_with/2]).
 -endif.
-
 -ifndef(HAVE_queue__delete_with_r_2).
 % OTP 24.0 ?
 -export([delete_with_r/2]).
 -endif.
-
 -ifndef(HAVE_queue__fold_3).
 % OTP 24.0 ?
 -export([fold/3]).
@@ -41,12 +35,12 @@
 
 -ifndef(HAVE_queue__all_2).
 all(Pred, {R, F}) when is_function(Pred, 1), is_list(R), is_list(F) -> lists:all(Pred, F) andalso lists:all(Pred, R);
-all(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
+all(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__any_2).
 any(Pred, {R, F}) when is_function(Pred, 1), is_list(R), is_list(F) -> lists:any(Pred, F) orelse lists:any(Pred, R);
-any(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
+any(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_2).
@@ -69,14 +63,14 @@ delete(Item, {R0, F0} = Q) when is_list(R0), is_list(F0) ->
         [] -> r2f(R0);
         F1 -> {R0, F1}
     end;
-delete(Item, Q) -> erlang:error(badarg, [Item, Q]).
+delete(Item, Q) -> error(badarg, [Item, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_r_2).
 delete_r(Item, {R0, F0}) when is_list(R0), is_list(F0) ->
     {F1, R1} = delete(Item, {F0, R0}),
     {R1, F1};
-delete_r(Item, Q) -> erlang:error(badarg, [Item, Q]).
+delete_r(Item, Q) -> error(badarg, [Item, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_with_2).
@@ -99,19 +93,19 @@ delete_with(Pred, {R0, F0} = Q) when is_function(Pred, 1), is_list(R0), is_list(
         [] -> r2f(R0);
         F1 -> {R0, F1}
     end;
-delete_with(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
+delete_with(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__delete_with_r_2).
 delete_with_r(Pred, {R0, F0}) when is_function(Pred, 1), is_list(R0), is_list(F0) ->
     {F1, R1} = delete_with(Pred, {F0, R0}),
     {R1, F1};
-delete_with_r(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
+delete_with_r(Pred, Q) -> error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__fold_3).
 fold(Fun, Acc, {R, F}) when is_function(Fun, 2), is_list(R), is_list(F) -> lists:foldr(Fun, lists:foldl(Fun, Acc, F), R);
-fold(Fun, Acc0, Q) -> erlang:error(badarg, [Fun, Acc0, Q]).
+fold(Fun, Acc0, Q) -> error(badarg, [Fun, Acc0, Q]).
 -endif.
 
 -ifndef(HAVE_queue__filtermap_2).
@@ -127,7 +121,7 @@ filtermap(Fun, {R0, F0}) when is_function(Fun, 1), is_list(R0), is_list(F0) ->
         {R, []} -> r2f(R);
         RF -> RF
     end;
-filtermap(Fun, Q) -> erlang:error(badarg, [Fun,Q]).
+filtermap(Fun, Q) -> error(badarg, [Fun, Q]).
 
 %% Call Fun in reverse order, i.e tail to head
 filtermap_r(Fun, [X|R0]) ->
