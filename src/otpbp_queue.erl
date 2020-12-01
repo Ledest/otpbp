@@ -20,6 +20,16 @@
 -export([delete_r/2]).
 -endif.
 
+-ifndef(HAVE_queue__delete_with_2).
+% OTP 24.0 ?
+-export([delete_with/2]).
+-endif.
+
+-ifndef(HAVE_queue__delete_with_r_2).
+% OTP 24.0 ?
+-export([delete_with_r/2]).
+-endif.
+
 -ifndef(HAVE_queue__fold_3).
 % OTP 24.0 ?
 -export([fold/3]).
@@ -67,6 +77,36 @@ delete_r(Item, {R0, F0}) when is_list(R0), is_list(F0) ->
     {F1, R1} = delete(Item, {F0, R0}),
     {R1, F1};
 delete_r(Item, Q) -> erlang:error(badarg, [Item, Q]).
+-endif.
+
+-ifndef(HAVE_queue__delete_with_2).
+-define(NEED__delete_with_front_2, true).
+-define(NEED__delete_with_rear_2, true).
+-ifndef(NEED__f2r_1).
+-define(NEED__f2r_1, true).
+-endif.
+-ifndef(NEED__r2f_1).
+-define(NEED__r2f_1, true).
+-endif.
+delete_with(Pred, {R0, F0} = Q) when is_function(Pred, 1), is_list(R0), is_list(F0) ->
+    case delete_with_front(Pred, F0) of
+        false ->
+            case delete_with_rear(Pred, R0) of
+                false -> Q;
+                [] -> f2r(F0);
+                R1 -> {R1, F0}
+            end;
+        [] -> r2f(R0);
+        F1 -> {R0, F1}
+    end;
+delete_with(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
+-endif.
+
+-ifndef(HAVE_queue__delete_with_r_2).
+delete_with_r(Pred, {R0, F0}) when is_function(Pred, 1), is_list(R0), is_list(F0) ->
+    {F1, R1} = delete_with(Pred, {F0, R0}),
+    {R1, F1};
+delete_with_r(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__fold_3).
@@ -140,4 +180,32 @@ delete_rear(Item, [X|Rest]) ->
         R -> [X|R]
     end;
 delete_rear(_, []) -> false.
+-endif.
+
+-ifdef(NEED__delete_with_front_2).
+-compile({inline, {delete_with_front, 2}}).
+delete_with_front(Pred, [X|Rest]) ->
+    case Pred(X) of
+        true -> Rest;
+        false ->
+            case delete_with_front(Pred, Rest) of
+                false -> false;
+                F -> [X|F]
+            end
+    end;
+delete_with_front(_, []) -> false.
+-endif.
+
+-ifdef(NEED__delete_with_rear_2).
+-compile({inline, {delete_with_rear, 2}}).
+delete_with_rear(Pred, [X|Rest]) ->
+    case delete_with_rear(Pred, Rest) of
+        false ->
+            case Pred(X) of
+                true -> Rest;
+                false -> false
+            end;
+        R -> [X|R]
+    end;
+delete_with_rear(_, []) -> false.
 -endif.
