@@ -1,5 +1,15 @@
 -module(otpbp_queue).
 
+-ifndef(HAVE_queue__all_2).
+% OTP 24.0 ?
+-export([all/2]).
+-endif.
+
+-ifndef(HAVE_queue__any_2).
+% OTP 24.0 ?
+-export([any/2]).
+-endif.
+
 -ifndef(HAVE_queue__fold_3).
 % OTP 24.0 ?
 -export([fold/3]).
@@ -7,6 +17,16 @@
 -ifndef(HAVE_queue__filtermap_2).
 % OTP 24.0 ?
 -export([filtermap/2]).
+-endif.
+
+-ifndef(HAVE_queue__all_2).
+all(Pred, {R, F}) when is_function(Pred, 1), is_list(R), is_list(F) -> lists:all(Pred, F) andalso lists:all(Pred, R);
+all(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
+-endif.
+
+-ifndef(HAVE_queue__any_2).
+any(Pred, {R, F}) when is_function(Pred, 1), is_list(R), is_list(F) -> lists:any(Pred, F) orelse lists:any(Pred, R);
+any(Pred, Q) -> erlang:error(badarg, [Pred, Q]).
 -endif.
 
 -ifndef(HAVE_queue__fold_3).
