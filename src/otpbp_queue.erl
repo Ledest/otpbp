@@ -15,6 +15,9 @@
 -ifndef(HAVE_queue__delete_r_2).
 % OTP 24.0 ?
 -export([delete_r/2]).
+-ifdef(HAVE_queue__delete_2).
+-import(queue, [delete/2]).
+-endif.
 -endif.
 -ifndef(HAVE_queue__delete_with_2).
 % OTP 24.0 ?
@@ -23,6 +26,9 @@
 -ifndef(HAVE_queue__delete_with_r_2).
 % OTP 24.0 ?
 -export([delete_with_r/2]).
+-ifdef(HAVE_queue__delete_with_2).
+-import(queue, [delete_with/2]).
+-endif.
 -endif.
 -ifndef(HAVE_queue__fold_3).
 % OTP 24.0 ?
