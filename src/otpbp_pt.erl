@@ -56,6 +56,7 @@
                               {{erl_syntax, record_access, 2}, otpbp_erl_syntax},
                               {{error_logger, get_format_depth, 0}, otpbp_error_logger},
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
+                              {{erts_internal, map_next, 3}, otpbp_erts_internal},
                               {{ets, take, 2}, otpbp_ets},
                               {{ets, update_counter, 4}, otpbp_ets},
                               {{file, del_dir_r, 1}, otpbp_file},
