@@ -34,9 +34,14 @@
 % OTP 24.0
 -export([intersect/2]).
 -endif.
+-ifndef(HAVE_maps__filtermap_2).
+% OTP 24.0
+-export([filtermap/2]).
+-endif.
 
 -ifdef(HAVE_MAP_SYNTAX_6).
 -define(PUT(K, V, M), maps:put(K, V, M)).
+-define(UPDATE(K, V, M), maps:update(K, V, M)).
 -define(UPDATE_WITH(K, F, I, M, V),
         case maps:find(K, M) of
             {ok, V} -> maps:update(K, F(V), M);
@@ -49,6 +54,7 @@
         end).
 -else.
 -define(PUT(K, V, M), M#{K => V}).
+-define(UPDATE(K, V, M), M#{K := V}).
 -define(UPDATE_WITH(K, F, I, M, V),
         case M of
             #{K := V} -> maps:update(K, F(V), M);
@@ -152,4 +158,41 @@ intersect(M1, M2) ->
     is_map(M1) orelse error({badmap, M1}, [M1, M2]),
     is_map(M2) orelse error({badmap, M2}, [M1, M2]),
     maps:with(maps:keys(M1), M2).
+-endif.
+
+-ifndef(HAVE_maps__filtermap_2).
+-ifdef(HAVE_maps__iterator_1).
+filtermap(Fun, Map) when is_function(Fun, 2) ->
+    case Map of
+        #{} -> filter_map(Fun, Map);
+        [I|#{}] when is_integer(I) -> filter_iterator(Fun, Map);
+        {_, _, _} -> filter_iterator(Fun, Map);
+        none -> #{};
+        _ -> error({badmap, Map}, [Fun, Map])
+    end;
+filtermap(Fun, Map) -> error(badarg, [Fun, Map]).
+
+filter_iterator(Pred, Iter) ->
+    maps:from_list(maps:fold(fun(K, V, A) ->
+                                 case Pred(K, V) of
+                                     true -> [{K, V}|A];
+                                     {true, NewV} -> [{K, NewV}|A];
+                                     false -> A
+                                 end
+                             end, [], Iter)).
+-else.
+filtermap(Fun, Map) ->
+    is_function(Fun, 2) orelse error(badarg, [Fun, Map]),
+    is_map(Map) orelse error({badmap, Map}, [Fun, Map]),
+    filter_map(Fun, Map).
+-endif.
+-compile({inline, filter_map/2}).
+filter_map(Pred, Map) ->
+    maps:fold(fun(K, V, A) ->
+                  case Pred(K, V) of
+                      true -> A;
+                      {true, NewV} -> ?UPDATE(K, NewV, A);
+                      false -> maps:remove(K, A)
+                  end
+              end, Map, Map).
 -endif.

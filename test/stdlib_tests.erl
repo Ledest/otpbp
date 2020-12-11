@@ -164,6 +164,21 @@ maps_test() ->
     ?assertError({badmap, a}, maps:intersect_with(fun(_K, _V1, _V2) -> error(should_not_happen) end, a, #{})),
     ?assertError({badmap, b}, maps:intersect_with(fun(_K, _V1, _V2) -> error(ok) end, #{}, b)),
     ?assertError({badmap, a}, maps:intersect_with(fun(_K, _V1, _V2) -> error(ok) end, a, b)),
+    %% filtermap/2
+    M0 = maps:from_list([{I, I} || I <- lists:seq(1, 30)]),
+    Pred = fun(K, _) when K =< 10 -> true;
+              (K, _) when K =< 20 -> false;
+              (_, V) -> {true, V * V}
+           end,
+    M3 = maps:filtermap(Pred, M0),
+    ?assertMatch(#{1 := 1, 10 := 10, 21 := 21 * 21, 30 := 30 * 30}, M3),
+    ?assertNot(maps:is_key(11, M3)),
+    ?assertNot(maps:is_key(20, M3)),
+    % maps:iterator/1 requires Erlang/OTP >= 21
+    %?assertEqual(M3, maps:filtermap(Pred, maps:iterator(M0))),
+    % Errors
+    ?assertError({badmap, a}, maps:filtermap(fun(_, _) -> ok end, a)),
+    ?assertError(badarg, maps:filtermap(<<>>, #{})),
     ok.
 
 check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->
