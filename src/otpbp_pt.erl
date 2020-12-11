@@ -78,6 +78,7 @@
                               {{lib, format_fun, [1, 2]}, erl_error},
                               {{lib, subst_values_for_vars, 2}, erl_eval},
                               {{lists, [join, search], 2}, otpbp_lists},
+                              {{maps, iterator, 1}, otpbp_maps},
                               {{maps, [filter, intersect, take], 2}, otpbp_maps},
                               {{maps, [intersect_with, merge_with], 3}, otpbp_maps},
                               {{maps, update_with, [3, 4]}, otpbp_maps},

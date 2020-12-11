@@ -18,6 +18,10 @@
 % OTP 19.0
 -export([take/2]).
 -endif.
+-ifndef(HAVE_maps__iterator_1).
+% OTP 21.0
+-export([iterator/1]).
+-endif.
 -ifndef(HAVE_maps__merge_with_3).
 % OTP 24.0
 -export([merge_with/3]).
@@ -100,6 +104,11 @@ take(K, M) ->
         _ -> error({badmap, M}, [K, M])
     end.
 -endif.
+-endif.
+
+-ifndef(HAVE_maps__iterator_1).
+iterator(M) when is_map(M) -> [0|M];
+iterator(M) -> error({badmap, M}, [M]).
 -endif.
 
 -ifndef(HAVE_maps__merge_with_3).
