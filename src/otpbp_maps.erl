@@ -165,7 +165,8 @@ intersect(M1, M2) ->
 filtermap(Fun, Map) when is_function(Fun, 2) ->
     case Map of
         #{} -> filter_map(Fun, Map);
-        [I|#{}] when is_integer(I) -> filter_iterator(Fun, Map);
+        [0|M] when is_map(M) -> filter_map(Fun, M);
+        [I|M] when is_integer(I), is_map(M) -> filter_iterator(Fun, Map);
         {_, _, _} -> filter_iterator(Fun, Map);
         none -> #{};
         _ -> error({badmap, Map}, [Fun, Map])
@@ -181,12 +182,15 @@ filter_iterator(Pred, Iter) ->
                                  end
                              end, [], Iter)).
 -else.
-filtermap(Fun, Map) ->
-    is_function(Fun, 2) orelse error(badarg, [Fun, Map]),
-    is_map(Map) orelse error({badmap, Map}, [Fun, Map]),
-    filter_map(Fun, Map).
+filtermap(Fun, Map) when is_function(Fun, 2) ->
+    case Map of
+        #{} -> filter_map(Fun, Map);
+        [0|M] when is_map(M) -> filter_map(Fun, M);
+        none -> #{};
+        _ -> error({badmap, Map}, [Fun, Map])
+    end;
+filtermap(Fun, Map) -> error(badarg, [Fun, Map]).
 -endif.
--compile({inline, filter_map/2}).
 filter_map(Pred, Map) ->
     maps:fold(fun(K, V, A) ->
                   case Pred(K, V) of
