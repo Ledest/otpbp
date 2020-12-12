@@ -71,6 +71,16 @@ maps_test() ->
     % Disabled for Erlang/OTP < 18
     %?assertError({badmap,a}, maps:size(a)),
     %?assertError({badmap,<<>>}, maps:size(<<>>)),
+    %% iterator/1
+    % Small map test
+    M4 = #{a => 1, b => 2},
+    {K41, V41, I41} = maps:next(maps:iterator(M4)),
+    {K42, V42, I42} = maps:next(I41),
+    ?assertEqual(none, maps:next(I42)),
+    ?assertEqual(lists:sort([{K41, V41}, {K42, V42}]), lists:sort(maps:to_list(M4))),
+    %% Large map test
+    M5 = maps:from_list([{{k, I}, I} || I <- lists:seq(1, 200)]),
+    ?assertEqual(lists:sort(iter_kv(maps:iterator(M5))), lists:sort(maps:to_list(M5))),
     %% merge_with/3
     Small = #{1 => 1, 2 => 3},
     Large = #{1 => 3, 2 => 2, 10 => 10},
@@ -211,6 +221,12 @@ random_map({SizeConstant, _, _} = InitSeed) ->
                            {#{}, rand:seed_s(exsplus, InitSeed)},
                            lists:seq(1, SizeConstant)),
     Ret.
+
+iter_kv(I) ->
+    case maps:next(I) of
+        none -> [];
+        {K, V, NI} -> [{K, V}|iter_kv(NI)]
+    end.
 
 queue_test() ->
     Q1 = queue:from_list([11, 22, 33, 44]),
