@@ -270,29 +270,42 @@ proplists_test() ->
     % proplist does, and that proplists:get_value/3 on a proplist created from the map yields the same results as
     % proplists:get_value/3 on the original proplist, ie they either all return the same `Value',
     % or they all return the `Default' given as respective third argument.
-    Default1 = make_ref(),
-    Default2 = make_ref(),
-    Default3 = make_ref(),
-    InList = [a, b, {a, 1}, {}, {a}, {a, 1, 2}, "foo"],
-    lists:foreach(fun(L1) ->
-                      LKs = proplists:get_keys(L1),
-                      M = proplists:to_map(L1),
-                      L2 = proplists:from_map(M),
-                      ?assertEqual([], maps:keys(M) -- LKs),
-                      ?assertEqual([], proplists:get_keys(L2) -- LKs),
-                      lists:foreach(fun(K) ->
-                                        R1 = maps:get(K, M, Default1),
-                                        R2 = proplists:get_value(K, L1, Default2),
-                                        R3 = proplists:get_value(K, L2, Default3),
-                                        ?assert(R1 =:= R2 andalso R1 =:= R3 orelse
-                                                R1 =:= Default1 andalso R2 =:= Default2 andalso R3 =:= Default3)
-                                    end, LKs)
-                  end,
-                  [[A, B, C, D, E, F, G] || A <- InList,
-                                            B <- InList -- [A],
-                                            C <- InList -- [A, B],
-                                            D <- InList -- [A, B, C],
-                                            E <- InList -- [A, B, C, D],
-                                            F <- InList -- [A, B, C, D, E],
-                                            G <- InList -- [A, B, C, D, E, F]]),
+    Default = make_ref(),
+    pm_fold(fun(L1, Acc) ->
+                LKs = proplists:get_keys(L1),
+                M = proplists:to_map(L1),
+                L2 = proplists:from_map(M),
+                ?assertEqual(lists:sort(maps:keys(M)), lists:sort(proplists:get_keys(L2))),
+                lists:foreach(fun(K) ->
+                                  R1 = maps:get(K, M, Default),
+                                  R2 = proplists:get_value(K, L1, Default),
+                                  R3 = proplists:get_value(K, L2, Default),
+                                  ?assert(R1 =:= Default andalso R2 =:= Default andalso R3 =:= Default
+                                          orelse R1 =:= R2 andalso R1 =:= R3)
+                              end, LKs),
+                Acc
+            end,
+            undefined, [a, b, {a, 1}, {}, {a}, {a, 1, 2}, {c, 1, 2}, "foo"]),
+
+    Fun = fun(M, A) -> [M|A] end,
+    ?assertEqual([], pm_fold(Fun, [], [])),
+    ?assertEqual([[1]], lists:sort(pm_fold(Fun, [], [1]))),
+    ?assertEqual(lists:sort([[1, 2], [2, 1]]), lists:sort(pm_fold(Fun, [], [1, 2]))),
+    ?assertEqual(lists:sort([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]),
+                 lists:sort(pm_fold(Fun, [], [1, 2, 3]))),
+
+    Stages = [{aliases, [{a, alias_a}]}, {negations, [{no_b, b}]}, {expand, [{c, [d]}]}],
+    M1 = proplists:to_map([], Stages),
+    ?assertEqual(M1, #{}),
+    ?assertEqual(M1, proplists:to_map(proplists:normalize([], Stages))),
+    List = [a, no_b, c],
+    M2 = proplists:to_map(List, Stages),
+    ?assertEqual(M2, #{alias_a => true, b => false, d => true}),
+    ?assertEqual(M2, proplists:to_map(proplists:normalize(List, Stages))),
     ok.
+
+pm_fold(_, _, []) -> [];
+pm_fold(Fun, Acc0, L) -> pm_fold(Fun, Acc0, L, []).
+
+pm_fold(Fun, Acc, [], Mut) -> Fun(Mut, Acc);
+pm_fold(Fun, Acc, L, Mut) -> lists:foldl(fun(X, AccIn) -> pm_fold(Fun, AccIn, lists:delete(X, L), [X|Mut]) end, Acc, L).
