@@ -248,3 +248,51 @@ queue_test() ->
     ?assertEqual([2, 3], queue:to_list(queue:delete_with_r(fun(X) -> X < 2 end, queue:from_list([1, 2, 3])))),
     ?assertEqual([1, 2, 3], queue:to_list(queue:delete_with_r(fun(X) -> X < 3 end, queue:from_list([1, 2, 2, 3])))),
     ok.
+
+proplists_test() ->
+    % to_map/1
+    ?assertEqual(#{a => true, b => 1, c => 2}, proplists:to_map([a, {b, 1}, {c, 2}, {c, 3}])),
+    ?assertEqual(#{}, proplists:to_map([])),
+    ?assertEqual(#{a => true, b => true}, proplists:to_map([a, b])),
+    ?assertEqual(#{a => true, b => true}, proplists:to_map([b, a])),
+    ?assertEqual(#{a => 1, b => true}, proplists:to_map([{a, 1}, b])),
+    ?assertEqual(#{a => 1, b => true}, proplists:to_map([b, {a, 1}])),
+    ?assertEqual(#{a => 1, b => 2}, proplists:to_map([{a, 1}, {b, 2}])),
+    ?assertEqual(#{a => 1, b => 2}, proplists:to_map([{b, 2}, {a, 1}])),
+    ?assertEqual(#{b => true}, proplists:to_map(["a", b])),
+    ?assertEqual(#{b => true}, proplists:to_map([b, "a"])),
+    ?assertEqual(#{b => true}, proplists:to_map([{a}, b])),
+    ?assertEqual(#{b => true}, proplists:to_map([b, {a}])),
+    ?assertEqual(#{b => true}, proplists:to_map([{a, 1, 2}, b])),
+    ?assertEqual(#{b => true}, proplists:to_map([b, {a, 1, 2}])),
+
+    % Ensure that maps:get/3 using the created map yields the same results as proplists:get_value/3 on the original
+    % proplist does, and that proplists:get_value/3 on a proplist created from the map yields the same results as
+    % proplists:get_value/3 on the original proplist, ie they either all return the same `Value',
+    % or they all return the `Default' given as respective third argument.
+    Default1 = make_ref(),
+    Default2 = make_ref(),
+    Default3 = make_ref(),
+    InList = [a, b, {a, 1}, {}, {a}, {a, 1, 2}, "foo"],
+    lists:foreach(fun(L1) ->
+                      LKs = proplists:get_keys(L1),
+                      M = proplists:to_map(L1),
+                      L2 = proplists:from_map(M),
+                      ?assertEqual([], maps:keys(M) -- LKs),
+                      ?assertEqual([], proplists:get_keys(L2) -- LKs),
+                      lists:foreach(fun(K) ->
+                                        R1 = maps:get(K, M, Default1),
+                                        R2 = proplists:get_value(K, L1, Default2),
+                                        R3 = proplists:get_value(K, L2, Default3),
+                                        ?assert(R1 =:= R2 andalso R1 =:= R3 orelse
+                                                R1 =:= Default1 andalso R2 =:= Default2 andalso R3 =:= Default3)
+                                    end, LKs)
+                  end,
+                  [[A, B, C, D, E, F, G] || A <- InList,
+                                            B <- InList -- [A],
+                                            C <- InList -- [A, B],
+                                            D <- InList -- [A, B, C],
+                                            E <- InList -- [A, B, C, D],
+                                            F <- InList -- [A, B, C, D, E],
+                                            G <- InList -- [A, B, C, D, E, F]]),
+    ok.
