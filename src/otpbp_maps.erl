@@ -42,6 +42,10 @@
 % OTP 24.0
 -export([filtermap/2]).
 -endif.
+-ifndef(HAVE_maps__from_keys_2).
+% OTP 24.0
+-export([from_keys/2]).
+-endif.
 
 -ifdef(HAVE_MAP_SYNTAX_6).
 -define(PUT(K, V, M), maps:put(K, V, M)).
@@ -210,4 +214,14 @@ filter_map(Pred, Map) ->
                       false -> maps:remove(K, A)
                   end
               end, Map, Map).
+-endif.
+-ifndef(HAVE_maps__from_keys_2).
+from_keys(Keys, Value) when is_list(Keys) ->
+    try [{Key, Value} || Key <- Keys] of
+        L -> maps:from_list(L)
+    catch
+        error:_ -> error(badarg, [Keys, Value]);
+        C:R -> erlang:C(R)
+    end;
+from_keys(Keys, Value) -> error(badarg, [Keys, Value]).
 -endif.

@@ -189,6 +189,17 @@ maps_test() ->
     % Errors
     ?assertError({badmap, a}, maps:filtermap(fun(_, _) -> ok end, a)),
     ?assertError(badarg, maps:filtermap(<<>>, #{})),
+    % from_keys/2
+    Map0 = maps:from_keys(["a", 2, {three}], value),
+    ?assertEqual(3, map_size(Map0)),
+    ?assertEqual(#{"a" => value, 2 => value, {three} => value}, Map0),
+    Map1 = maps:from_keys([1, 2, 2], {complex, value}),
+    ?assertEqual(2, map_size(Map1)),
+    ?assertEqual(#{1 => {complex, value}, 2 => {complex, value}}, Map1),
+    ?assertEqual(0, map_size(maps:from_keys([], value))),
+    % Errors
+    ?assertError(badarg, maps:from_keys([a|b], value)),
+    ?assertError(badarg, maps:from_keys(not_list, value)),
     ok.
 
 check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->

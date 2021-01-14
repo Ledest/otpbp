@@ -80,7 +80,7 @@
                               {{lib, subst_values_for_vars, 2}, erl_eval},
                               {{lists, [join, search], 2}, otpbp_lists},
                               {{maps, [iterator, next], 1}, otpbp_maps},
-                              {{maps, [filter, filtermap, intersect, take], 2}, otpbp_maps},
+                              {{maps, [filter, filtermap, from_keys, intersect, take], 2}, otpbp_maps},
                               {{maps, [intersect_with, merge_with], 3}, otpbp_maps},
                               {{maps, update_with, [3, 4]}, otpbp_maps},
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
