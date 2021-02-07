@@ -50,7 +50,7 @@ limit_map(Map, D) when map_size(Map) =< D -> Map;
 limit_map(Map, D) -> limit_map(maps:to_list(Map), D, #{}).
 
 limit_map(_, 0, A) -> A;
-limit_map([{K, V}|T], D, A) -> limit_map(T, D - 1, maps:put(K, V, A)).
+limit_map([{K, V}|T], D, A) -> limit_map(T, D - 1, A#{K => V}).
 
 %% limit_map_body(_, 0) -> [{'...', '...'}];
 %% limit_map_body([], _) -> [];
