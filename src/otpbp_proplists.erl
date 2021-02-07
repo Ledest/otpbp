@@ -13,16 +13,11 @@
 -endif.
 
 -ifndef(HAVE_proplists__to_map_1).
--ifdef(HAVE_MAP_SYNTAX_6).
--define(PUT(K, V, M), maps:put(K, V, M)).
--else.
--define(PUT(K, V, M), M#{K => V}).
--endif.
 to_map(List) ->
-    lists:foldr(fun({K, V}, M) -> ?PUT(K, V, M);
+    lists:foldr(fun({K, V}, M) -> M#{K => V};
                    % if tuples with arity /= 2 appear before atoms or tuples with arity == 2, get_value/2,3 returns early
                    (T, M) when tuple_size(T) =/= 0 -> maps:remove(element(1, T), M);
-                   (K, M) when is_atom(K) -> ?PUT(K, true, M);
+                   (K, M) when is_atom(K) -> M#{K => true};
                    (_, M) -> M
                 end, #{}, List).
 -endif.
