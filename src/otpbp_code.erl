@@ -56,19 +56,8 @@ module_changed_on_disk(Module, Path) ->
                       {ok, {_, MD5}} -> MD5;
                       _ -> undefined
                   end
-    end =/= module_md5(Module).
+    end =/= erlang:get_module_info(Module, md5).
 -compile({inline, [module_changed_on_disk/2]}).
-
--ifdef(HAVE_erlang__get_module_info__md5).
-module_md5(Module) -> erlang:get_module_info(Module, md5).
--else.
-module_md5(Module) ->
-    case lists:keyfind(vsn, 1, erlang:get_module_info(Module, attributes)) of
-        {_, [V]} when is_integer(V) -> binary:encode_unsigned(V);
-        _ -> undefined
-    end.
--endif.
--compile({inline, [module_md5/1]}).
 
 -ifndef(HAVE_code__modified_modules_0).
 modified_modules() ->

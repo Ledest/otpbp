@@ -173,10 +173,6 @@ lists:keystore(erl_opts, 1,
                                                                     non_existing -> SrcDirs ++ ["src_ext"];
                                                                     _ -> SrcDirs -- ["src_ext"]
                                                                 end}) ++
-                case lists:keymember(md5, 1, erlang:get_module_info(erlang)) of
-                    true -> [{d, 'HAVE_erlang__get_module_info__md5'}];
-                    _false -> []
-                end ++
                 lists:map(fun(E) ->
                               {d, list_to_atom(lists:flatten(io_lib:format("HAVE_~s__~s_~B",
                                                                            case E of
