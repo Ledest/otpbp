@@ -542,7 +542,7 @@ parse_relative_part(?STRING_REST("//", Rest), URI) ->
 parse_relative_part(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-absolute
     Path = calculate_parsed_part(Rest, T),
-    maps:put(path,  ?STRING_REST($/, Path), URI1);
+    URI1#{path => ?STRING_REST($/, Path)};
 parse_relative_part(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
@@ -556,7 +556,7 @@ parse_relative_part(?STRING_REST(Char, Rest), URI) ->
         true ->
             {T, URI1} = parse_segment_nz_nc(Rest, URI),  % path-noscheme
             Path = calculate_parsed_part(Rest, T),
-            maps:put(path, ?STRING_REST(Char, Path), URI1);
+            URI1#{path => ?STRING_REST(Char, Path)};
         false -> throw({error,invalid_uri,[Char]})
     end.
 
@@ -599,11 +599,11 @@ parse_segment(?STRING_REST($/, Rest), URI) ->
 parse_segment(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_segment(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_segment(?STRING_REST(Char, Rest), URI) ->
     case is_pchar(Char) of
         true -> parse_segment(Rest, URI);
@@ -622,11 +622,11 @@ parse_segment_nz_nc(?STRING_REST($/, Rest), URI) ->
 parse_segment_nz_nc(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_segment_nz_nc(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_segment_nz_nc(?STRING_REST(Char, Rest), URI) ->
     case is_segment_nz_nc(Char) of
         true -> parse_segment_nz_nc(Rest, URI);
@@ -674,7 +674,7 @@ parse_scheme_start(?STRING_REST(Char, Rest), URI) ->
 maybe_add_path(Map) ->
     case maps:is_key(path, Map) of
         false ->
-            maps:put(path, <<>>, Map);
+            Map#{path => <<>>};
         _Else ->
             Map
     end.
@@ -714,31 +714,31 @@ parse_hier(?STRING_REST("//", Rest), URI) ->
     try parse_userinfo(Rest, URI) of
         {T, URI1} ->
             Userinfo = calculate_parsed_userinfo(Rest, T),
-	    {Rest, maps:put(userinfo, Userinfo, URI1)}
+	    {Rest, URI1#{userinfo => Userinfo}}
     catch
         throw:{_,_,_} ->
             {T, URI1} = parse_host(Rest, URI),
             Host = calculate_parsed_host_port(Rest, T),
-	    {Rest, maps:put(host, remove_brackets(Host), URI1)}
+	    {Rest, URI1#{host => remove_brackets(Host)}}
     end;
 parse_hier(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-absolute
     Path = calculate_parsed_part(Rest, T),
-    {Rest, maps:put(path, ?STRING_REST($/, Path), URI1)};
+    {Rest, URI1#{path => ?STRING_REST($/, Path)}};
 parse_hier(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_hier(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_hier(?STRING_REST(Char, Rest), URI) ->  % path-rootless
     case is_pchar(Char) of
         true ->  % segment_nz
             {T, URI1} = parse_segment(Rest, URI),
             Path = calculate_parsed_part(Rest, T),
-            {Rest, maps:put(path, ?STRING_REST(Char, Path), URI1)};
+            {Rest, URI1#{path => ?STRING_REST(Char, Path)}};
         false -> throw({error,invalid_uri,[Char]})
     end;
 parse_hier(?STRING_EMPTY, URI) ->
@@ -771,11 +771,11 @@ parse_hier(?STRING_EMPTY, URI) ->
 %%-------------------------------------------------------------------------
 -spec parse_userinfo(binary(), uri_map()) -> {binary(), uri_map()}.
 parse_userinfo(?CHAR($@), URI) ->
-    {?STRING_EMPTY, maps:put(host, <<>>, URI)};
+    {?STRING_EMPTY, URI#{host => <<>>}};
 parse_userinfo(?STRING_REST($@, Rest), URI) ->
     {T, URI1} = parse_host(Rest, URI),
     Host = calculate_parsed_host_port(Rest, T),
-    {Rest, maps:put(host, remove_brackets(Host), URI1)};
+    {Rest, URI1#{host => remove_brackets(Host)}};
 parse_userinfo(?STRING_REST(Char, Rest), URI) ->
     case is_userinfo(Char) of
         true -> parse_userinfo(Rest, URI);
@@ -837,21 +837,21 @@ parse_host(?STRING_REST($:, Rest), URI) ->
     {T, URI1} = parse_port(Rest, URI),
     H = calculate_parsed_host_port(Rest, T),
     Port = get_port(H),
-    {Rest, maps:put(port, Port, URI1)};
+    {Rest, URI1#{port => Port}};
 parse_host(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-abempty
     Path = calculate_parsed_part(Rest, T),
-    {Rest, maps:put(path, ?STRING_REST($/, Path), URI1)};
+    {Rest, URI1#{path => ?STRING_REST($/, Path)}};
 parse_host(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_host(?STRING_REST($[, Rest), URI) ->
     parse_ipv6_bin(Rest, [], URI);
 parse_host(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_host(?STRING_REST(Char, Rest), URI) ->
     case is_digit(Char) of
         true ->
@@ -871,19 +871,19 @@ parse_reg_name(?STRING_REST($:, Rest), URI) ->
     {T, URI1} = parse_port(Rest, URI),
     H = calculate_parsed_host_port(Rest, T),
     Port = get_port(H),
-    {Rest, maps:put(port, Port, URI1)};
+    {Rest, URI1#{port => Port}};
 parse_reg_name(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-abempty
     Path = calculate_parsed_part(Rest, T),
-    {Rest, maps:put(path, ?STRING_REST($/, Path), URI1)};
+    {Rest, URI1#{path => ?STRING_REST($/, Path)}};
 parse_reg_name(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_reg_name(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_reg_name(?STRING_REST(Char, Rest), URI) ->
     case is_reg_name(Char) of
         true -> parse_reg_name(Rest, URI);
@@ -904,22 +904,22 @@ parse_ipv4_bin(?STRING_REST($:, Rest), Acc, URI) ->
     {T, URI1} = parse_port(Rest, URI),
     H = calculate_parsed_host_port(Rest, T),
     Port = get_port(H),
-    {Rest, maps:put(port, Port, URI1)};
+    {Rest, URI1#{port => Port}};
 parse_ipv4_bin(?STRING_REST($/, Rest), Acc, URI) ->
     _ = validate_ipv4_address(lists:reverse(Acc)),
     {T, URI1} = parse_segment(Rest, URI),  % path-abempty
     Path = calculate_parsed_part(Rest, T),
-    {Rest, maps:put(path, ?STRING_REST($/, Path), URI1)};
+    {Rest, URI1#{path => ?STRING_REST($/, Path)}};
 parse_ipv4_bin(?STRING_REST($?, Rest), Acc, URI) ->
     _ = validate_ipv4_address(lists:reverse(Acc)),
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_ipv4_bin(?STRING_REST($#, Rest), Acc, URI) ->
     _ = validate_ipv4_address(lists:reverse(Acc)),
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_ipv4_bin(?STRING_REST(Char, Rest), Acc, URI) ->
     case is_ipv4(Char) of
         true -> parse_ipv4_bin(Rest, [Char|Acc], URI);
@@ -967,19 +967,19 @@ parse_ipv6_bin_end(?STRING_REST($:, Rest), URI) ->
     {T, URI1} = parse_port(Rest, URI),
     H = calculate_parsed_host_port(Rest, T),
     Port = get_port(H),
-    {Rest, maps:put(port, Port, URI1)};
+    {Rest, URI1#{port => Port}};
 parse_ipv6_bin_end(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-abempty
     Path = calculate_parsed_part(Rest, T),
-    {Rest, maps:put(path, ?STRING_REST($/, Path), URI1)};
+    {Rest, URI1#{path => ?STRING_REST($/, Path)}};
 parse_ipv6_bin_end(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_ipv6_bin_end(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_ipv6_bin_end(?STRING_REST(Char, Rest), URI) ->
     case is_ipv6(Char) of
         true -> parse_ipv6_bin_end(Rest, URI);
@@ -1009,15 +1009,15 @@ validate_ipv6_address(Addr) ->
 parse_port(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-abempty
     Path = calculate_parsed_part(Rest, T),
-    {Rest, maps:put(path, ?STRING_REST($/, Path), URI1)};
+    {Rest, URI1#{path => ?STRING_REST($/, Path)}};
 parse_port(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(query, Query, URI1)};
+    {Rest, URI1#{query => Query}};
 parse_port(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_port(?STRING_REST(Char, Rest), URI) ->
     case is_digit(Char) of
         true -> parse_port(Rest, URI);
@@ -1043,7 +1043,7 @@ parse_port(?STRING_EMPTY, URI) ->
 parse_query(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    {Rest, maps:put(fragment, Fragment, URI1)};
+    {Rest, URI1#{fragment => Fragment}};
 parse_query(?STRING_REST(Char, Rest), URI) ->
     case is_query(Char) of
         true -> parse_query(Rest, URI);
@@ -2043,7 +2043,7 @@ to_lower(<<>>, Acc) ->
 %% 5.2.4.   Remove Dot Segments
 normalize_path_segment(Map) ->
     Path = maps:get(path, Map, undefined),
-    maps:put(path, remove_dot_segments(Path), Map).
+    Map#{path => remove_dot_segments(Path)}.
 
 
 remove_dot_segments(Path) when is_binary(Path) ->
@@ -2171,9 +2171,9 @@ normalize_port(Map, Port, Default) ->
 normalize_http_path(Map, Path) ->
     case Path of
         "" ->
-            maps:put(path, "/", Map);
+            Map#{path => "/"};
         <<>> ->
-            maps:put(path, <<"/">>, Map);
+            Map#{path => <<"/">>};
         _Else ->
             Map
     end.
