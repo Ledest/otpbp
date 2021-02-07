@@ -1,10 +1,5 @@
 -module(otpbp_math).
 
--ifndef(HAVE_math__log2_1).
-% OTP 18.0
--export([log2/1]).
--endif.
-
 -ifndef(HAVE_math__ceil_1).
 % OTP 20.0
 -export([ceil/1]).
@@ -12,10 +7,6 @@
 -ifndef(HAVE_math__floor_1).
 % OTP 20.0
 -export([floor/1]).
--endif.
-
--ifndef(HAVE_math__log2_1).
-log2(X) -> math:log(X) / math:log(2).
 -endif.
 
 -ifndef(HAVE_math__ceil_1).
