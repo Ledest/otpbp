@@ -76,9 +76,8 @@
                               {{math, [ceil, floor, log2], 1}, otpbp_math},
                               {{orddict, take, 2}, otpbp_orddict},
                               {{ordsets, is_empty, 1}, otpbp_ordsets},
-                              {{os, [cmd, getenv], 2}, otpbp_os},
+                              {{os, cmd, 2}, otpbp_os},
                               {{os, [env, list_env_vars], 0}, otpbp_os},
-                              {{os, system_time, 1}, otpbp_os},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0
                               {{proplists, to_map, [1, 2]}, otpbp_proplists},
                               {{queue, [all, any, delete, delete_r, delete_with, delete_with_r, filtermap, foreach], 2},
