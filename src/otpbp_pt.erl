@@ -128,7 +128,7 @@ parse_transform(Forms, Options) ->
                                                      funs = foldl(fun({M, Fs}, IA) ->
                                                                       foldl(fun(FA, IAM) ->
                                                                                 case maps:find({M, FA}, TL) of
-                                                                                    {ok, V} -> maps:put(FA, V, IAM);
+                                                                                    {ok, V} -> IAM#{FA => V};
                                                                                     _ -> IAM
                                                                                 end
                                                                              end, IA, Fs)
@@ -197,7 +197,7 @@ check_func({M, F, A}) ->
                                       end;
 check_func({F, A}) -> check_func({erlang, F, A}).
 
-store_func(F, {_, _} = MF, D) -> maps:put(F, MF, D);
+store_func(F, {_, _} = MF, D) -> D#{F => MF};
 store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
@@ -244,11 +244,11 @@ application_guard_ceil_floor(Node, Op) ->
 
 application_transform(#param{funs = L} = P, Node) ->
     A = erl_syntax_lib:analyze_application(Node),
-    case maps:find(A, L) of
-        error -> false;
-        {ok, {M, N}} ->
+    case L of
+        #{A := {M, N}} ->
             replace_message(A, M, N, Node, P),
-            application(M, N, Node, A)
+            application(M, N, Node, A);
+        #{} -> false
     end.
 
 application(M, N, Node, A) ->
@@ -265,9 +265,8 @@ application(M, N, ML, NL, A) ->
 
 implicit_fun_transform(#param{funs = L} = P, Node) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
-        F -> case maps:find(F, L) of
-                 error -> false;
-                 {ok, {M, N}} ->
+        F -> case L of
+                 #{F := {M, N}} ->
                      Q = erl_syntax:implicit_fun_name(Node),
                      {AQ, MP} = case erl_syntax:type(Q) of
                                     arity_qualifier -> {Q, erl_syntax:arity_qualifier_body(Q)};
@@ -276,7 +275,8 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
                                 end,
                      replace_message(F, M, N, Node, P),
                      copy_pos(Node, erl_syntax:implicit_fun(atom(MP, M), atom(erl_syntax:arity_qualifier_body(AQ), N),
-                                                            erl_syntax:arity_qualifier_argument(AQ)))
+                                                            erl_syntax:arity_qualifier_argument(AQ)));
+                 #{} -> false
              end
     catch
         throw:syntax_error -> false
