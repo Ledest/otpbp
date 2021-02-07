@@ -88,7 +88,6 @@
                               {{rand, [export_seed_s, normal_s, seed, seed_s, uniform, uniform_s], 1}, otpbp_rand},
                               {{rand, [seed, seed_s, uniform_s], 2}, otpbp_rand},
                               {{sets, is_empty, 1}, otpbp_sets},
-                              {{ssl, connection_information, [1, 2]}, otpbp_ssl},
                               {{string, [casefold, chomp, is_empty, length, lowercase, next_codepoint,
                                          next_grapheme, reverse, titlecase, to_graphemes, trim, uppercase], 1},
                                otpbp_string},
