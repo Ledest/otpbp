@@ -32,13 +32,15 @@ name(Pid) when is_pid(Pid) -> Pid.
 -endif.
 
 -ifndef(HAVE_gen__unregister_name_1).
-unregister_name({via, Mod, Name}) ->
-    Mod:unregister_name(Name),
-    ok;
 unregister_name({local, Name}) ->
     catch unregister(Name),
     ok;
-unregister_name({global, Name}) -> unregister_name({via, global, Name});
+unregister_name({global, Name}) ->
+    global:unregister_name(Name),
+    ok;
+unregister_name({via, Mod, Name}) ->
+    Mod:unregister_name(Name),
+    ok;
 unregister_name(Pid) when is_pid(Pid) -> ok.
 -endif.
 
