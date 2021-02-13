@@ -1,0 +1,23 @@
+name: Erlang rebar CI
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: erlang:22.3.4
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compile
+      run: rebar compile
+    - name: Run tests
+      run: rebar xref && rebar eunit
