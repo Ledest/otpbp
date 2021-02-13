@@ -96,8 +96,10 @@
 -export([mac/4]).
 -endif.
 
+-ifndef(HAVE_crypto__mac_3).
 -ifdef(HAVE_crypto__mac_4).
 -import(crypto, [mac/4]).
+-endif.
 -endif.
 
 -ifndef(HAVE_crypto__dss_sign_2).
