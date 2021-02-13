@@ -42,6 +42,10 @@
 % OTP 24.0
 -export([from_keys/2]).
 -endif.
+-ifndef(HAVE_maps__foreach_2).
+% OTP 24.0
+-export([foreach/2]).
+-endif.
 
 -ifndef(HAVE_maps__update_with_4).
 update_with(K, Fun, Init, M) ->
@@ -162,4 +166,13 @@ from_keys(Keys, Value) when is_list(Keys) ->
         C:R -> erlang:C(R)
     end;
 from_keys(Keys, Value) -> error(badarg, [Keys, Value]).
+-endif.
+
+-ifndef(HAVE_maps__foreach_2).
+foreach(Fun, MapOrIter) when is_function(Fun, 2) ->
+    maps:fold(fun(K, V, _) ->
+                  Fun(K, V),
+                  ok
+              end, ok, MapOrIter);
+foreach(Fun, MapOrIter) -> error(badarg, [Fun, MapOrIter]).
 -endif.

@@ -200,6 +200,20 @@ maps_test() ->
     % Errors
     ?assertError(badarg, maps:from_keys([a|b], value)),
     ?assertError(badarg, maps:from_keys(not_list, value)),
+    % foreach/2
+    % Errors
+    ?assertError({badmap, a}, maps:foreach(fun(_, _) -> ok end, a)),
+    ?assertError({badmap, []}, maps:foreach(fun(_, _) -> ok end, [])),
+    ?assertError({badmap, {}}, maps:foreach(fun(_, _) -> ok end, {})),
+    ?assertError({badmap, 42}, maps:foreach(fun(_, _) -> ok end, 42)),
+    ?assertError({badmap, <<>>}, maps:foreach(fun(_, _) -> ok end, <<>>)),
+    ?assertError(badarg, maps:foreach(fun() -> ok end, #{})),
+    ?assertError(badarg, maps:foreach(fun(_, _, _) -> ok end, #{})),
+    ?assertError(badarg, maps:foreach(a, #{})),
+    ?assertError(badarg, maps:foreach([], #{})),
+    ?assertError(badarg, maps:foreach({}, #{})),
+    ?assertError(badarg, maps:foreach(42, #{})),
+    ?assertError(badarg, maps:foreach(<<>>, #{})),
     ok.
 
 check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->
