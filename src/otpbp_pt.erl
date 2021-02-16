@@ -30,6 +30,7 @@
                               {{code, [all_available, modified_modules], 0}, otpbp_code},
                               {{code, module_status, 1}, otpbp_code},
                               {{compile, env_compiler_options, 0}, otpbp_compile},
+                              {{compile, iofile, 1}, otpbp_compile},
                               {{crypto, mac, [3, 4]}, otpbp_crypto},
                               {{crypto, [dss_sign, rsa_sign], [2, 3]}, otpbp_crypto},
                               {{crypto, [dss_verify, rsa_verify], [3, 4]}, otpbp_crypto},

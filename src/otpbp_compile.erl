@@ -5,6 +5,11 @@
 -export([env_compiler_options/0]).
 -endif.
 
+-ifndef(HAVE_compile__iofile_1).
+% OTP < 24.0
+-export([iofile/1]).
+-endif.
+
 -ifndef(HAVE_compile__env_compiler_options_0).
 -define(ERL_COMPILER_OPTIONS, "ERL_COMPILER_OPTIONS").
 env_compiler_options() ->
@@ -23,4 +28,9 @@ env_compiler_options() ->
                        end;
         _ -> []
     end.
+-endif.
+
+-ifndef(HAVE_compile__iofile_1).
+iofile(F) when is_atom(F) -> iofile(atom_to_list(F));
+iofile(F) -> {filename:dirname(F), filename:basename(F, ".erl")}.
 -endif.
