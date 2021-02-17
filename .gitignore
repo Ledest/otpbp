@@ -1,9 +1,10 @@
 .rebar
-*.beam
 deps/*
 *~
 *.swp
 *.state
+/_build
+rebar.lock
 /ebin
 /doc
 /.eunit
