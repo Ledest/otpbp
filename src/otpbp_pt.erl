@@ -112,7 +112,7 @@
 
 -record(param, {options = [] :: list(),
                 verbose = false :: boolean(),
-                otp_release = otp_release() :: non_neg_integer(),
+                otp_release = otp_release() :: 18..24,
                 erts_version = erts_version() :: [non_neg_integer(),...],
                 funs,
                 file = "" :: string()}).
@@ -333,12 +333,7 @@ try_expr_clause_patterns_transform(Ps) ->
 
 atom(P, A) when is_tuple(P), is_atom(A) -> copy_pos(P, erl_syntax:atom(A)).
 
-otp_release() ->
-    {R, _} = string:to_integer(case erlang:system_info(otp_release) of
-                                   [$R|S] -> S;
-                                   S -> S
-                               end),
-    R.
+otp_release() -> list_to_integer(erlang:system_info(otp_release)).
 
 erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_info(version), ".")).
 
