@@ -349,4 +349,10 @@ replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, N
 
 do_replace_message({M, {N, A}}, NM, NN, F, Node) -> do_replace_message({lists:concat([M, ":", N]), A}, NM, NN, F, Node);
 do_replace_message({N, A}, NM, NN, F, Node) ->
-    io:fwrite("~ts:~b: replace ~s/~b to ~s:~s/~b~n", [F, erl_syntax:get_pos(Node), N, A, NM, NN, A]).
+    io:fwrite("~ts:~b: replace ~s/~b to ~s:~s/~b~n", [F, get_pos(Node), N, A, NM, NN, A]).
+
+get_pos(Node) ->
+    case erl_syntax:get_pos(Node) of
+        {L, _} -> L;
+        L -> L
+    end.
