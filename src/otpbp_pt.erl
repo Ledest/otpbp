@@ -345,10 +345,10 @@ erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_i
 -compile({inline, [otp_release/0, erts_version/0]}).
 
 replace_message(_F, _NM, _NN, _Node, #param{verbose = false}) -> ok;
-replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, NM, NN, File, Node).
+replace_message(F, NM, NN, Node, #param{file = File}) -> do_replace_message(F, NM, NN, Node, File).
 
-do_replace_message({M, {N, A}}, NM, NN, F, Node) -> do_replace_message({lists:concat([M, ":", N]), A}, NM, NN, F, Node);
-do_replace_message({N, A}, NM, NN, F, Node) ->
+do_replace_message({M, {N, A}}, NM, NN, Node, F) -> do_replace_message({lists:concat([M, ":", N]), A}, NM, NN, Node, F);
+do_replace_message({N, A}, NM, NN, Node, F) ->
     io:fwrite("~ts:~b: replace ~s/~b to ~s:~s/~b~n", [F, get_pos(Node), N, A, NM, NN, A]).
 
 get_pos(Node) ->
