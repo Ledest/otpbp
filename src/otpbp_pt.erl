@@ -63,7 +63,7 @@
                               {{gen, get_parent, 0}, otpbp_gen},
                               {{gen, [debug_options, get_proc_name, name, unregister_name], 1}, otpbp_gen},
                               {{gen, debug_options, 2}, otpbp_gen},
-                              {{inet, ipv4_mapped_ipv6_address, 1}, otpbp_inet},
+                              {{inet, [info, ipv4_mapped_ipv6_address], 1}, otpbp_inet},
                               {{io_lib, limit_term, 2}, otpbp_io_lib},
                               {{lib, [flush_receive, progname], 0}, otpbp_lib},
                               {{lib, nonl, 1}, otpbp_lib},
