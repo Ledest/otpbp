@@ -18,7 +18,7 @@ ipv4_mapped_ipv6_address({D1, D2, D3, D4, D5, D6, D7, D8})
 -endif.
 
 -ifndef(HAVE_inet__info_1).
-info({'$inet', GenSocketMod, _} = Socket) when is_atom(GenSocketMod) -> GenSocketMod:?FUNCTION_NAME(Socket);
+info({'$inet', GenSocketMod, _} = Socket) when is_atom(GenSocketMod) -> GenSocketMod:info(Socket);
 info(Socket) ->
     maps:merge(port_info(Socket),
                #{counters => case inet:getstat(Socket) of
