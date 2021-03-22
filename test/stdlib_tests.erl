@@ -365,3 +365,27 @@ pm_fold(Fun, Acc0, L) -> pm_fold(Fun, Acc0, L, []).
 
 pm_fold(Fun, Acc, [], Mut) -> Fun(Mut, Acc);
 pm_fold(Fun, Acc, L, Mut) -> lists:foldl(fun(X, AccIn) -> pm_fold(Fun, AccIn, lists:delete(X, L), [X|Mut]) end, Acc, L).
+
+binary_test() ->
+    % Vector test imported from the RFC 4648 section 10.
+    ?assertEqual(<<>>, binary:encode_hex(<<>>)),
+    ?assertEqual(<<"66">>, binary:encode_hex(<<"f">>)),
+    ?assertEqual(<<"666F">>, binary:encode_hex(<<"fo">>)),
+    ?assertEqual(<<"666F6F">>, binary:encode_hex(<<"foo">>)),
+    ?assertEqual(<<"666F6F62">>, binary:encode_hex(<<"foob">>)),
+    ?assertEqual(<<"666F6F6261">>, binary:encode_hex(<<"fooba">>)),
+    ?assertEqual(<<"666F6F626172">>, binary:encode_hex(<<"foobar">>)),
+    ?assertEqual(<<>>, binary:decode_hex(<<>>)),
+    ?assertEqual(<<"f">>, binary:decode_hex(<<"66">>)),
+    ?assertEqual(<<"fo">>, binary:decode_hex(<<"666F">>)),
+    ?assertEqual(<<"foo">>, binary:decode_hex(<<"666F6F">>)),
+    ?assertEqual(<<"foob">>, binary:decode_hex(<<"666F6F62">>)),
+    ?assertEqual(<<"fooba">>, binary:decode_hex(<<"666F6F6261">>)),
+    ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666F6F626172">>)),
+    ?assertEqual(<<"fo">>, binary:decode_hex(<<"666f">>)),
+    ?assertEqual(<<"foo">>, binary:decode_hex(<<"666f6f">>)),
+    ?assertEqual(<<"foob">>, binary:decode_hex(<<"666f6f62">>)),
+    ?assertEqual(<<"fooba">>, binary:decode_hex(<<"666f6f6261">>)),
+    ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666f6f626172">>)),
+    ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666f6F626172">>)),
+    ok.
