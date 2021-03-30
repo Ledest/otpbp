@@ -160,10 +160,10 @@ transform(Tree, P, _) -> {Tree, P}.
 
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
-                                    case do_transform(case erl_syntax:type(E) of
-                                                          conjunction -> conjunction;
-                                                          _ -> P
-                                                      end, E) of
+                                    case transform(case erl_syntax:type(E) of
+                                                       conjunction -> conjunction;
+                                                       _ -> P
+                                                   end, E) of
                                         false -> {E, F};
                                         N -> {N, true}
                                     end
@@ -206,7 +206,7 @@ store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, #{}, ?TRANSFORM_FUNCTIONS).
 -compile({inline, [transform_list/0]}).
 
-do_transform(conjunction, Tree) ->
+transform(conjunction, Tree) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
                                     case erl_syntax:type(E) =:= application andalso application_transform_guard(E) of
                                         false -> {E, F};
@@ -216,7 +216,7 @@ do_transform(conjunction, Tree) ->
         {T, true} -> T;
         _ -> Tree
     end;
-do_transform(#param{} = P, Node) ->
+transform(#param{} = P, Node) ->
     case erl_syntax:type(Node) of
         application -> application_transform(P, Node);
         implicit_fun -> implicit_fun_transform(P, Node);
