@@ -96,6 +96,11 @@
 -export([mac/4]).
 -endif.
 
+-ifndef(HAVE_crypto__hash_equals_2).
+% OTP 25.0
+-export([hash_equals/2]).
+-endif.
+
 -ifndef(HAVE_crypto__mac_3).
 -ifdef(HAVE_crypto__mac_4).
 -import(crypto, [mac/4]).
@@ -273,4 +278,9 @@ cmac(T, Key, Data) -> mac_unknown(cmac, T, Key, Data).
 mac_unknown(T, SubType, Key, Data) -> error({badarg, {"mac.c", 229}, "Unknown mac algorithm"}, [T, SubType, Key, Data]).
 
 -compile({inline, [hmac/3, cmac/3, mac_unknown/4]}).
+-endif.
+
+-ifndef(HAVE_crypto__hash_equals_2).
+hash_equals(A, B) when is_binary(A), is_binary(B) -> A =:= B;
+hash_equals(A, B) -> error(badarg, [A, B]).
 -endif.
