@@ -74,6 +74,7 @@
                               {{lib, format_exception, [6, 7]}, erl_error},
                               {{lib, format_fun, [1, 2]}, erl_error},
                               {{lib, subst_values_for_vars, 2}, erl_eval},
+                              {{lists, enumerate, [1, 2]}, otpbp_lists},
                               {{lists, [join, search], 2}, otpbp_lists},
                               {{maps, [iterator, next], 1}, otpbp_maps},
                               {{maps, [filtermap, foreach, from_keys, intersect, take], 2}, otpbp_maps},
