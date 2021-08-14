@@ -434,6 +434,8 @@ poly1305(Key, Data) ->
 -endif.
 
 -ifdef(NEED_ALIAS_1).
+-compile({no_auto_import,[alias/1]}).
+
 alias(des3_cbc) -> des_ede3_cbc;
 alias(des_ede3) -> des_ede3_cbc;
 alias(des_ede3_cbf) -> des_ede3_cfb;
