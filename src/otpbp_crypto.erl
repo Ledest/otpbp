@@ -104,6 +104,22 @@
 % OTP < 24
 -export([hmac/4]).
 -endif.
+-ifndef(HAVE_crypto__hmac_init_2).
+% OTP < 24
+-export([hmac_init/2]).
+-endif.
+-ifndef(HAVE_crypto__hmac_update_2).
+% OTP < 24
+-export([hmac_update/2]).
+-endif.
+-ifndef(HAVE_crypto__hmac_final_1).
+% OTP < 24
+-export([hmac_final/1]).
+-endif.
+-ifndef(HAVE_crypto__hmac_final_n_2).
+% OTP < 24
+-export([hmac_final_n/2]).
+-endif.
 -ifndef(HAVE_crypto__cmac_3).
 -ifdef(HAVE_crypto__mac_4).
 % OTP < 24
@@ -329,6 +345,46 @@ hmac(Type, Key, Data) ->
 hmac(Type, Key, Data, MacLength) ->
     try
         crypto:macN(hmac, Type, Key, Data, MacLength)
+    catch
+        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-endif.
+
+-ifndef(HAVE_crypto__hmac_init_2).
+hmac_init(Type, Key) ->
+    try
+        crypto:mac_init(hmac, Type, Key)
+    catch
+        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-endif.
+
+-ifndef(HAVE_crypto__hmac_update_2).
+hmac_update(State, HashLen) ->
+    try
+        crypto:mac_update(State, HashLen)
+    catch
+        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-endif.
+
+-ifndef(HAVE_crypto__hmac_final_1).
+hmac_final(Context) ->
+    try
+        crypto:mac_final(Context)
+    catch
+        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-endif.
+
+-ifndef(HAVE_crypto__hmac_final_n_2).
+hmac_final_n(Context, HashLen) ->
+    try
+        crypto:mac_finalN(Context, HashLen)
     catch
         error:{error, {_File,_Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
