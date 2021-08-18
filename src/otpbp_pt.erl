@@ -58,6 +58,7 @@
                               {{erl_error, format_exception, [3, 4]}, otpbp_erl_error},
                               {{erl_eval, [eval_str, extended_parse_exprs, extended_parse_term], 1}, lib},
                               {{erl_eval, subst_values_for_vars, 2}, lib},
+                              {{erlang, [get_cookie, set_cookie], 1}, otpbp_erlang},
                               {{error_logger, get_format_depth, 0}, otpbp_error_logger},
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
                               {{erts_internal, map_next, 3}, otpbp_erts_internal},
