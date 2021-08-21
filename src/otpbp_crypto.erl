@@ -82,6 +82,25 @@
 -export([sha512_mac/3]).
 -endif.
 
+-ifndef(HAVE_crypto__md4_1).
+-export([md4/1]).
+-endif.
+-ifndef(HAVE_crypto__md4_init_0).
+-export([md4_init/0]).
+-endif.
+-ifndef(HAVE_crypto__md5_1).
+-export([md5/1]).
+-endif.
+-ifndef(HAVE_crypto__md5_init_0).
+-export([md5_init/0]).
+-endif.
+-ifndef(HAVE_crypto__sha_1).
+-export([sha/1]).
+-endif.
+-ifndef(HAVE_crypto__sha_init_0).
+-export([sha_init/0]).
+-endif.
+
 -ifndef(HAVE_crypto__supports_1).
 % OTP 22.0
 -export([supports/1]).
@@ -231,6 +250,25 @@ sha384_init() -> crypto:hash_init(sha384).
 -endif.
 -ifndef(HAVE_crypto__sha512_init_0).
 sha512_init() -> crypto:hash_init(sha512).
+-endif.
+
+-ifndef(HAVE_crypto__md4_1).
+md4(Data) -> crypto:hash(md4, Data).
+-endif.
+-ifndef(HAVE_crypto__md4_init_0).
+md4_init() -> crypto:hash_init(md4).
+-endif.
+-ifndef(HAVE_crypto__md5_1).
+md5(Data) -> crypto:hash(md5, Data).
+-endif.
+-ifndef(HAVE_crypto__md5_init_0).
+md5_init() -> crypto:hash_init(md5).
+-endif.
+-ifndef(HAVE_crypto__sha_1).
+sha(Data) -> crypto:hash(sha, Data).
+-endif.
+-ifndef(HAVE_crypto__sha_init_0).
+sha_init() -> crypto:hash_init(sha).
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
