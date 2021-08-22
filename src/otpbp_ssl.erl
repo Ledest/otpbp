@@ -12,6 +12,20 @@
 % OTP < 24.0
 -export([ssl_accept/3]).
 -endif.
+-ifndef(HAVE_ssl__cipher_suites_0).
+% OTP < 24.0
+-export([cipher_suites/0]).
+-endif.
+-ifndef(HAVE_ssl__cipher_suites_1).
+% OTP < 24.0
+-export([cipher_suites/1]).
+-endif.
+
+-ifndef(HAVE_ssl__cipher_suites_0).
+-ifdef(HAVE_ssl__cipher_suites_1).
+-import(ssl, [cipher_suites/1]).
+-endif.
+-endif.
 
 -ifndef(HAVE_ssl__ssl_accept_1).
 ssl_accept(Socket) when is_port(Socket) -> ssl:handshake(Socket);
@@ -38,4 +52,20 @@ ssl_accept(Socket, SslOptions, Timeout) ->
         {ok, _} -> ok;
         Error -> Error
      end.
+-endif.
+
+-ifndef(HAVE_ssl__cipher_suites_0).
+cipher_suites() -> cipher_suites(erlang).
+-endif.
+
+-ifndef(HAVE_ssl__cipher_suites_1).
+cipher_suites(erlang) -> lists:map(fun ssl_cipher_format:suite_legacy/1, available_suites_default());
+cipher_suites(openssl) ->
+    lists:map(fun(Suite) -> ssl_cipher_format:suite_map_to_openssl_str(ssl_cipher_format:suite_bin_to_map(Suite)) end,
+              available_suites_default());
+cipher_suites(all) ->
+    lists:map(fun ssl_cipher_format:suite_legacy/1,
+              ssl_cipher:filter_suites(ssl_cipher:all_suites(tls_record:highest_protocol_version([])))).
+
+available_suites_default() -> ssl_cipher:filter_suites(ssl_cipher:suites(tls_record:highest_protocol_version([]))).
 -endif.
