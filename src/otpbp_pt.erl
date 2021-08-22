@@ -102,6 +102,7 @@
                               {{queue, fold, 3}, otpbp_queue},
                               {{sets, is_empty, 1}, otpbp_sets},
                               {{snmpa, old_info_format, 1}, otpbp_snmpa},
+                              {{ssl, ssl_accept, [1, 2, 3]}, otpbp_ssl},
                               {{string, [casefold, chomp, is_empty, length, lowercase, next_codepoint,
                                          next_grapheme, reverse, titlecase, to_graphemes, trim, uppercase], 1},
                                otpbp_string},
