@@ -25,18 +25,18 @@
 -export([start/0,start_link/0,init/1,handle_call/3,handle_cast/2,handle_info/2,
          terminate/2]).
 
--deprecated([{'_','_',"use 'pg' instead"}]).
-
 %%% As of R13B03 monitors are used instead of links.
 
 %%%
 %%% Exported functions
 %%%
 
+-define(SERVICE, pg2).
+
 -spec start_link() -> {'ok', pid()} | {'error', any()}.
 
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+    gen_server:start_link({local, ?SERVICE}, ?MODULE, [], []).
 
 -spec start() -> {'ok', pid()} | {'error', any()}.
 
@@ -51,9 +51,9 @@ create(Name) ->
     _ = ensure_started(),
     case ets:member(pg2_table, {group, Name}) of
         false ->
-            global:trans({{?MODULE, Name}, self()},
+            global:trans({{?SERVICE, Name}, self()},
                          fun() ->
-                                 gen_server:multi_call(?MODULE, {create, Name})
+                                 gen_server:multi_call(?SERVICE, {create, Name})
                          end),
             ok;
         true ->
@@ -64,9 +64,9 @@ create(Name) ->
 
 delete(Name) ->
     _ = ensure_started(),
-    global:trans({{?MODULE, Name}, self()},
+    global:trans({{?SERVICE, Name}, self()},
                  fun() ->
-                         gen_server:multi_call(?MODULE, {delete, Name})
+                         gen_server:multi_call(?SERVICE, {delete, Name})
                  end),
     ok.
 
@@ -79,9 +79,9 @@ join(Name, Pid) when is_pid(Pid) ->
         false ->
             {error, {no_such_group, Name}};
         true ->
-            global:trans({{?MODULE, Name}, self()},
+            global:trans({{?SERVICE, Name}, self()},
                          fun() ->
-                                 gen_server:multi_call(?MODULE,
+                                 gen_server:multi_call(?SERVICE,
                                                        {join, Name, Pid})
                          end),
             ok
@@ -96,9 +96,9 @@ leave(Name, Pid) when is_pid(Pid) ->
         false ->
             {error, {no_such_group, Name}};
         true ->
-            global:trans({{?MODULE, Name}, self()},
+            global:trans({{?SERVICE, Name}, self()},
                          fun() ->
-                                 gen_server:multi_call(?MODULE,
+                                 gen_server:multi_call(?SERVICE,
                                                        {leave, Name, Pid})
                          end),
             ok
@@ -173,7 +173,7 @@ init([]) ->
     Ns = nodes(),
     ok = net_kernel:monitor_nodes(true),
     lists:foreach(fun(N) ->
-                          {?MODULE, N} ! {new_pg2, node()},
+                          {?SERVICE, N} ! {new_pg2, node()},
                           self() ! {nodeup, N}
                   end, Ns),
     pg2_table = ets:new(pg2_table, [ordered_set, protected, named_table]),
@@ -224,10 +224,10 @@ handle_info({'DOWN', MonitorRef, process, _Pid, _Info}, S) ->
     member_died(MonitorRef),
     {noreply, S};
 handle_info({nodeup, Node}, S) ->
-    gen_server:cast({?MODULE, Node}, {exchange, node(), all_members()}),
+    gen_server:cast({?SERVICE, Node}, {exchange, node(), all_members()}),
     {noreply, S};
 handle_info({new_pg2, Node}, S) ->
-    gen_server:cast({?MODULE, Node}, {exchange, node(), all_members()}),
+    gen_server:cast({?SERVICE, Node}, {exchange, node(), all_members()}),
     {noreply, S};
 handle_info(_, S) ->
     {noreply, S}.
@@ -283,7 +283,7 @@ member_died(Ref) ->
             Name <- Names,
             P <- member_in_group(Pid, Name)],
     %% Kept for backward compatibility with links. Can be removed, eventually.
-    _ = [gen_server:abcast(nodes(), ?MODULE, {del_member, Name, Pid}) ||
+    _ = [gen_server:abcast(nodes(), ?SERVICE, {del_member, Name, Pid}) ||
             Name <- Names],
     ok.
 
@@ -359,7 +359,7 @@ all_groups() ->
     [N || [N] <- ets:match(pg2_table, {{group,'$1'}})].
 
 ensure_started() ->
-    case whereis(?MODULE) of
+    case whereis(?SERVICE) of
         undefined ->
             C = {pg2, {?MODULE, start_link, []}, permanent,
                  1000, worker, [?MODULE]},
