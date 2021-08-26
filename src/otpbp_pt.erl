@@ -95,6 +95,9 @@
                               {{ordsets, is_empty, 1}, otpbp_ordsets},
                               {{os, cmd, 2}, otpbp_os},
                               {{os, [env, list_env_vars], 0}, otpbp_os},
+                              {{pg2, [start, start_link, which_groups], 0}, otpbp_pg2},
+                              {{pg2, [create, delete, get_closest_pid, get_local_members, get_members], 1}, otpbp_pg2},
+                              {{pg2, [join, leave], 2}, otpbp_pg2},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0
                               {{proplists, to_map, [1, 2]}, otpbp_proplists},
                               {{queue, [all, any, delete, delete_r, delete_with, delete_with_r, filtermap, foreach], 2},
