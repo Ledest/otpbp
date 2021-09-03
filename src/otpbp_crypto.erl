@@ -157,6 +157,22 @@
 -export([poly1305/2]).
 -endif.
 -endif.
+-ifndef(HAVE_crypto__block_decrypt_3).
+% OTP < 24
+-export([block_decrypt/3]).
+-endif.
+-ifndef(HAVE_crypto__block_decrypt_4).
+% OTP < 24
+-export([block_decrypt/4]).
+-endif.
+-ifndef(HAVE_crypto__block_encrypt_3).
+% OTP < 24
+-export([block_encrypt/3]).
+-endif.
+-ifndef(HAVE_crypto__block_encrypt_4).
+% OTP < 24
+-export([block_encrypt/4]).
+-endif.
 
 -ifndef(HAVE_crypto__hash_equals_2).
 % OTP 25.0
@@ -486,4 +502,137 @@ alias(A) -> A.
 -ifndef(HAVE_crypto__hash_equals_2).
 hash_equals(A, B) when is_binary(A), is_binary(B) -> A =:= B;
 hash_equals(A, B) -> error(badarg, [A, B]).
+-endif.
+
+-ifndef(HAVE_crypto__block_decrypt_4).
+block_decrypt(aes_ige256, _Key, _IV, _Data) -> error(notsup);
+block_decrypt(Type, Key, IV, {AAD, Data, TagLength}) ->
+    try
+        crypto:crypto_one_time_aead(alias(Type, Key), Key, IV, Data, AAD, TagLength, false)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end;
+block_decrypt(Type, Key, IV, Data) ->
+    try
+        crypto:crypto_update(crypto:crypto_init(alias(Type, Key), Key, IV, false), Data)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-ifndef(NEED_ALIAS_2).
+-define(NEED_ALIAS_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_crypto__block_decrypt_3).
+-ifdef(HAVE_crypto__block_decrypt_4).
+block_decrypt(Type, Key, Data) -> crypto:block_decrypt(Type, Key, <<>>, Data).
+-else.
+block_decrypt(Type, Key, Data) ->
+    try
+        crypto:crypto_update(crypto:crypto_init(alias(Type, Key), Key, false), Data)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-ifndef(NEED_ALIAS_2).
+-define(NEED_ALIAS_2, true).
+-endif.
+-endif.
+-endif.
+
+-ifndef(HAVE_crypto__block_encrypt_4).
+block_encrypt(aes_ige256, _Key, _IV, _Data) -> error(notsup);
+block_encrypt(Type, Key, IV, {AAD, Data, TagLength}) ->
+    try
+        crypto:crypto_one_time_aead(alias(Type, Key), Key, IV, Data, AAD, TagLength, true)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end;
+block_encrypt(Type, Key, IV, {AAD, Data}) ->
+    try
+        crypto:crypto_one_time_aead(alias(Type, Key), Key, IV, Data, AAD, true)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end;
+block_encrypt(Type, Key, IV, Data) ->
+    try
+        crypto:crypto_update(crypto:crypto_init(alias(Type, Key), Key, IV, true), Data)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-ifndef(NEED_ALIAS_2).
+-define(NEED_ALIAS_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_crypto__block_encrypt_3).
+-ifdef(HAVE_crypto__block_encrypt_4).
+block_encrypt(Type, Key, Data) -> crypto:block_encrypt(Type, Key, <<>>, Data).
+-else.
+block_encrypt(Type, Key, Data) ->
+    try
+        crypto:crypto_update(crypto:crypto_init(alias(Type, Key), Key, true), Data)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-ifndef(NEED_ALIAS_2).
+-define(NEED_ALIAS_2, true).
+-endif.
+-endif.
+-endif.
+
+-ifdef(NEED_ALIAS_2).
+alias(aes_cbc128, _) -> aes_128_cbc;
+alias(aes_cbc256, _) -> aes_256_cbc;
+alias(aes_cbc, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_cbc;
+        24 -> aes_192_cbc;
+        32 -> aes_256_cbc
+    end;
+alias(aes_cfb8, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_cfb8;
+        24 -> aes_192_cfb8;
+        32 -> aes_256_cfb8
+    end;
+alias(aes_cfb128, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_cfb128;
+        24 -> aes_192_cfb128;
+        32 -> aes_256_cfb128
+    end;
+alias(aes_ctr, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_ctr;
+        24 -> aes_192_ctr;
+        32 -> aes_256_ctr
+    end;
+alias(aes_ebc, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_ebc;
+        24 -> aes_192_ebc;
+        32 -> aes_256_ebc
+    end;
+alias(aes_gcm, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_gcm;
+        24 -> aes_192_gcm;
+        32 -> aes_256_gcm
+    end;
+alias(aes_ccm, Key) ->
+    case iolist_size(Key) of
+        16 -> aes_128_ccm;
+        24 -> aes_192_ccm;
+        32 -> aes_256_ccm
+    end;
+alias(A, _) when A =:= des3_cbc; A =:= des_ede3 -> des_ede3_cbc;
+alias(A, _) when A =:= des_ede3_cbf; A =:= des3_cbf; A =:= des3_cfb -> des_ede3_cfb;
+alias(A, _) -> A.
 -endif.
