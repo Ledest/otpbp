@@ -474,16 +474,13 @@ poly1305(Key, Data) ->
 -endif.
 
 -ifdef(NEED_ALIAS_1).
--compile({no_auto_import,[alias/1]}).
+-compile({no_auto_import, [alias/1]}).
 
-alias(des3_cbc) -> des_ede3_cbc;
-alias(des_ede3) -> des_ede3_cbc;
-alias(des_ede3_cbf) -> des_ede3_cfb;
-alias(des3_cbf) -> des_ede3_cfb;
-alias(des3_cfb) -> des_ede3_cfb;
 alias(aes_cbc128) -> aes_128_cbc;
 alias(aes_cbc256) -> aes_256_cbc;
-alias(Alg) -> Alg.
+alias(A) when A =:= des3_cbc; A =:= des_ede3 -> des_ede3_cbc;
+alias(A) when A =:= des_ede3_cbf; A =:= des3_cbf; A =:= des3_cfb -> des_ede3_cfb;
+alias(A) -> A.
 -endif.
 
 -ifndef(HAVE_crypto__hash_equals_2).
