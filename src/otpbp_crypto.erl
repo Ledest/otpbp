@@ -374,7 +374,7 @@ hmac(Type, Key, Data) ->
     try
         crypto:mac(hmac, Type, Key, Data)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
@@ -384,7 +384,7 @@ hmac(Type, Key, Data, MacLength) ->
     try
         crypto:macN(hmac, Type, Key, Data, MacLength)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
@@ -394,7 +394,7 @@ hmac_init(Type, Key) ->
     try
         crypto:mac_init(hmac, Type, Key)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
@@ -404,7 +404,7 @@ hmac_update(State, HashLen) ->
     try
         crypto:mac_update(State, HashLen)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
@@ -414,7 +414,7 @@ hmac_final(Context) ->
     try
         crypto:mac_final(Context)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
@@ -424,7 +424,7 @@ hmac_final_n(Context, HashLen) ->
     try
         crypto:mac_finalN(Context, HashLen)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
@@ -432,10 +432,11 @@ hmac_final_n(Context, HashLen) ->
 -ifndef(HAVE_crypto__cmac_3).
 -ifdef(HAVE_crypto__mac_4).
 cmac(Type, Key, Data) ->
+    Alias = alias(Type),
     try
-        crypto:mac(cmac, alias(Type), Key, Data)
+        crypto:mac(cmac, Alias, Key, Data)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -ifndef(NEED_ALIAS_1).
@@ -447,10 +448,11 @@ cmac(Type, Key, Data) ->
 -ifndef(HAVE_crypto__cmac_4).
 -ifdef(HAVE_crypto__macN_5).
 cmac(Type, Key, Data, MacLength) ->
+    Alias = alias(Type),
     try
-        crypto:macN(cmac, alias(Type), Key, Data, MacLength)
+        crypto:macN(cmac, Alias, Key, Data, MacLength)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -ifndef(NEED_ALIAS_1).
@@ -465,7 +467,7 @@ poly1305(Key, Data) ->
     try
         crypto:mac(poly1305, Key, Data)
     catch
-        error:{error, {_File,_Line}, _Reason} -> error(badarg);
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
 -endif.
