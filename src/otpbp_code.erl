@@ -12,6 +12,14 @@
 % OTP 23.0
 -export([all_available/0]).
 -endif.
+-ifndef(HAVE_code__is_module_native_1).
+% OTP < 26.0
+-export([is_module_native/1]).
+-endif.
+-ifndef(HAVE_code__rehash_0).
+% OTP < 26.0
+-export([rehash/0]).
+-endif.
 
 -ifndef(HAVE_code__module_status_1).
 module_status(Module) -> module_status(Module, code:get_path()).
@@ -103,4 +111,17 @@ all_available(_Path, [], Acc) -> Acc.
 
 comp_modules({A, _, _}, {B, _, _}) -> comp_modules(A, B);
 comp_modules(A, B) -> A =< B.
+-endif.
+
+-ifndef(HAVE_code__is_module_native_1).
+is_module_native(Module) when is_atom(Module) ->
+    case is_loaded(Module) of
+        {file, _} -> false;
+        false -> undefined
+    end;
+is_module_native(Module) -> error(badarg, [Module]).
+-endif.
+
+-ifndef(HAVE_code__rehash_0).
+rehash() -> error_logger:warning_report("The code path cache functionality has been removed").
 -endif.
