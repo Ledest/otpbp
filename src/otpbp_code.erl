@@ -115,7 +115,7 @@ comp_modules(A, B) -> A =< B.
 
 -ifndef(HAVE_code__is_module_native_1).
 is_module_native(Module) when is_atom(Module) ->
-    case is_loaded(Module) of
+    case code:is_loaded(Module) of
         {file, _} -> false;
         false -> undefined
     end;
