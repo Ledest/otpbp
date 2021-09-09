@@ -12,12 +12,8 @@ safe_relative_path(Path) ->
         _ -> unsafe
     end.
 
-safe_relative_path([$.|T], Acc) -> safe_relative_path(T, Acc);
-safe_relative_path([<<$.>>|T], Acc) -> safe_relative_path(T, Acc);
-safe_relative_path([".."|_], []) -> unsafe;
-safe_relative_path([<<"..">>|_], []) -> unsafe;
-safe_relative_path([".."|T], [_|Acc]) -> safe_relative_path(T, Acc);
-safe_relative_path([<<"..">>|T], [_|Acc]) -> safe_relative_path(T, Acc);
+safe_relative_path([H|_], []) when H =:= ".."; H =:= <<"..">> -> unsafe;
+safe_relative_path([H|T], Acc) when H =:= $.; H =:= <<$.>>; H =:= <<"..">>; H =:= ".." -> safe_relative_path(T, Acc);
 safe_relative_path([H|T], Acc) -> safe_relative_path(T, [H|Acc]);
 safe_relative_path([], []) -> [];
 safe_relative_path([], Acc) -> filename:join(lists:reverse(Acc)).
