@@ -9,7 +9,6 @@ code_test() ->
     ?assertEqual(code:module_status('TEST'), not_loaded),
     ?assert(is_list(code:modified_modules())).
 
-
 os_test() ->
     Env = os:env(),
     ?assertEqual(Env, os:list_env_vars()),
