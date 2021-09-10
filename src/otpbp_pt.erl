@@ -106,6 +106,9 @@
                               {{pg2, [join, leave], 2}, otpbp_pg2},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0
                               {{proplists, to_map, [1, 2]}, otpbp_proplists},
+                              {{public_key, ssh_decode, 2}, {ssh_file, decode}},
+                              {{public_key, ssh_encode, 2}, {ssh_file, encode}},
+                              {{public_key, ssh_hostkey_fingerprint, [1, 2]}, {ssh, hostkey_fingerprint}},
                               {{queue, [all, any, delete, delete_r, delete_with, delete_with_r, filtermap, foreach], 2},
                                otpbp_queue},
                               {{queue, fold, 3}, otpbp_queue},
