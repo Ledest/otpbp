@@ -148,6 +148,11 @@
                               {{uri_string, [compose_query, normalize], [1, 2]}, otpbp_uri_string},
                               {{uri_string, [dissect_query, is_host, is_path, parse, recompose], 1}, otpbp_uri_string},
                               {{uri_string, transcode, 2}, otpbp_uri_string},
+                              {{zlib, [adler32, crc32], [2, 3]}, otpbp_zlib},
+                              {{zlib, [adler32_combine, crc32_combine], 4}, otpbp_zlib},
+                              {{zlib, inflateChunk, [1, 2]}, otpbp_zlib},
+                              {{zlib, getBufSize, 1}, otpbp_zlib},
+                              {{zlib, setBufSize, 2}, otpbp_zlib},
                               {{zlib, [compress, gzip, zip], 2}, otpbp_zlib}]).
 
 -import(erl_syntax, [copy_pos/2]).
