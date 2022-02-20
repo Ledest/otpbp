@@ -205,7 +205,7 @@ r2f([]) -> {[], []};
 r2f([_] = R) -> {[], R};
 r2f([X, Y]) -> {[X], [Y]};
 r2f(List) ->
-    {FF, RR} = lists:split(length(List) div 2 + 1, List),
+    {FF, RR} = lists:split(length(List) div 2, List),
     {FF, lists:reverse(RR, [])}.
 -endif.
 
@@ -215,7 +215,7 @@ f2r([]) -> {[], []};
 f2r([_] = F) -> {F, []};
 f2r([X, Y]) -> {[Y], [X]};
 f2r(List) ->
-    {FF, RR} = lists:split(length(List) div 2 + 1, List),
+    {FF, RR} = lists:split(length(List) div 2, List),
     {lists:reverse(RR, []), FF}.
 -endif.
 
