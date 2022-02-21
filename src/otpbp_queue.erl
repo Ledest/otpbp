@@ -203,10 +203,10 @@ foreach_rear(_, []) -> ok.
 %% Move half of elements from R to F, if there are at least three
 r2f([]) -> {[], []};
 r2f([_] = R) -> {[], R};
-r2f([X, Y]) -> {[X], [Y]};
+r2f([Y, X]) -> {[Y], [X]};
 r2f(List) ->
-    {FF, RR} = lists:split(length(List) div 2, List),
-    {FF, lists:reverse(RR, [])}.
+    {RR, FF} = lists:split(length(List) div 2, List),
+    {RR, lists:reverse(FF, [])}.
 -endif.
 
 -ifdef(NEED__f2r_1).
