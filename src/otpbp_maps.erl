@@ -46,6 +46,14 @@
 % OTP 24.0
 -export([foreach/2]).
 -endif.
+-ifndef(HAVE_maps__groups_from_list_2).
+% OTP 25.0
+-export([groups_from_list/2]).
+-endif.
+-ifndef(HAVE_maps__groups_from_list_3).
+% OTP 25.0
+-export([groups_from_list/3]).
+-endif.
 
 -ifndef(HAVE_maps__update_with_4).
 update_with(K, Fun, Init, M) ->
@@ -175,4 +183,43 @@ foreach(Fun, MapOrIter) when is_function(Fun, 2) ->
                   ok
               end, ok, MapOrIter);
 foreach(Fun, MapOrIter) -> error(badarg, [Fun, MapOrIter]).
+-endif.
+
+-ifndef(HAVE_maps__groups_from_list_2).
+groups_from_list(F, L) when is_function(F, 1) ->
+    try lists:reverse(L) of
+        List -> groups_from_list_1(F, List, #{})
+    catch
+        error:_ -> error(badarg, [F, L])
+    end;
+groups_from_list(F, L) -> error(badarg, [F, L]).
+
+groups_from_list_1(F, [H|T], A) ->
+    K = F(H),
+    groups_from_list_1(F, T,
+                       case A of
+                           #{K := Vs} -> A#{K := [H|Vs]};
+                           #{} -> A#{K => [H]}
+                       end);
+groups_from_list_1(_F, [], A) -> A.
+-endif.
+
+-ifndef(HAVE_maps__groups_from_list_3).
+groups_from_list(F, VF, L) when is_function(F, 1), is_function(VF, 1) ->
+    try lists:reverse(L) of
+        List -> groups_from_list_2(F, VF, List, #{})
+    catch
+        error:_ -> error(badarg, [F, VF, L])
+    end;
+groups_from_list(F, VF, L) -> error(badarg, [F, VF, L]).
+
+groups_from_list_2(F, VF, [H|T], A) ->
+    K = F(H),
+    V = VF(H),
+    groups_from_list_2(F, VF, T,
+                       case A of
+                           #{K := Vs} -> A#{K := [V|Vs]};
+                           #{} -> A#{K => [V]}
+                       end);
+groups_from_list_2(_F, _VF, [], A) -> A.
 -endif.

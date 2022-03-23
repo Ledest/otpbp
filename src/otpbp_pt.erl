@@ -104,6 +104,7 @@
                               {{lists, uniq, [1, 2]}, otpbp_lists},
                               {{maps, [iterator, next], 1}, otpbp_maps},
                               {{maps, [filtermap, foreach, from_keys, intersect, take], 2}, otpbp_maps},
+                              {{maps, groups_from_list, [2, 3]}, otpbp_maps},
                               {{maps, [intersect_with, merge_with], 3}, otpbp_maps},
                               {{maps, update_with, [3, 4]}, otpbp_maps},
                               {{math, [ceil, floor], 1}, otpbp_math},
