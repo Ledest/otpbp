@@ -214,6 +214,12 @@ maps_test() ->
     ?assertError(badarg, maps:foreach({}, #{})),
     ?assertError(badarg, maps:foreach(42, #{})),
     ?assertError(badarg, maps:foreach(<<>>, #{})),
+    % groups_from_list/2
+    ?assertEqual(#{}, maps:groups_from_list(fun erlang:length/1, [])),
+    ?assertEqual(#{0 => [2], 1 => [1, 3]}, maps:groups_from_list(fun(X) -> X rem 2 end, [1, 2, 3])),
+    % groups_from_list/3
+    ?assertEqual(#{3 => ["tna", "tac"], 5 => ["ognid"], 7 => ["olaffub"]},
+                 maps:groups_from_list(fun erlang:length/1, fun lists:reverse/1, ["ant", "buffalo", "cat", "dingo"])),
     ok.
 
 check_map_combiners_same_small(MapCombiner1, MapCombiner2, Seed) ->
