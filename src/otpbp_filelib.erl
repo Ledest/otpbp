@@ -4,6 +4,10 @@
 % OTP 23.0
 -export([safe_relative_path/2]).
 -endif.
+-ifndef(HAVE_filelib__ensure_path_1).
+% OTP 25.0
+-export([ensure_path/1]).
+-endif.
 
 -ifndef(HAVE_filelib__safe_relative_path_2).
 safe_relative_path(Path, Cwd) ->
@@ -50,4 +54,26 @@ climb(_, []) -> unsafe;
 climb(T, [_|Acc]) -> safe_relative_path_1(T, Acc).
 
 -compile({inline, [climb/2, safe_relative_path/1]}).
+-endif.
+
+-ifndef(HAVE_filelib__ensure_path_1).
+ensure_path("/") -> ok;
+ensure_path(Path) -> 
+    case filelib:is_dir(Path) of
+        true -> ok;
+        false ->
+            case filename:dirname(Path) of 
+                Path -> {error, einval};
+                Parent ->
+                    _ = ensure_path(Parent),
+                    case file:make_dir(Path) of
+                        {error, eexist} ->
+                            case filelib:is_dir(Path) of
+                                true -> ok;
+                                false -> {error, eexist}
+                            end;
+                        Other -> Other
+                    end
+            end
+    end.
 -endif.

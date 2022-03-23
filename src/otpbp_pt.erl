@@ -74,6 +74,7 @@
                               {{erts_internal, map_next, 3}, otpbp_erts_internal},
                               {{file, del_dir_r, 1}, otpbp_file},
                               {{file, delete, 2}, otpbp_file},
+                              {{filelib, ensure_path, 1}, otpbp_filelib},
                               {{filelib, safe_relative_path, 2}, otpbp_filelib},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
                               {{ftp, start_service, 1}, otpbp_ftp},
