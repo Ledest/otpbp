@@ -44,8 +44,22 @@ gb_sets_test() ->
     ?assertEqual({1, gb_sets:iterator_from(2, S)}, gb_sets:next(gb_sets:iterator(S))).
 
 lists_test() ->
+    % search/2
     ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, []), false),
-    ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, [1,2,3,4,5,6,7,8]), {value, 2}).
+    ?assertEqual(lists:search(fun(E) -> E rem 2 =:= 0 end, [1,2,3,4,5,6,7,8]), {value, 2}),
+    % enumerate/1, enumerate/2
+    ?assertEqual([], lists:enumerate([])),
+    ?assertEqual([], lists:enumerate(10, [])),
+    ?assertEqual([{1, a}, {2, b}, {3, c}], lists:enumerate([a,b,c])),
+    ?assertEqual([{10, a}, {11, b}, {12, c}], lists:enumerate(10, [a,b,c])),
+    ?assertError(function_clause, lists:enumerate(0)),
+    ?assertError(function_clause, lists:enumerate(0, 10)),
+    ?assertError(function_clause, lists:enumerate(1.0, [])),
+    ?assertError(function_clause, lists:enumerate(1.0, [a, b, c])),
+    ?assertError(function_clause, lists:enumerate(<<1>>, [])),
+    ?assertError(function_clause, lists:enumerate(<<1>>, [a, b, c])),
+    ?assertError(function_clause, lists:enumerate(1, <<1, 2, 3>>)),
+    ok.
 
 maps_test() ->
     %% update_with/3
@@ -394,18 +408,4 @@ binary_test() ->
     ?assertEqual(<<"fooba">>, binary:decode_hex(<<"666f6f6261">>)),
     ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666f6f626172">>)),
     ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666f6F626172">>)),
-    ok.
-
-enumerate_test() ->
-    ?assertEqual([], lists:enumerate([])),
-    ?assertEqual([], lists:enumerate(10, [])),
-    ?assertEqual([{1, a}, {2, b}, {3, c}], lists:enumerate([a,b,c])),
-    ?assertEqual([{10, a}, {11, b}, {12, c}], lists:enumerate(10, [a,b,c])),
-    ?assertError(function_clause, lists:enumerate(0)),
-    ?assertError(function_clause, lists:enumerate(0, 10)),
-    ?assertError(function_clause, lists:enumerate(1.0, [])),
-    ?assertError(function_clause, lists:enumerate(1.0, [a, b, c])),
-    ?assertError(function_clause, lists:enumerate(<<1>>, [])),
-    ?assertError(function_clause, lists:enumerate(<<1>>, [a, b, c])),
-    ?assertError(function_clause, lists:enumerate(1, <<1, 2, 3>>)),
     ok.
