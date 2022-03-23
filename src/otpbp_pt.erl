@@ -101,6 +101,7 @@
                               {{lib, subst_values_for_vars, 2}, erl_eval},
                               {{lists, enumerate, [1, 2]}, otpbp_lists},
                               {{lists, [join, search], 2}, otpbp_lists},
+                              {{lists, uniq, [1, 2]}, otpbp_lists},
                               {{maps, [iterator, next], 1}, otpbp_maps},
                               {{maps, [filtermap, foreach, from_keys, intersect, take], 2}, otpbp_maps},
                               {{maps, [intersect_with, merge_with], 3}, otpbp_maps},
