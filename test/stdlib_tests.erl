@@ -59,6 +59,18 @@ lists_test() ->
     ?assertError(function_clause, lists:enumerate(<<1>>, [])),
     ?assertError(function_clause, lists:enumerate(<<1>>, [a, b, c])),
     ?assertError(function_clause, lists:enumerate(1, <<1, 2, 3>>)),
+    % uniq/1
+    ?assertEqual([], lists:uniq([])),
+    ?assertEqual(["foo", "bar", "zoo"], lists:uniq(["foo", "foo", "bar", "foo", "zoo", "foo", "bar", "zoo"])),
+    ?assertEqual([a, 1, b, 2], lists:uniq([a, a, a, 1, b, 2, a, 2, 1])),
+    ?assertEqual([<<"home">>, "home"], lists:uniq([<<"home">>, "home"])),
+    ?assertEqual([3.14159, 2.71828, 3.17], lists:uniq([3.14159, 3.14159, 2.71828, 3.17])),
+    ?assertEqual([42, 42.0], lists:uniq([42, 42.0, 42, 42.0])),
+    % uniq/2
+    ?assertEqual([], lists:uniq(fun(X) -> X end, [])),
+    ?assertEqual([{42, 1}, {42.0, 99}, {a, 99}],
+                 lists:uniq(fun(X) -> element(1, X) end, [{42, 1}, {42.0, 99}, {a, 99}, {a, 1}, {42, 100}])),
+    ?assertEqual([1], lists:uniq(fun(_) -> whatever end, lists:seq(1, 10))),
     ok.
 
 maps_test() ->
