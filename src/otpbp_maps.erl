@@ -194,13 +194,7 @@ groups_from_list(F, L) when is_function(F, 1) ->
     end;
 groups_from_list(F, L) -> error(badarg, [F, L]).
 
-groups_from_list_1(F, [H|T], A) ->
-    K = F(H),
-    groups_from_list_1(F, T,
-                       case A of
-                           #{K := Vs} -> A#{K := [H|Vs]};
-                           #{} -> A#{K => [H]}
-                       end);
+groups_from_list_1(F, [H|T], A) -> groups_from_list_1(F, T, maps:update_with(F(H), fun(Vs) -> [H|Vs] end, [H], A));
 groups_from_list_1(_F, [], A) -> A.
 -endif.
 
@@ -214,12 +208,7 @@ groups_from_list(F, VF, L) when is_function(F, 1), is_function(VF, 1) ->
 groups_from_list(F, VF, L) -> error(badarg, [F, VF, L]).
 
 groups_from_list_2(F, VF, [H|T], A) ->
-    K = F(H),
     V = VF(H),
-    groups_from_list_2(F, VF, T,
-                       case A of
-                           #{K := Vs} -> A#{K := [V|Vs]};
-                           #{} -> A#{K => [V]}
-                       end);
+    groups_from_list_2(F, VF, T, maps:update_with(F(H), fun(Vs) -> [V|Vs] end, [V], A));
 groups_from_list_2(_F, _VF, [], A) -> A.
 -endif.
