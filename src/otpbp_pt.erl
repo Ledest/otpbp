@@ -123,6 +123,8 @@
                               {{queue, [all, any, delete, delete_r, delete_with, delete_with_r, filtermap, foreach], 2},
                                otpbp_queue},
                               {{queue, fold, 3}, otpbp_queue},
+                              {{rand, bytes, 1}, otpbp_rand},
+                              {{rand, bytes_s, 2}, otpbp_rand},
                               {{sets, is_empty, 1}, otpbp_sets},
                               {{snmpa, old_info_format, 1}, otpbp_snmpa},
                               {{snmpm, async_get, [3, 4, 5, 6]}, {snmpm, async_get2}},
