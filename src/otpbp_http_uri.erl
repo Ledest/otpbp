@@ -4,6 +4,10 @@
 % OTP < 25.0
 -export([encode/1]).
 -endif.
+-ifndef(HAVE_http_uri__decode_1).
+% OTP < 25.0
+-export([decode/1]).
+-endif.
 -ifndef(HAVE_http_uri__scheme_defaults_0).
 % OTP < 25.0
 -export([scheme_defaults/0]).
@@ -46,6 +50,14 @@ encode(URI) when is_binary(URI) -> list_to_binary(encode(binary_to_list(URI))).
 -compile({inline, reserved/0}).
 reserved() ->
     sets:from_list([$;, $:, $@, $&, $=, $+, $,, $/, $?, $#, $[, $], $<, $>, ${, $}, $|, $", $\\, $', $^, $%, $\s]).
+-endif.
+
+-ifndef(HAVE_http_uri__decode_1).
+decode(URI) when is_list(URI); is_binary(URI) ->
+    case uri_string:percent_decode(URI) of
+        {error, _, _} -> error(function_clause);
+        R -> R
+    end.
 -endif.
 
 -ifndef(HAVE_http_uri__parse_2).
