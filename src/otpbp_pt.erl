@@ -167,7 +167,7 @@
                 verbose = false :: boolean(),
                 otp_release = otp_release() :: 18..24,
                 erts_version = erts_version() :: [non_neg_integer(),...],
-                funs,
+                funs = #{} :: #{{module(), {atom(), arity()}} => {module(), atom()}},
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
