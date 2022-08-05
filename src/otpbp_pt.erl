@@ -241,6 +241,7 @@ transform_attribute(Tree, P) ->
     case erl_syntax_lib:analyze_attribute(Tree) of
         {file, {F, _}} -> {Tree, P#param{file = F}};
         {behaviour, _} -> {transform_behaviour(Tree, P), P};
+        {behavior, _} -> {transform_behaviour(setelement(3, Tree, behaviour), P), P};
         _ -> {Tree, P}
     end.
 
