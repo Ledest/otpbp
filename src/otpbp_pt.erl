@@ -159,6 +159,7 @@
                               {{zlib, getBufSize, 1}, otpbp_zlib},
                               {{zlib, setBufSize, 2}, otpbp_zlib},
                               {{zlib, [compress, gzip, zip], 2}, otpbp_zlib}]).
+-define(TRANSFORM_BEHAVIOURS, [{gen_statem, otpbp_gen_statem}]).
 
 -import(erl_syntax, [copy_pos/2]).
 -import(lists, [foldl/3]).
@@ -168,6 +169,7 @@
                 otp_release = otp_release() :: 18..24,
                 erts_version = erts_version() :: [non_neg_integer(),...],
                 funs = #{} :: #{{module(), {atom(), arity()}} => {module(), atom()}},
+                behaviours = maps:from_list(?TRANSFORM_BEHAVIOURS) :: #{module() => module()},
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
@@ -206,7 +208,7 @@ get_no_auto_import(AF) ->
 -compile({inline, [get_no_auto_import/1, transform/3]}).
 
 transform(Tree, P, function) -> {transform_function(Tree, P), P};
-transform(Tree, P, attribute) -> {Tree, transform_attribute(Tree, P)};
+transform(Tree, P, attribute) -> transform_attribute(Tree, P);
 transform(Tree, P, _) -> {Tree, P}.
 
 transform_function(Tree, P) ->
@@ -225,11 +227,30 @@ transform_function(Tree, P) ->
 
 transform_attribute(Tree, P) ->
     case erl_syntax_lib:analyze_attribute(Tree) of
-        {file, {F, _}} -> P#param{file = F};
-        _ -> P
+        {file, {F, _}} -> {Tree, P#param{file = F}};
+        {behaviour, _} -> {transform_behaviour(Tree, P), P};
+        _ -> {Tree, P}
     end.
 
--compile({inline, [transform_function/2, transform_attribute/2]}).
+transform_behaviour({_, _, _, B} = Tree, #param{behaviours = Bs}) ->
+    case Bs of
+        #{B := M} ->
+            case check_behaviour(B) of
+                true -> Tree;
+                _false -> setelement(4, Tree, M)
+            end;
+        _ -> Tree
+    end;
+transform_behaviour(Tree, _) -> Tree.
+
+check_behaviour(B) ->
+    try B:module_info(exports) of
+        Exports -> lists:member({behaviour_info, 1}, Exports)
+    catch
+        _:_ -> false
+    end.
+
+-compile({inline, [transform_function/2, transform_attribute/2, check_behaviour/1, transform_behaviour/2]}).
 
 add_func(F, MF, D, I) -> foldl(fun(A, Acc) -> add_func(setelement(I, F, A), MF, Acc) end, D, element(I, F)).
 
