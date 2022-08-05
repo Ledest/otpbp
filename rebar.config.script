@@ -210,6 +210,8 @@ Funs = [{application, set_env, 1},
         {zlib, gzip, 2},
         {zlib, zip, 2}],
 
+Behaviours = [gen_statem],
+
 OTPRelease = list_to_integer(erlang:system_info(otp_release)),
 
 ErlOpts = case lists:keyfind(erl_opts, 1, CONFIG) of
@@ -244,7 +246,16 @@ lists:keystore(erl_opts, 1,
                                                                                {M, F, A} -> [M, F, A];
                                                                                {F, A} -> [erlang, F, A]
                                                                            end)))}
-                          end, lists:filter(Check, BIFs ++ Funs))}) ++
+                          end, lists:filter(Check, BIFs ++ Funs)) ++
+                lists:filtermap(fun(E) ->
+                                    try E:module_info(exports) of
+                                        Exports ->
+                                            lists:member({behaviour_info, 1}, Exports) andalso
+                                                {true, {d, list_to_atom(lists:concat(["HAVE_BEHAVIOUR_", E]))}}
+                                    catch
+                                        _:_ -> false
+                                    end
+                                end, Behaviours)}) ++
 if
     OTPRelease >= 20 -> [];
     true -> [{pre_hooks, [{compile, "make -s -C src/uc_spec otpbp_unicode_util.erl"}]},
