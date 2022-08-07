@@ -150,7 +150,7 @@
                               {{snmpm, sync_get_next, [3, 4, 5, 6]}, {snmpm, sync_get_next2}},
                               {{snmpm, sync_set, [3, 4, 5, 6]}, {snmpm, sync_set2}},
                               {{ssl, cipher_suites, [0, 1]}, otpbp_ssl},
-                              {{ssl, ssl_accept, [1, 2, 3]}, otpbp_ssl},
+                              {{ssl, [handshake, ssl_accept], [1, 2, 3]}, otpbp_ssl},
                               {{string, [casefold, chomp, is_empty, length, lowercase, next_codepoint,
                                          next_grapheme, reverse, titlecase, to_graphemes, trim, uppercase], 1},
                                otpbp_string},

@@ -1,5 +1,18 @@
 -module(otpbp_ssl).
 
+-ifndef(HAVE_ssl__handshake_1).
+% OTP 21.0
+-export([handshake/1]).
+-endif.
+-ifndef(HAVE_ssl__handshake_2).
+% OTP 21.0
+-export([handshake/2]).
+-endif.
+-ifndef(HAVE_ssl__handshake_3).
+% OTP 21.0
+-export([handshake/3]).
+-endif.
+
 -ifndef(HAVE_ssl__ssl_accept_1).
 % OTP < 24.0
 -export([ssl_accept/1]).
@@ -25,6 +38,30 @@
 -ifdef(HAVE_ssl__cipher_suites_1).
 -import(ssl, [cipher_suites/1]).
 -endif.
+-endif.
+
+-ifndef(HAVE_ssl__handshake_1).
+handshake(Socket) ->
+    case ssl:ssl_accept(Socket) of
+        ok -> {ok, Socket};
+        R -> R
+    end.
+-endif.
+
+-ifndef(HAVE_ssl__handshake_2).
+handshake(Socket, SslOptionsOrTimeout) ->
+    case ssl:ssl_accept(Socket, SslOptionsOrTimeout) of
+        ok -> {ok, Socket};
+        R -> R
+    end.
+-endif.
+
+-ifndef(HAVE_ssl__handshake_3).
+handshake(Socket, SslOptions, Timeout) ->
+    case ssl:ssl_accept(Socket, SslOptions, Timeout) of
+        ok -> {ok, Socket};
+        R -> R
+    end.
 -endif.
 
 -ifndef(HAVE_ssl__ssl_accept_1).
