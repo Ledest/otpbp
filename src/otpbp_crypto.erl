@@ -174,6 +174,23 @@
 -export([block_encrypt/4]).
 -endif.
 
+-ifndef(HAVE_crypto__stream_init_2).
+% OTP < 24
+-export([stream_init/2]).
+-endif.
+-ifndef(HAVE_crypto__stream_init_3).
+% OTP < 24
+-export([stream_init/3]).
+-endif.
+-ifndef(HAVE_crypto__stream_decrypt_2).
+% OTP < 24
+-export([stream_decrypt/2]).
+-endif.
+-ifndef(HAVE_crypto__stream_encrypt_2).
+% OTP < 24
+-export([stream_encrypt/2]).
+-endif.
+
 -ifndef(HAVE_crypto__hash_equals_2).
 % OTP 25.0
 -export([hash_equals/2]).
@@ -585,6 +602,64 @@ block_encrypt(Type, Key, Data) ->
 -define(NEED_ALIAS_2, true).
 -endif.
 -endif.
+-endif.
+
+-ifndef(HAVE_crypto__stream_init_2).
+stream_init(rc4, Key) ->
+    try crypto:crypto_init(rc4, Key, [{encrypt, undefined}]) of
+        Ref -> {rc4, {Ref, flg_undefined}}
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-endif.
+
+-ifndef(HAVE_crypto__stream_init_3).
+stream_init(Type, Key, IVec) when is_binary(IVec) ->
+    Cypher = alias(Type, Key),
+    try crypto:crypto_init(Cypher, Key, IVec, [{encrypt, undefined}]) of
+        Ref -> {Cypher, {Ref, flg_undefined}}
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-ifndef(NEED_ALIAS_2).
+-define(NEED_ALIAS_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_crypto__stream_decrypt_2).
+stream_decrypt({Cipher, {Ref, flg_undefined}}, Data) ->
+    try crypto:crypto_init(Cipher, <<>>, [{encrypt, false}]) of
+        Ref -> stream_decrypt({Cipher, Ref}, Data)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end;
+stream_decrypt({_Cipher, Ref} = State, Data) ->
+    try crypto:crypto_update(Ref, Data) of
+        Text -> {State, Text}
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
+-endif.
+
+-ifndef(HAVE_crypto__stream_encrypt_2).
+stream_encrypt({Cipher, {Ref0, flg_undefined}}, Data) ->
+    try crypto:crypto_init(Ref0, <<>>, [{encrypt, true}]) of
+        Ref -> stream_encrypt({Cipher, Ref}, Data)
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end;
+stream_encrypt({_Cipher, Ref} = State, Data) ->
+    try crypto:crypto_update(Ref, Data) of
+        Text -> {State, Text}
+    catch
+        error:{error, {_File, _Line}, _Reason} -> error(badarg);
+        error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
+    end.
 -endif.
 
 -ifdef(NEED_ALIAS_2).

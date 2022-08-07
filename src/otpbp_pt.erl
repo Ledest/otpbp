@@ -57,6 +57,8 @@
                               {{crypto, [sha224_mac, sha256_mac, sha384_mac, sha512_mac], 2}, otpbp_crypto},
                               {{crypto, [sha224_update, sha256_update, sha384_update, sha512_update], 2},
                                {crypto, hash_update}},
+                              {{crypto, stream_init, [2, 3]}, otpbp_crypto},
+                              {{crypto, [stream_decrypt, stream_encrypt], 2}, otpbp_crypto},
                               {{ct, get_progname, 0}, otpbp_ct},
                               {{dict, take, 2}, otpbp_dict},
                               {{disk_log, accessible_logs, 0}, otpbp_disk_log},
