@@ -399,22 +399,31 @@ try_expr_clause_patterns_transform(Ps) ->
                                    module_qualifier ->
                                        M = erl_syntax:module_qualifier_body(B),
                                        case erl_syntax:type(M) of
-                                           variable ->
-                                               S = copy_pos(M, application(erlang, get_stacktrace, M, M, [])),
-                                               C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
-                                                                              erl_syntax:module_qualifier_argument(B)),
-                                               {copy_pos(P, C), {true, [copy_pos(M, erl_syntax:match_expr(M, S))|L]}};
-                                           underscore ->
-                                               C = erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
-                                                                              erl_syntax:module_qualifier_argument(B)),
-                                               {copy_pos(P, C), {true, L}};
+                                           variable -> {class_qualifier(P, B), {true, match_expr_list(M, L)}};
+                                           underscore -> {class_qualifier(P, B), {true, L}};
                                            _ -> {P, A}
                                        end;
+                                   _ -> {P, A}
+                               end;
+                           module_qualifier ->
+                               M = erl_syntax:module_qualifier_body(P),
+                               case erl_syntax:type(M) of
+                                   variable -> {class_qualifier(P), {true, match_expr_list(M, L)}};
+                                   underscore -> {class_qualifier(P), {true, L}};
                                    _ -> {P, A}
                                end;
                            _ -> {P, A}
                        end
                    end, {false, []}, Ps).
+
+class_qualifier(P, B) -> class_qualifier(P, B, erl_syntax:class_qualifier_argument(P)).
+
+class_qualifier(P) -> class_qualifier(P, P, erl_syntax:atom('throw')).
+
+class_qualifier(P, B, C) -> copy_pos(P, erl_syntax:class_qualifier(C, erl_syntax:module_qualifier_argument(B))).
+
+match_expr_list(M, L) ->
+    [copy_pos(M, erl_syntax:match_expr(M, copy_pos(M, application(erlang, get_stacktrace, M, M, []))))|L].
 
 -compile({inline, [try_expr_transform/2, try_expr_handler_transform/1, try_expr_clause_patterns_transform/1]}).
 
