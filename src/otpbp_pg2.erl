@@ -299,7 +299,7 @@ kill_monitor_proc(RPid, _Pid) -> exit(RPid, kill).
 %% When/if erlang:monitor() returns before trying to connect to the
 %% other node this function can be removed.
 do_monitor(Pid) ->
-    case lists:member(node(Pid), nodes([this|visible])) of
+    case lists:member(node(Pid), nodes([this, visible])) of
         true ->
             %% Assume the node is still up
             {Pid, monitor(process, Pid)};
