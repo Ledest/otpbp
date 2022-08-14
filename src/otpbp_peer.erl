@@ -42,6 +42,14 @@
 -ifndef(HAVE_peer__start_1).
 -author("maximfca@gmail.com").
 
+-ifndef(OTP_RELEASE).
+-compile([{parse_transform, otpbp_pt}]).
+-else.
+-if(?OTP_RELEASE < 21).
+-compile([{parse_transform, otpbp_pt}]).
+-endif.
+-endif.
+
 %% API
 -export([
          start_link/0,
@@ -76,6 +84,7 @@
          handle_call/3,
          handle_cast/2,
          handle_info/2,
+         code_change/3,
          terminate/2
         ]).
 
@@ -333,24 +342,17 @@ handle_call({call, M, F, A}, From,
     origin_to_peer(tcp, Socket, {call, Seq, M, F, A}),
     {noreply, State#peer_state{outstanding = Out#{Seq => From}, seq = Seq + 1}};
 
-handle_call({starting, Node}, _From, #peer_state{ options = Options } = State) ->
-    case maps:find(shutdown, Options) of
-        {ok, {Timeout, MainCoverNode}} when is_integer(Timeout),
-                                            is_atom(MainCoverNode) ->
-
-            %% The node was started using test_server:start_peer/2 with cover enabled
-            %% so we should start cover on the starting node.
-            Modules = erpc:call(MainCoverNode,cover,modules,[]),
-            erpc:call(
-              Node, fun() ->
-                            Sticky = [ begin code:unstick_mod(M), M end
-                                       || M <- Modules, code:is_sticky(M)],
-                            erpc:call(MainCoverNode, cover, start, [Node]),
-                            [code:stick_mod(M) || M <- Sticky]
-                    end);
-        _ ->
-            ok
-    end,
+handle_call({starting, Node}, _From, #peer_state{options = #{shutdown := {Timeout, MainCoverNode}}} = State)
+  when is_integer(Timeout), is_atom(MainCoverNode) ->
+    %% The node was started using test_server:start_peer/2 with cover enabled
+    %% so we should start cover on the starting node.
+    Modules = rpc:call(MainCoverNode, cover, modules, []),
+    Sticky = rpc:call(Node, lists, filter, [fun code:is_sticky/1, Modules]),
+    rpc:call(Node, lists, foreach, [fun code:unstick_mod/1, Sticky]),
+    rpc:call(MainCoverNode, cover, start, [Node]),
+    rpc:call(Node, lists, foreach, [fun code:stick_mod/1, Sticky]),
+    {reply, ok, State};
+handle_call({starting, _Node}, _From, #peer_state{} = State) ->
     {reply, ok, State};
 handle_call(get_node, _From, #peer_state{node = Node} = State) ->
     {reply, Node, State};
@@ -439,6 +441,8 @@ handle_info({tcp_closed, Sock}, #peer_state{connection = Sock} = State) ->
     catch gen_tcp:close(Sock),
     maybe_stop(tcp_closed, State#peer_state{connection = undefined}).
 
+code_change(_OldVsn, State, _Extra) -> {ok, State}.
+
 %%--------------------------------------------------------------------
 %% cleanup/termination
 
@@ -460,7 +464,7 @@ terminate(_Reason, #peer_state{connection = Port, options = Options, node = Node
             wait_disconnected(Node, {timeout, Timeout});
         {{halt, Timeout}, error} ->
             try
-                _ = erpc:call(Node, erlang, halt, [], Timeout),
+                _ = rpc:call(Node, erlang, halt, [], Timeout),
                 ok
             catch
                 error:{erpc,noconnection} -> ok;
@@ -526,17 +530,17 @@ wait_disconnected(Node, WaitUntil) ->
 
 force_disconnect_node(Node) ->
     _ = erlang:disconnect_node(Node),
-    logger:warning("peer:stop() timed out waiting for disconnect from "
-                   "node ~p. The connection was forcefully taken down.",
-                   [Node]).
+    error_logger:warning_msg("peer:stop() timed out waiting for disconnect from node ~p. "
+                             "The connection was forcefully taken down.",
+                             [Node]).
 
 %% This hack is a temporary workaround for test coverage reports
 shutdown(_Type, _Port, Node, Timeout) when is_integer(Timeout); Timeout =:= infinity ->
-    erpc:cast(Node, init, stop, []),
+    rpc:cast(Node, init, stop, []),
     Timeout;
 shutdown(dist, undefined, Node, {Timeout, CoverNode}) when is_integer(Timeout); Timeout =:= infinity ->
     rpc:call(CoverNode, cover, flush, [Node]),
-    erpc:cast(Node, init, stop, []),
+    rpc:cast(Node, init, stop, []),
     Timeout;
 shutdown(Type, Port, Node, {Timeout, CoverNode}) when is_integer(Timeout); Timeout =:= infinity ->
     rpc:call(CoverNode, cover, flush, [Node]),
@@ -551,9 +555,9 @@ verify_args(Options) ->
     [error({invalid_arg, Arg}) || Arg <- Args, not io_lib:char_list(Arg)],
     %% alternative connection must be requested for non-distributed node,
     %%  or a distributed node when origin is not alive
-    is_map_key(connection, Options)
+    maps:is_key(connection, Options)
         orelse
-          (is_map_key(name, Options) andalso erlang:is_alive()) orelse error(not_alive),
+          (maps:is_key(name, Options) andalso erlang:is_alive()) orelse error(not_alive),
     %% exec must be a string, or a tuple of string(), [string()]
     case maps:find(exec, Options) of
         {ok, {Exec, Strs}} ->
@@ -594,8 +598,8 @@ verify_args(Options) ->
         {ok, Err2} ->
             error({shutdown, Err2})
     end,
-    case maps:find(detached, Options) of
-        {ok, false} when map_get(connection, Options) =:= standard_io ->
+    case Options of
+        #{detached := false, connection := standard_io} ->
             error({detached, cannot_detach_with_standard_io});
         _ ->
             ok
@@ -633,10 +637,11 @@ start_it(Options, StartFun) ->
                     erlang:demonitor(Mref, [flush]),
                     erlang:exit(timeout)
             end;
-        {ok, Pid} when is_map_key(host, Options) ->
-            {ok, Pid, node_name(Options)};
         {ok, Pid} ->
-            {ok, Pid};
+            case maps:is_key(host, Options) of
+                true -> {ok, Pid, node_name(Options)};
+                _ -> {ok, Pid}
+            end;
         Error ->
             Error
     end.
@@ -826,11 +831,13 @@ command_line(Listen, Options) ->
     %% start command
     StartCmd =
         case Listen of
-            undefined when map_get(connection, Options) =:= standard_io ->
-                ["-user", atom_to_list(?MODULE)];
             undefined ->
-                Self = base64:encode_to_string(term_to_binary(self())),
-                DetachArgs ++ ["-user", atom_to_list(?MODULE), "-origin", Self];
+                case Options of
+                    #{connection := standard_io} -> ["-user", atom_to_list(?MODULE)];
+                    _ ->
+                        Self = base64:encode_to_string(term_to_binary(self())),
+                        DetachArgs ++ ["-user", atom_to_list(?MODULE), "-origin", Self]
+                end;
             {Ips, Port} ->
                 IpStr = lists:concat(lists:join(",", [inet:ntoa(Ip) || Ip <- Ips])),
                 DetachArgs ++ ["-user", atom_to_list(?MODULE), "-origin", IpStr, integer_to_list(Port)]
@@ -843,7 +850,8 @@ exec(#{exec := Prog}) when is_list(Prog) ->
     {Prog, []};
 exec(#{exec := {Prog, Args}}) when is_list(Prog), is_list(Args) ->
     {Prog, Args};
-exec(Options) when not is_map_key(exec, Options) ->
+exec(#{exec := _} = Options) -> error(function_clause, [Options]);
+exec(Options) when is_map(Options) ->
     case init:get_argument(progname) of
         {ok, [[Prog]]} ->
             case os:find_executable(Prog) of
@@ -1048,13 +1056,15 @@ io_server_loop(Kind, Port, Refs, Out, PortBuf) ->
         {tcp_closed, Port} when Kind =:= tcp ->
             %% TCP connection closed, time to shut down
             erlang:halt(1);
-        {reply, Seq, Class, Reply} when is_integer(Seq), is_map_key(Seq, Out) ->
-            %% stdin/stdout RPC
-            {CallerRef, Out2} = maps:take(Seq, Out),
-            Refs2 = maps:remove(CallerRef, Refs),
-            erlang:demonitor(CallerRef, [flush]),
-            peer_to_origin(Kind, Port, {reply, Seq, Class, Reply}),
-            io_server_loop(Kind, Port, Refs2, Out2, PortBuf);
+        {reply, Seq, Class, Reply} when is_integer(Seq) ->
+            case maps:take(Seq, Out) of
+                {CallerRef, Out2} ->
+                    %% stdin/stdout RPC
+                    demonitor(CallerRef, [flush]),
+                    peer_to_origin(Kind, Port, {reply, Seq, Class, Reply}),
+                    io_server_loop(Kind, Port, maps:remove(CallerRef, Refs), Out2, PortBuf);
+                _ -> io_server_loop(Kind, Port, Refs, Out, PortBuf)
+            end;
         %% stdin/stdout message forwarding
         {message, To, Content} ->
             peer_to_origin(Kind, Port, {message, To, Content}),
