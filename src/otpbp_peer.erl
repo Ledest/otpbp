@@ -38,7 +38,8 @@
 %% Alternative connection via TCP does not have that limitation, but
 %%  it also does not redirect console I/O from the peer node.
 %% @end
--module(peer).
+-module(otpbp_peer).
+-ifndef(HAVE_peer__start_1).
 -author("maximfca@gmail.com").
 
 %% API
@@ -1110,3 +1111,4 @@ do_call(Seq, M, F, A) ->
                   end
           end),
     CallerRef.
+-endif.
