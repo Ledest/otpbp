@@ -151,7 +151,16 @@ Funs = [{application, set_env, 1},
         {os, cmd, 2},
         {os, env, 0}, % OTP 24.0
         {os, list_env_vars, 0},
-        {pg2, start, 0},
+        {pg2, create, 1}, % OTP < 24.0
+        {pg2, delete, 1}, % OTP < 24.0
+        {pg2, get_closest_pid, 1}, % OTP < 24.0
+        {pg2, get_local_members, 1}, % OTP < 24.0
+        {pg2, get_members, 1}, % OTP < 24.0
+        {pg2, join, 2}, % OTP < 24.0
+        {pg2, leave, 2}, % OTP < 24.0
+        {pg2, start, 0}, % OTP < 24.0
+        {pg2, start_link, 0}, % OTP < 24.0
+        {pg2, which_groups, 0}, % OTP < 24.0
         {proplists, to_map, 1},
         {proplists, to_map, 2},
         {queue, all, 2},
