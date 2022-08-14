@@ -151,6 +151,17 @@ Funs = [{application, set_env, 1},
         {os, cmd, 2},
         {os, env, 0}, % OTP 24.0
         {os, list_env_vars, 0},
+        {peer, call, 4}, % OTP 25.0
+        {peer, call, 5}, % OTP 25.0
+        {peer, cast, 4}, % OTP 25.0
+        {peer, get_state, 1}, % OTP 25.0
+        {peer, random_name, 0}, % OTP 25.0
+        {peer, random_name, 1}, % OTP 25.0
+        {peer, send, 3}, % OTP 25.0
+        {peer, start, 1}, % OTP 25.0
+        {peer, start_link, 0}, % OTP 25.0
+        {peer, start_link, 1}, % OTP 25.0
+        {peer, stop, 1}, % OTP 25.0
         {pg2, create, 1}, % OTP < 24.0
         {pg2, delete, 1}, % OTP < 24.0
         {pg2, get_closest_pid, 1}, % OTP < 24.0
