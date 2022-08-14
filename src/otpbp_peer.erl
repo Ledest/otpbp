@@ -896,7 +896,7 @@ parse_args(CmdLine) ->
     %% unquote arguments. It is possible to change regex capture groups to avoid extra processing.
     [unquote(Arg) || [Arg] <- Args].
 
-unquote([Q | Arg]) when Q =:= $\"; Q =:= $\' ->
+unquote([Q | Arg]) when Q =:= $"; Q =:= $' ->
     case lists:last(Arg) of
         Q -> lists:droplast(Arg);
         _ -> [Q | Arg]
