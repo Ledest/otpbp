@@ -350,10 +350,9 @@ handle_call({starting, Node}, _From, #peer_state{options = #{shutdown := {Timeou
     %% The node was started using test_server:start_peer/2 with cover enabled
     %% so we should start cover on the starting node.
     Modules = rpc:call(MainCoverNode, cover, modules, []),
-    Sticky = rpc:call(Node, lists, filter, [fun code:is_sticky/1, Modules]),
-    rpc:call(Node, lists, foreach, [fun code:unstick_mod/1, Sticky]),
+    Sticky = lists:filter(fun(M) -> rpc:call(Node, code, is_sticky, [M]) end, Modules),
     rpc:call(MainCoverNode, cover, start, [Node]),
-    rpc:call(Node, lists, foreach, [fun code:stick_mod/1, Sticky]),
+    lists:foreach(fun(M) -> rpc:call(Node, code, stick_mod, [M]) end, Sticky),
     {reply, ok, State};
 handle_call({starting, _Node}, _From, #peer_state{} = State) ->
     {reply, ok, State};
