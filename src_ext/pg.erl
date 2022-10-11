@@ -496,7 +496,7 @@ sync_groups(Scope, ScopeMon, MG, RemoteGroups, [{Group, Pids} | Tail]) ->
         {Pids, NewRemoteGroups} ->
             sync_groups(Scope, ScopeMon, MG, NewRemoteGroups, Tail);
         {OldPids, NewRemoteGroups} ->
-            [{Group, AllOldPids, LocalPids}] = ets:lookup(Scope, Group),
+            [{_Group, AllOldPids, LocalPids}] = ets:lookup(Scope, Group),
             %% should be really rare...
             AllNewPids = Pids ++ AllOldPids -- OldPids,
             true = ets:insert(Scope, {Group, AllNewPids, LocalPids}),
@@ -521,7 +521,7 @@ join_local([Pid | Tail], Group, Local) ->
 
 join_local_update_ets(Scope, ScopeMon, MG, Group, Pid) when is_pid(Pid) ->
     case ets:lookup(Scope, Group) of
-        [{Group, All, Local}] ->
+        [{_Group, All, Local}] ->
             ets:insert(Scope, {Group, [Pid | All], [Pid | Local]});
         [] ->
             ets:insert(Scope, {Group, [Pid], [Pid]})
@@ -529,7 +529,7 @@ join_local_update_ets(Scope, ScopeMon, MG, Group, Pid) when is_pid(Pid) ->
     notify_group(ScopeMon, MG, join, Group, [Pid]);
 join_local_update_ets(Scope, ScopeMon, MG, Group, Pids) ->
     case ets:lookup(Scope, Group) of
-        [{Group, All, Local}] ->
+        [{_Group, All, Local}] ->
             ets:insert(Scope, {Group, Pids ++ All, Pids ++ Local});
         [] ->
             ets:insert(Scope, {Group, Pids, Pids})
@@ -538,7 +538,7 @@ join_local_update_ets(Scope, ScopeMon, MG, Group, Pids) ->
 
 join_remote_update_ets(Scope, ScopeMon, MG, Group, Pid) when is_pid(Pid) ->
     case ets:lookup(Scope, Group) of
-        [{Group, All, Local}] ->
+        [{_Group, All, Local}] ->
             ets:insert(Scope, {Group, [Pid | All], Local});
         [] ->
             ets:insert(Scope, {Group, [Pid], []})
@@ -546,7 +546,7 @@ join_remote_update_ets(Scope, ScopeMon, MG, Group, Pid) when is_pid(Pid) ->
     notify_group(ScopeMon, MG, join, Group, [Pid]);
 join_remote_update_ets(Scope, ScopeMon, MG, Group, Pids) ->
     case ets:lookup(Scope, Group) of
-        [{Group, All, Local}] ->
+        [{_Group, All, Local}] ->
             ets:insert(Scope, {Group, Pids ++ All, Local});
         [] ->
             ets:insert(Scope, {Group, Pids, []})
@@ -580,10 +580,10 @@ leave_local([Pid | Tail], Group, Local) ->
 
 leave_local_update_ets(Scope, ScopeMon, MG, Group, Pid) when is_pid(Pid) ->
     case ets:lookup(Scope, Group) of
-        [{Group, [Pid], [Pid]}] ->
+        [{_Group, [Pid], [Pid]}] ->
             ets:delete(Scope, Group),
             notify_group(ScopeMon, MG, leave, Group, [Pid]);
-        [{Group, All, Local}] ->
+        [{_Group, All, Local}] ->
             ets:insert(Scope, {Group, lists:delete(Pid, All), lists:delete(Pid, Local)}),
             notify_group(ScopeMon, MG, leave, Group, [Pid]);
         [] ->
@@ -592,7 +592,7 @@ leave_local_update_ets(Scope, ScopeMon, MG, Group, Pid) when is_pid(Pid) ->
     end;
 leave_local_update_ets(Scope, ScopeMon, MG, Group, Pids) ->
     case ets:lookup(Scope, Group) of
-        [{Group, All, Local}] ->
+        [{_Group, All, Local}] ->
             case All -- Pids of
                 [] ->
                     ets:delete(Scope, Group);
@@ -607,10 +607,10 @@ leave_local_update_ets(Scope, ScopeMon, MG, Group, Pids) ->
 leave_remote_update_ets(Scope, ScopeMon, MG, Pid, Groups) when is_pid(Pid) ->
     _ = [
         case ets:lookup(Scope, Group) of
-            [{Group, [Pid], []}] ->
+            [{_Group, [Pid], []}] ->
                 ets:delete(Scope, Group),
                 notify_group(ScopeMon, MG, leave, Group, [Pid]);
-            [{Group, All, Local}] ->
+            [{_Group, All, Local}] ->
                 ets:insert(Scope, {Group, lists:delete(Pid, All), Local}),
                 notify_group(ScopeMon, MG, leave, Group, [Pid]);
             [] ->
@@ -620,7 +620,7 @@ leave_remote_update_ets(Scope, ScopeMon, MG, Pid, Groups) when is_pid(Pid) ->
 leave_remote_update_ets(Scope, ScopeMon, MG, Pids, Groups) ->
     _ = [
         case ets:lookup(Scope, Group) of
-            [{Group, All, Local}] ->
+            [{_Group, All, Local}] ->
                 case All -- Pids of
                     [] when Local =:= [] ->
                         ets:delete(Scope, Group);
