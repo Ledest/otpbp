@@ -1,11 +1,11 @@
 -module(otpbp_ets).
 
--ifndef(HAVE_ets_lookup_element_4).
+-ifndef(HAVE_ets__lookup_element_4).
 % OTP 26.0
 -export([lookup_element/4]).
 -endif.
 
--ifndef(HAVE_ets_lookup_element_4).
+-ifndef(HAVE_ets__lookup_element_4).
 lookup_element(Table, Key, Pos, Default) ->
     case ets:lookup(Table, Key) of
         [Object|_] = Objects ->
