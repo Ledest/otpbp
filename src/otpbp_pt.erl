@@ -252,7 +252,7 @@
 
 -record(param, {options = [] :: list(),
                 verbose = false :: boolean(),
-                otp_release = otp_release() :: 18..25,
+                otp_release = otp_release() :: 19..25,
                 erts_version = erts_version() :: [non_neg_integer(),...],
                 funs = #{} :: #{{module(), {atom(), arity()}} => {module(), atom()}},
                 behaviours = maps:from_list(?TRANSFORM_BEHAVIOURS) :: #{module() => module()},
