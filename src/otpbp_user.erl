@@ -2,7 +2,7 @@
 
 -ifndef(HAVE_user__interfaces_1).
 % OTP >= 26.0
--export([take/2]).
+-export([interfaces/1]).
 -endif.
 
 -ifndef(HAVE_user__interfaces_1).
