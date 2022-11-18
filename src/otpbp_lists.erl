@@ -98,46 +98,64 @@ uniq_2([], _, _) -> [].
 
 -ifndef(HAVE_lists__zip_3).
 zip(Xs, Ys, fail) -> lists:zip(Xs, Ys);
-zip([X|Xs], [Y|Ys], How) -> [{X, Y}|zip(Xs, Ys, How)];
-zip([], [], trim) -> [];
-zip([], [], {pad, {_, _}}) -> [];
-zip([_|_], [], trim) -> [];
-zip([], [_|_], trim) -> [];
-zip([], [_|_] = Ys, {pad, {X, _}}) -> [{X, Y} || Y <- Ys];
-zip([_|_] = Xs, [], {pad, {_, Y}}) -> [{X, Y} || X <- Xs].
+zip(Xs, Ys, trim) -> zip(Xs, Ys);
+zip(Xs, Ys, {pad, {X, Y}}) -> zip(Xs, Ys, X, Y).
+
+zip([X|Xs], [Y|Ys]) -> [{X, Y}|zip(Xs, Ys)];
+zip(Xs, Ys) when is_list(Xs), is_list(Ys) -> [].
+
+zip([X|Xs], [Y|Ys], PX, PY) -> [{X, Y}|zip(Xs, Ys, PX, PY)];
+zip([], [], _, _) -> [];
+zip([], [_|_] = Ys, PX, _) -> [{PX, Y} || Y <- Ys];
+zip([_|_] = Xs, [], _, PY) -> [{X, PY} || X <- Xs].
 -endif.
 
 -ifndef(HAVE_lists__zip3_4).
 zip3(Xs, Ys, Zs, fail) -> lists:zip3(Xs, Ys, Zs);
-zip3([X|Xs], [Y|Ys], [Z|Zs], How) -> [{X, Y, Z} | zip3(Xs, Ys, Zs, How)];
-zip3(Xs, Ys, Zs, trim) when is_list(Xs), is_list(Ys), is_list(Zs) -> [];
-zip3([], [], [], {pad, {_, _, _}}) -> [];
-zip3([], [], [_|_] = Zs, {pad, {X, Y, _}}) -> [{X, Y, Z} || Z <- Zs];
-zip3([], [_|_] = Ys, [], {pad, {X, _, Z}}) -> [{X, Y, Z} || Y <- Ys];
-zip3([_|_] = Xs, [], [], {pad, {_, Y, Z}}) -> [{X, Y, Z} || X <- Xs];
-zip3([], [Y|Ys], [Z|Zs], {pad, {X, _, _}} = How) -> [{X, Y, Z} | zip3([], Ys, Zs, How)];
-zip3([X|Xs], [], [Z|Zs], {pad, {_, Y, _}} = How) -> [{X, Y, Z} | zip3(Xs, [], Zs, How)];
-zip3([X|Xs], [Y|Ys], [], {pad, {_, _, Z}} = How) -> [{X, Y, Z} | zip3(Xs, Ys, [], How)].
+zip3(Xs, Ys, Zs, trim) -> zip3(Xs, Ys, Zs);
+zip3(Xs, Ys, Zs, {pad, {X, Y, Z}}) -> zip3(Xs, Ys, Zs, X, Y, Z).
+
+zip3([X|Xs], [Y|Ys], [Z|Zs]) -> [{X, Y, Z}|zip3(Xs, Ys, Zs)];
+zip3(Xs, Ys, Zs) when is_list(Xs), is_list(Ys), is_list(Zs) -> [].
+
+zip3([X|Xs], [Y|Ys], [Z|Zs], PX, PY, PZ) -> [{X, Y, Z}|zip3(Xs, Ys, Zs, PX, PY, PZ)];
+zip3([], [], [], _, _, _) -> [];
+zip3([], [], [_|_] = Zs, PX, PY, _) -> [{PX, PY, Z} || Z <- Zs];
+zip3([], [_|_] = Ys, [], PX, _, PZ) -> [{PX, Y, PZ} || Y <- Ys];
+zip3([_|_] = Xs, [], [], _, PY, PZ) -> [{X, PY, PZ} || X <- Xs];
+zip3([], [Y|Ys], [Z|Zs], PX, PY, PZ) -> [{PX, Y, Z}|zip3([], Ys, Zs, PX, PY, PZ)];
+zip3([X|Xs], [], [Z|Zs], PX, PY, PZ) -> [{X, PY, Z}|zip3(Xs, [], Zs, PX, PY, PZ)];
+zip3([X|Xs], [Y|Ys], [], PX, PY, PZ) -> [{X, Y, PZ}|zip3(Xs, Ys, [], PX, PY, PZ)].
 -endif.
 
 -ifndef(HAVE_lists__zipwith_4).
 zipwith(F, Xs, Ys, fail) -> lists:zipwith(F, Xs, Ys);
-zipwith(F, [X|Xs], [Y|Ys], How) -> [F(X, Y)|zipwith(F, Xs, Ys, How)];
-zipwith(F, Xs, Ys, trim) when is_function(F, 2), is_list(Xs), is_list(Ys) -> [];
-zipwith(F, [], [], {pad, {_, _}}) when is_function(F, 2) -> [];
-zipwith(F, [], [_|_] = Ys, {pad, {X, _}}) -> [F(X, Y) || Y <- Ys];
-zipwith(F, [_|_] = Xs, [], {pad, {_, Y}}) -> [F(X, Y) || X <- Xs].
+zipwith(F, Xs, Ys, trim) -> zipwith(F, Xs, Ys);
+zipwith(F, Xs, Ys, {pad, {X, Y}}) -> zipwith(F, Xs, Ys, X, Y).
+
+zipwith(F, [X|Xs], [Y|Ys]) -> [F(X, Y)|zipwith(F, Xs, Ys)];
+zipwith(F, Xs, Ys) when is_function(F, 2), is_list(Xs), is_list(Ys) -> [].
+
+zipwith(F, [X|Xs], [Y|Ys], PX, PY) -> [F(X, Y)|zipwith(F, Xs, Ys, PX, PY)];
+zipwith(F, [], [], _, _) when is_function(F, 2) -> [];
+zipwith(F, [], [_|_] = Ys, X, _) -> [F(X, Y) || Y <- Ys];
+zipwith(F, [_|_] = Xs, [], _, Y) -> [F(X, Y) || X <- Xs].
 -endif.
 
 -ifndef(HAVE_lists__zipwith3_5).
 zipwith3(F, Xs, Ys, Zs, fail) -> lists:zipwith3(F, Xs, Ys, Zs);
-zipwith3(F, [X|Xs], [Y|Ys], [Z|Zs], How) -> [F(X, Y, Z)|zipwith3(F, Xs, Ys, Zs, How)];
-zipwith3(F, Xs, Ys, Zs, trim) when is_function(F, 3), is_list(Xs), is_list(Ys), is_list(Zs) -> [];
-zipwith3(F, [], [], [], {pad, {_, _, _}}) when is_function(F, 3) -> [];
-zipwith3(F, [], [], [_|_] = Zs, {pad, {X, Y, _}}) -> [F(X, Y, Z) || Z <- Zs];
-zipwith3(F, [], [_|_] = Ys, [], {pad, {X, _, Z}}) -> [F(X, Y, Z) || Y <- Ys];
-zipwith3(F, [_|_] = Xs, [], [], {pad, {_, Y, Z}}) -> [F(X, Y, Z) || X <- Xs];
-zipwith3(F, [], [Y|Ys], [Z|Zs], {pad, {X, _, _}} = How) -> [F(X, Y, Z)|zipwith3(F, [], Ys, Zs, How)];
-zipwith3(F, [X|Xs], [], [Z|Zs], {pad, {_, Y, _}} = How) -> [F(X, Y, Z)|zipwith3(F, Xs, [], Zs, How)];
-zipwith3(F, [X|Xs], [Y|Ys], [], {pad, {_, _, Z}} = How) -> [F(X, Y, Z)|zipwith3(F, Xs, Ys, [], How)].
+zipwith3(F, Xs, Ys, Zs, trim) -> zipwith3(F, Xs, Ys, Zs);
+zipwith3(F, Xs, Ys, Zs, {pad, {X, Y, Z}}) -> zipwith3(F, Xs, Ys, Zs, X, Y, Z).
+
+zipwith3(F, [X|Xs], [Y|Ys], [Z|Zs]) -> [F(X, Y, Z)|zipwith3(F, Xs, Ys, Zs)];
+zipwith3(F, Xs, Ys, Zs) when is_function(F, 3), is_list(Xs), is_list(Ys), is_list(Zs) -> [].
+
+zipwith3(F, [X|Xs], [Y|Ys], [Z|Zs], PX, PY, PZ) -> [F(X, Y, Z)|zipwith3(F, Xs, Ys, Zs, PX, PY, PZ)];
+zipwith3(F, [], [], [], _, _, _) when is_function(F, 3) -> [];
+zipwith3(F, [], [], [_|_] = Zs, X, Y, _) -> [F(X, Y, Z) || Z <- Zs];
+zipwith3(F, [], [_|_] = Ys, [], X, _, Z) -> [F(X, Y, Z) || Y <- Ys];
+zipwith3(F, [_|_] = Xs, [], [], _, Y, Z) -> [F(X, Y, Z) || X <- Xs];
+zipwith3(F, [], [Y|Ys], [Z|Zs], PX, PY, PZ) -> [F(PX, Y, Z)|zipwith3(F, [], Ys, Zs, PX, PY, PZ)];
+zipwith3(F, [X|Xs], [], [Z|Zs], PX, PY, PZ) -> [F(X, PY, Z)|zipwith3(F, Xs, [], Zs, PX, PY, PZ)];
+zipwith3(F, [X|Xs], [Y|Ys], [], PX, PY, PZ) -> [F(X, Y, PZ)|zipwith3(F, Xs, Ys, [], PX, PY, PZ)].
 -endif.
