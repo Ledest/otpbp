@@ -138,7 +138,6 @@ lists_test() ->
     ?assertEqual([{a, c, e}, {b, y, f}], lists:zip3([a, b], [c], [e, f], {pad, {x, y, z}})),
     ?assertEqual([{a, c, e}, {x, d, f}], lists:zip3([a], [c, d], [e, f], {pad, {x, y, z}})),
     % zipwith/4 fail
-    Zip = fun(A, B) -> A * B end,
     ?assertEqual([], lists:zipwith(fun(A, B) -> A * B end, [], [], fail)),
     ?assertError(function_clause, lists:zipwith(fun(A, B) -> A * B end, [2], [], fail)),
     ?assertError(function_clause, lists:zipwith(fun(A, B) -> A * B end, [], [5], fail)),
