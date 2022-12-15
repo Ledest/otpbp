@@ -26,6 +26,7 @@
                               {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
                               {{application, set_env, [1, 2]}, otpbp_application},
                               {{binary, [decode_hex, encode_hex], 1}, otpbp_binary},
+                              {{binary, encode_hex, 2}, otpbp_binary},
                               {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2},
                                otpbp_calendar},
                               {{code, [all_available, modified_modules], 0}, otpbp_code},
