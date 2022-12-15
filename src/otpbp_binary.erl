@@ -26,13 +26,12 @@ decode_hex_char(_Char) -> error(badarg).
 -endif.
 
 -ifndef(HAVE_binary__encode_hex_1).
-encode_hex(Bin) ->
-    is_binary(Bin) orelse error(badarg),
-    encode_hex(Bin, <<>>).
+encode_hex(Bin) when is_binary(Bin) -> encode_hex_(Bin, <<>>);
+encode_hex(Bin) -> error(badarg, [Bin]).
 
-encode_hex(<<>>, Acc) -> Acc;
-encode_hex(<<A:4, B:4, Rest/binary>>, Acc) ->
-    encode_hex(Rest, <<Acc/binary,  (encode_hex_digit(A)), (encode_hex_digit(B))>>).
+encode_hex_(<<>>, Acc) -> Acc;
+encode_hex_(<<A:4, B:4, Rest/binary>>, Acc) ->
+    encode_hex_(Rest, <<Acc/binary,  (encode_hex_digit(A)), (encode_hex_digit(B))>>).
 
 encode_hex_digit(Char) when Char =< 9 -> Char + $0;
 encode_hex_digit(Char) when Char =< 16#F -> Char + ($A - 10).
