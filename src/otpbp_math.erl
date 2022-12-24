@@ -16,19 +16,25 @@ log2(X) -> math:log(X) / math:log(2).
 -endif.
 
 -ifndef(HAVE_math__ceil_1).
--ifdef(HAVE_erlang__ceil_1).
--compile({no_auto_import, [ceil/1]}).
-ceil(X) -> float(erlang:ceil(X)).
--else.
-ceil(X) -> float(round(X + 0.5)).
--endif.
+ceil(I) when is_integer(I) -> float(I);
+ceil(0.0 = F) -> F;
+ceil(F) when is_float(F), F < 0 -> float(trunc(F));
+ceil(F) when is_float(F) ->
+    case trunc(F) of
+        I when I == F -> F;
+        I -> float(I + 1)
+    end;
+ceil(A) -> error(badarg, [A]).
 -endif.
 
 -ifndef(HAVE_math__floor_1).
--ifdef(HAVE_erlang__floor_1).
--compile({no_auto_import, [floor/1]}).
-floor(X) -> float(erlang:floor(X)).
--else.
-floor(X) -> float(round(X - 0.5)).
--endif.
+floor(I) when is_integer(I) -> float(I);
+floor(0.0 = F) -> F;
+floor(F) when is_float(F), F > 0 -> float(trunc(F));
+floor(F) when is_float(F) ->
+    case trunc(F) of
+        I when I == F -> F;
+        I -> float(I - 1)
+    end;
+floor(A) -> error(badarg, [A]).
 -endif.
