@@ -171,6 +171,7 @@
                               {{string, [equal, pad, replace, take], 4}, otpbp_string},
                               {{supervisor, get_callback_module, 1}, otpbp_supervisor},
                               {{supervisor, format_status, 2}, otpbp_supervisor},
+                              {{timer, tc, 4}, otpbp_timer},
                               {{unicode_util, [spec_version, whitespace], 0}, otpbp_unicode_util},
                               {{unicode_util, [casefold, cp, gc, get_case, is_whitespace, lookup, lowercase, nfc, nfd,
                                                nfkc, nfkd, titlecase,uppercase], 1},
