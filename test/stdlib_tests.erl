@@ -617,3 +617,16 @@ math_test() ->
     % tau/0
     ?assertEqual(6.2831853071795864, math:tau()),
     ok.
+
+timer_test() ->
+    ?assertEqual(ok, case timer:tc(timer, sleep, [500], milli_seconds) of
+                         {Res, ok} when Res < 500 -> {too_early, Res};
+                         {Res, ok} when Res > 800 -> {too_late, Res};
+                         {_, ok} -> ok
+                     end),
+    ?assertEqual(ok, try timer:tc(erlang, exit, [foo], seconds)
+                     catch exit:foo -> ok
+                     end),
+    Self = self(),
+    ?assertMatch({_, Self}, timer:tc(erlang, self, [], seconds)),
+    ok.
