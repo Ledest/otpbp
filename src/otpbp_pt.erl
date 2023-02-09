@@ -24,6 +24,7 @@
                               {{map_get, 2}, {maps, get}},
                               {{[ceil, floor], 1}, otpbp_erlang},
                               {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
+                              {{application, get_supervisor, 1}, otpbp_application},
                               {{application, set_env, [1, 2]}, otpbp_application},
                               {{binary, [decode_hex, encode_hex], 1}, otpbp_binary},
                               {{binary, encode_hex, 2}, otpbp_binary},
