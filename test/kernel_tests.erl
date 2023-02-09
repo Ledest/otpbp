@@ -5,9 +5,10 @@
 -include_lib("eunit/include/eunit.hrl").
 
 code_test() ->
-    ?assertEqual(code:module_status(?MODULE), loaded),
-    ?assertEqual(code:module_status('TEST'), not_loaded),
-    ?assert(is_list(code:modified_modules())).
+    ?assertEqual(loaded, code:module_status(?MODULE)),
+    ?assertEqual(not_loaded, code:module_status('TEST')),
+    ?assert(is_list(code:modified_modules())),
+    ok.
 
 os_test() ->
     Env = os:env(),
