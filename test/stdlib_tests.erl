@@ -21,14 +21,12 @@ orddict_test() ->
     ?assertEqual(orddict:take(4, D), error).
 
 sets_test() ->
-    S = sets:from_list([a, 1]),
     ?assert(sets:is_empty(sets:new())),
-    ?assertNot(sets:is_empty(S)).
+    ?assertNot(sets:is_empty(sets:from_list([a, 1]))).
 
 ordsets_test() ->
-    S = ordsets:from_list([3,1,2]),
     ?assert(ordsets:is_empty(ordsets:new())),
-    ?assertNot(ordsets:is_empty(S)).
+    ?assertNot(ordsets:is_empty(ordsets:from_list([3,1,2]))).
 
 gb_trees_test() ->
     D1 = gb_trees:from_orddict(orddict:from_list([{3, c}, {1, a}, {2, b}])),
@@ -438,31 +436,30 @@ iter_kv(I) ->
     end.
 
 queue_test() ->
-    Q1 = queue:from_list([11, 22, 33, 44]),
     ?assertEqual([11, 22 * 22, 33 * 33], queue:to_list(queue:filtermap(fun(X) when X < 17 -> true;
                                                                           (X) when X > 37 -> false;
                                                                           (X) -> {true, X*X}
-                                                                       end, Q1))),
+                                                                       end,
+                                                                       queue:from_list([11, 22, 33, 44])))),
     ?assertEqual([22 * 22, 33 * 33, 44],
                                          queue:to_list(queue:filtermap(fun(X) when X < 17 -> false;
                                                                           (X) when X > 37 -> true;
                                                                           (X) -> {true, X*X}
-                                                                       end, Q1))),
+                                                                       end,
+                                                                       queue:from_list([11, 22, 33, 44])))),
     L = lists:seq(1, 2 * 50),
-    Q2 = queue:from_list(L),
-    ?assertEqual(lists:sum(L), queue:fold(fun(X, A) -> X + A end, 0, Q2)),
-    ?assertEqual([X * X || X <- L], lists:reverse(queue:fold(fun(X, A) -> [X * X|A] end, [], Q2))),
-    ?assertEqual(false, queue:any(fun(X) -> X > 9 end, queue:from_list([]))),
-    AQ = queue:from_list([1, 2, 3]),
-    ?assertEqual(true, queue:any(fun(X) -> X > 1 end, AQ)),
-    ?assertEqual(false, queue:any(fun(X) -> X < 1 end, AQ)),
-    ?assertEqual(true, queue:any(fun(X) -> X < 3 end, AQ)),
-    ?assertEqual(false, queue:any(fun(X) -> X > 3 end, AQ)),
-    ?assertEqual(true, queue:all(fun(X) -> X > 9 end, queue:from_list([]))),
-    ?assertEqual(true, queue:all(fun(X) -> X >= 1 end, AQ)),
-    ?assertEqual(false, queue:all(fun(X) -> X>1 end, AQ)),
-    ?assertEqual(true, queue:all(fun(X) -> X=<3 end, AQ)),
-    ?assertEqual(false, queue:all(fun(X) -> X<3 end, AQ)),
+    ?assertEqual(lists:sum(L), queue:fold(fun(X, A) -> X + A end, 0, queue:from_list(L))),
+    ?assertEqual([X * X || X <- L], lists:reverse(queue:fold(fun(X, A) -> [X * X|A] end, [], queue:from_list(L)))),
+    ?assertEqual(false, queue:any(fun(X) -> X > 9 end, queue:new())),
+    ?assertEqual(true, queue:any(fun(X) -> X > 1 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(false, queue:any(fun(X) -> X < 1 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(true, queue:any(fun(X) -> X < 3 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(false, queue:any(fun(X) -> X > 3 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(true, queue:all(fun(X) -> X > 9 end, queue:new())),
+    ?assertEqual(true, queue:all(fun(X) -> X >= 1 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(false, queue:all(fun(X) -> X>1 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(true, queue:all(fun(X) -> X=<3 end, queue:from_list([1, 2, 3]))),
+    ?assertEqual(false, queue:all(fun(X) -> X<3 end, queue:from_list([1, 2, 3]))),
     ?assertEqual([], queue:to_list(queue:delete(x, queue:new()))),
     ?assertEqual([1, 2, 3], queue:to_list(queue:delete(x, queue:from_list([1, 2, 3])))),
     ?assertEqual([2, 3], queue:to_list(queue:delete(x, queue:from_list([x, 2, 3])))),
@@ -505,7 +502,6 @@ proplists_test() ->
     ?assertEqual(#{b => true}, proplists:to_map([b, {a}])),
     ?assertEqual(#{b => true}, proplists:to_map([{a, 1, 2}, b])),
     ?assertEqual(#{b => true}, proplists:to_map([b, {a, 1, 2}])),
-
     % Ensure that maps:get/3 using the created map yields the same results as proplists:get_value/3 on the original
     % proplist does, and that proplists:get_value/3 on a proplist created from the map yields the same results as
     % proplists:get_value/3 on the original proplist, ie they either all return the same `Value',
@@ -526,22 +522,17 @@ proplists_test() ->
                 Acc
             end,
             undefined, [a, b, {a, 1}, {}, {a}, {a, 1, 2}, {c, 1, 2}, "foo"]),
-
-    Fun = fun(M, A) -> [M|A] end,
-    ?assertEqual([], pm_fold(Fun, [], [])),
-    ?assertEqual([[1]], lists:sort(pm_fold(Fun, [], [1]))),
-    ?assertEqual(lists:sort([[1, 2], [2, 1]]), lists:sort(pm_fold(Fun, [], [1, 2]))),
+    ?assertEqual([], pm_fold(fun(M, A) -> [M|A] end, [], [])),
+    ?assertEqual([[1]], lists:sort(pm_fold(fun(M, A) -> [M|A] end, [], [1]))),
+    ?assertEqual(lists:sort([[1, 2], [2, 1]]), lists:sort(pm_fold(fun(M, A) -> [M|A] end, [], [1, 2]))),
     ?assertEqual(lists:sort([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]),
-                 lists:sort(pm_fold(Fun, [], [1, 2, 3]))),
-
+                 lists:sort(pm_fold(fun(M, A) -> [M|A] end, [], [1, 2, 3]))),
     Stages = [{aliases, [{a, alias_a}]}, {negations, [{no_b, b}]}, {expand, [{c, [d]}]}],
-    M1 = proplists:to_map([], Stages),
-    ?assertEqual(M1, #{}),
-    ?assertEqual(M1, proplists:to_map(proplists:normalize([], Stages))),
+    ?assertEqual(proplists:to_map([], Stages), #{}),
+    ?assertEqual(proplists:to_map([], Stages), proplists:to_map(proplists:normalize([], Stages))),
     List = [a, no_b, c],
-    M2 = proplists:to_map(List, Stages),
-    ?assertEqual(M2, #{alias_a => true, b => false, d => true}),
-    ?assertEqual(M2, proplists:to_map(proplists:normalize(List, Stages))),
+    ?assertEqual(proplists:to_map(List, Stages), #{alias_a => true, b => false, d => true}),
+    ?assertEqual(proplists:to_map(List, Stages), proplists:to_map(proplists:normalize(List, Stages))),
     ok.
 
 pm_fold(_, _, []) -> [];
