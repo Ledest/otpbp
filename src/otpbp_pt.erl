@@ -116,7 +116,7 @@
                               {{lib, format_exception, [6, 7]}, erl_error},
                               {{lib, format_fun, [1, 2]}, erl_error},
                               {{lib, subst_values_for_vars, 2}, erl_eval},
-                              {{lists, enumerate, [1, 2]}, otpbp_lists},
+                              {{lists, enumerate, [1, 2, 3]}, otpbp_lists},
                               {{lists, [join, search], 2}, otpbp_lists},
                               {{lists, uniq, [1, 2]}, otpbp_lists},
                               {{lists, zip, 3}, otpbp_lists},

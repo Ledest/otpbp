@@ -16,6 +16,10 @@
 % OTP 25.0
 -export([enumerate/2]).
 -endif.
+-ifndef(HAVE_lists__enumerate_3).
+% OTP 26.0
+-export([enumerate/3]).
+-endif.
 -ifndef(HAVE_lists__uniq_1).
 % OTP 25.0
 -export([uniq/1]).
@@ -67,6 +71,12 @@ enumerate(List) ->
 -ifndef(HAVE_lists__enumerate_2).
 enumerate(Index, List) when is_integer(Index) ->
     {L, _} = lists:mapfoldl(fun(E, A) -> {{A, E}, A + 1} end, Index, List),
+    L.
+-endif.
+
+-ifndef(HAVE_lists__enumerate_3).
+enumerate(Index, Step, List) when is_integer(Index), is_integer(Step) ->
+    {L, _} = lists:mapfoldl(fun(E, A) -> {{A, E}, A + Step} end, Index, List),
     L.
 -endif.
 
