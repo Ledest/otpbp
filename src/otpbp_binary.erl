@@ -14,54 +14,40 @@
 -endif.
 
 -ifndef(HAVE_binary__decode_hex_1).
-decode_hex(Bin) ->
-    is_binary(Bin) orelse error(badarg),
-    decode_hex(Bin, <<>>).
-
-decode_hex(<<>>, Acc) -> Acc;
-decode_hex(<<A:8, B:8, Rest/binary>>, Acc) ->
-    decode_hex(Rest, <<Acc/binary, (decode_hex_char(A)):4, (decode_hex_char(B)):4>>);
-decode_hex(_Bin, _Acc) -> error(badarg).
+decode_hex(Bin) when byte_size(Bin) rem 2 =:= 0 ->
+    <<<<(decode_hex_char(A)):4, (decode_hex_char(B)):4>> || <<A, B>> <= Bin>>;
+decode_hex(Bin) -> error(badarg, [Bin]).
 
 decode_hex_char(Char) when Char >= $a, Char =< $f -> Char - ($a - 10);
 decode_hex_char(Char) when Char >= $A, Char =< $F -> Char - ($A - 10);
 decode_hex_char(Char) when Char >= $0, Char =< $9 -> Char - $0;
-decode_hex_char(_Char) -> error(badarg).
+decode_hex_char(Char) -> error(badarg, [Char]).
 -endif.
 
 -ifndef(HAVE_binary__encode_hex_1).
-encode_hex(Bin) when is_binary(Bin) -> encode_hex_(Bin, <<>>);
+encode_hex(Bin) when is_binary(Bin) -> <<<<(encode_hex_digit(A)), (encode_hex_digit(B))>> || <<A:4, B:4>> <= Bin>>;
 encode_hex(Bin) -> error(badarg, [Bin]).
 
-encode_hex_(<<>>, Acc) -> Acc;
-encode_hex_(<<A:4, B:4, Rest/binary>>, Acc) ->
-    encode_hex_(Rest, <<Acc/binary,  (encode_hex_digit(A)), (encode_hex_digit(B))>>).
-
 encode_hex_digit(Char) when Char =< 9 -> Char + $0;
-encode_hex_digit(Char) when Char =< 16#F -> Char + ($A - 10).
+encode_hex_digit(Char) -> Char + ($A - 10).
 -endif.
 
 -ifndef(HAVE_binary__encode_hex_2).
 -ifdef(HAVE_binary__encode_hex_1).
 encode_hex(Bin, uppercase) when is_binary(Bin) -> binary:encode_hex(Bin);
-encode_hex(Bin, lowercase) when is_binary(Bin) -> encode_hex_lower(Bin, <<>>);
+encode_hex(Bin, lowercase) when is_binary(Bin) ->
+    <<<<(encode_hex_digit_lowercase(A)), (encode_hex_digit_lowercase(B))>> || <<A:4, B:4>> <= Bin>>;
 encode_hex(Bin, Case) -> error(badarg, [Bin, Case]).
+
+encode_hex_digit_lowercase(Char) when Char =< 9 -> Char + $0;
+encode_hex_digit_lowercase(Char) -> Char + ($a - 10).
 -else.
-encode_hex(Bin, uppercase) when is_binary(Bin) -> encode_hex_upper(Bin, <<>>);
-encode_hex(Bin, lowercase) when is_binary(Bin) -> encode_hex_lower(Bin, <<>>);
+encode_hex(Bin, Case) when is_binary(Bin), Case =:= uppercase orelse Case =:= lowercase ->
+    <<<<(encode_hex_digit(A, Case)), (encode_hex_digit(B, Case))>> || <<A:4, B:4>> <= Bin>>;
 encode_hex(Bin, Case) -> error(badarg, [Bin, Case]).
 
-encode_hex_digit_upper(Char) when Char =< 9 -> Char + $0;
-encode_hex_digit_upper(Char) when Char =< 16#F -> Char + ($A - 10).
-
-encode_hex_upper(<<>>, Acc) -> Acc;
-encode_hex_upper(<<A:4, B:4, Rest/binary>>, Acc) ->
-    encode_hex_upper(Rest, <<Acc/binary,  (encode_hex_digit_upper(A)), (encode_hex_digit_upper(B))>>).
+encode_hex_digit(Char, _) when Char =< 9 -> Char + $0;
+encode_hex_digit(Char, uppercase) -> Char + ($A - 10);
+encode_hex_digit(Char, _lowercase) -> Char + ($a - 10).
 -endif.
-encode_hex_digit_lower(Char) when Char =< 9 -> Char + $0;
-encode_hex_digit_lower(Char) when Char =< 16#F -> Char + ($a - 10).
-
-encode_hex_lower(<<>>, Acc) -> Acc;
-encode_hex_lower(<<A:4, B:4, Rest/binary>>, Acc) ->
-    encode_hex_lower(Rest, <<Acc/binary,  (encode_hex_digit_lower(A)), (encode_hex_digit_lower(B))>>).
 -endif.
