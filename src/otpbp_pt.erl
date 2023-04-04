@@ -27,6 +27,8 @@
                               {{term_to_iovec, [1, 2]}, otpbp_erlang},
                               {{application, get_supervisor, 1}, otpbp_application},
                               {{application, set_env, [1, 2]}, otpbp_application},
+                              {{beam_lib, significant_chunks, 0}, otpbp_beam_lib},
+                              {{beam_lib, [strip, strip_files, strip_release], 2}, otpbp_beam_lib},
                               {{binary, [decode_hex, encode_hex], 1}, otpbp_binary},
                               {{binary, encode_hex, 2}, otpbp_binary},
                               {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2},
