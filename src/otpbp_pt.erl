@@ -85,7 +85,7 @@
                               {{filelib, ensure_path, 1}, otpbp_filelib},
                               {{filelib, safe_relative_path, 2}, otpbp_filelib},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
-                              {{ftp, start_service, 1}, otpbp_ftp},
+                              {{ftp, start_service, 1}, ftp_internal},
                               {{ftp, stop_service, 1}, {ftp, close}},
                               {{http_uri, scheme_defaults, 0}, otpbp_http_uri},
                               {{http_uri, [decode, encode], 1}, otpbp_http_uri},
