@@ -69,6 +69,7 @@
                               {{disk_log, accessible_logs, 0}, otpbp_disk_log},
                               {{disk_log, lclose, 1}, {disk_log, close}},
                               {{disk_log, lclose, 2}, otpbp_disk_log},
+                              {{epp, scan_file, [1, 2]}, otpbp_epp},
                               {{erl_error, format_fun, [1, 2]}, lib},
                               {{erl_error, [format_call, format_stacktrace], [4, 5]}, lib},
                               {{erl_error, format_exception, [6, 7]}, lib},
