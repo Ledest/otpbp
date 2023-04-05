@@ -31,6 +31,8 @@
                               {{beam_lib, [strip, strip_files, strip_release], 2}, otpbp_beam_lib},
                               {{binary, [decode_hex, encode_hex], 1}, otpbp_binary},
                               {{binary, encode_hex, 2}, otpbp_binary},
+                              {{c, lm, 0}, otpbp_c},
+                              {{c, mm, 0}, {otpbp_code, modified_modules}},
                               {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2},
                                otpbp_calendar},
                               {{code, [all_available, modified_modules], 0}, otpbp_code},
