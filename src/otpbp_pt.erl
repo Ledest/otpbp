@@ -96,6 +96,7 @@
                               {{filelib, find_file, [2, 3]}, otpbp_filelib},
                               {{filelib, safe_relative_path, 2}, otpbp_filelib},
                               {{filelib, find_source, [1, 2, 3]}, otpbp_filelib},
+                              {{filename, basedir, [2, 3]}, otpbp_filename},
                               {{filename, safe_relative_path, 1}, otpbp_filename},
                               {{ftp, start_service, 1}, ftp_internal},
                               {{ftp, stop_service, 1}, {ftp, close}},
