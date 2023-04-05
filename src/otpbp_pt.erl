@@ -83,6 +83,7 @@
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
                               {{erts_internal, map_next, 3}, otpbp_erts_internal},
                               {{ets, lookup_element, 4}, otpbp_ets},
+                              {{ets, whereis, 1}, otpbp_ets},
                               {{file, del_dir_r, 1}, otpbp_file},
                               {{file, delete, 2}, otpbp_file},
                               {{filelib, ensure_path, 1}, otpbp_filelib},
