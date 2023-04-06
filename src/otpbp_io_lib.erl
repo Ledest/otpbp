@@ -4,6 +4,10 @@
 % OTP 20.0
 -export([limit_term/2]).
 -endif.
+-ifndef(HAVE_io_lib__format_3).
+% OTP 20.0
+-export([format/3]).
+-endif.
 
 -ifndef(HAVE_io_lib__limit_term_2).
 %% The intention is to mimic the depth limitation of io_lib:write()
@@ -113,4 +117,9 @@ test_limit_map(_Map, _D) -> ok.
 -compile({inline, [test_limit_tuple/2]}).
 
 test_limit_bitstring(_, _) -> ok.
+-endif.
+
+-ifndef(HAVE_io_lib__format_3).
+format(Format, Data, []) -> io_lib:format(Format, Data);
+format(Format, Data, [{chars_limit, L}]) when is_integer(L), L >= -1 -> io_lib:format(Format, Data).
 -endif.
