@@ -8,6 +8,10 @@
 % OTP 20.0
 -export([floor/1]).
 -endif.
+-ifndef(HAVE_math__fmod_2).
+% OTP 20.0
+-export([fmod/2]).
+-endif.
 -ifndef(HAVE_math__tau_0).
 % OTP 26.0
 -export([tau/0]).
@@ -35,6 +39,10 @@ floor(F) when is_float(F) ->
         I -> float(I - 1)
     end;
 floor(A) -> error(badarg, [A]).
+-endif.
+
+-ifndef(HAVE_math__fmod_2).
+fmod(X, Y) -> float(X) - Y * trunc(X / Y).
 -endif.
 
 -ifndef(HAVE_math__tau_0).
