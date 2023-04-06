@@ -185,6 +185,8 @@
                               {{sets, from_list, 2}, otpbp_sets},
                               {{sets, is_empty, 1}, otpbp_sets},
                               {{sets, new, 1}, otpbp_sets},
+                              {{shell_docs, [render, render_callback], 5}, otpbp_shell_docs},
+                              {{shell_docs, supported_tags, 0}, otpbp_shell_docs},
                               {{snmpa, old_info_format, 1}, otpbp_snmpa},
                               {{snmpm, async_get, [3, 4, 5, 6]}, {snmpm, async_get2}},
                               {{snmpm, async_get_bulk, [5, 6, 7, 8]}, {snmpm, async_get_bulk2}},
