@@ -168,6 +168,7 @@
                               {{queue, fold, 3}, otpbp_queue},
                               {{rand, bytes, 1}, otpbp_rand},
                               {{rand, bytes_s, 2}, otpbp_rand},
+                              {{re, version, 0}, otpbp_re},
                               {{sets, from_list, 2}, otpbp_sets},
                               {{sets, is_empty, 1}, otpbp_sets},
                               {{sets, new, 1}, otpbp_sets},
