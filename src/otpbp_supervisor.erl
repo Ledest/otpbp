@@ -16,6 +16,10 @@
 % OTP 19.0
 -export([format_status/2]).
 -endif.
+-ifndef(HAVE_supervisor__check_childspecs_2).
+% OTP 24.0
+-export([check_childspecs/2]).
+-endif.
 
 -ifdef(NEED_supervisor__state_record).
 -record(state, {name,
@@ -44,4 +48,9 @@ get_callback_module(Pid) ->
 format_status(terminate, [_PDict, State]) -> State;
 format_status(_, [_PDict, #state{module = Module} = State]) ->
     [{data, [{"State", State}]}, {supervisor, [{"Callback", Module}]}].
+-endif.
+
+-ifndef(HAVE_supervisor__check_childspecs_2).
+check_childspecs(ChildSpecs, undefined) -> supervisor:check_childspecs(ChildSpecs);
+check_childspecs(_ChildSpecs, AutoShutdown) -> {error, {badarg, AutoShutdown}}.
 -endif.
