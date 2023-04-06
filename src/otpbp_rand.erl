@@ -6,14 +6,14 @@
 -define(NEED_rand__bytes_s_2, true).
 -endif.
 -endif.
-% OTP 21.0
+% OTP 24.0
 -export([bytes/1]).
 -endif.
 -ifndef(HAVE_rand__bytes_s_2).
 -ifndef(NEED_rand__bytes_s_2).
 -define(NEED_rand__bytes_s_2, true).
 -endif.
-% OTP 21.0
+% OTP 24.0
 -export([bytes_s/2]).
 -endif.
 
