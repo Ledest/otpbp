@@ -33,6 +33,7 @@
                               {{binary, encode_hex, 2}, otpbp_binary},
                               {{c, lm, 0}, otpbp_c},
                               {{c, mm, 0}, {otpbp_code, modified_modules}},
+                              {{calendar, [rfc3339_to_system_time, system_time_to_rfc3339], [1, 2]}, otpbp_calendar},
                               {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2},
                                otpbp_calendar},
                               {{code, [all_available, modified_modules], 0}, otpbp_code},

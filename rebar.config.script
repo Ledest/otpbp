@@ -24,7 +24,11 @@ Funs = [{application, get_supervisor, 1},
         {binary, encode_hex, 1},
         {binary, encode_hex, 2},
         {c, lm, 0},
+        {calendar, rfc3339_to_system_time, 1},
+        {calendar, rfc3339_to_system_time, 2},
         {calendar, system_time_to_local_time, 2},
+        {calendar, system_time_to_rfc3339, 1},
+        {calendar, system_time_to_rfc3339, 2},
         {calendar, system_time_to_universal_time, 2},
         {code, all_available, 0},
         {code, modified_modules, 0},
@@ -336,6 +340,11 @@ lists:keystore(erl_opts, 1,
                                                                     non_existing -> SrcDirs ++ ["src_ext"];
                                                                     _ -> SrcDirs -- ["src_ext"]
                                                                 end}) ++
+                try erlang:convert_time_unit(1, second, second) of
+                    _ -> [{d, 'HAVE_NEW_TIME_UNITS'}]
+                catch
+                    _:_ -> []
+                end ++
                 lists:map(fun(E) ->
                               {d, list_to_atom(lists:flatten(io_lib:format("HAVE_~s__~s_~B",
                                                                            case E of
