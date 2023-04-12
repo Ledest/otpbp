@@ -14,13 +14,13 @@
 -endif.
 
 -ifndef(HAVE_os__cmd_2).
+cmd(Cmd, Opts) when is_atom(Cmd) -> cmd_(atom_to_list(Cmd), Opts);
 cmd(Cmd, Opts) ->
-    {SpawnCmd, SpawnOpts, SpawnInput, Eot} = mk_cmd(if
-                                                        is_atom(Cmd) -> atom_to_list(Cmd);
-                                                        true ->
-                                                            validate(Cmd),
-                                                            Cmd
-                                                    end),
+    validate(Cmd),
+    cmd_(Cmd, Opts).
+
+cmd_(Cmd, Opts) ->
+    {SpawnCmd, SpawnOpts, SpawnInput, Eot} = mk_cmd(Cmd),
     Port = open_port({spawn, SpawnCmd}, [binary, stderr_to_stdout, stream, in, hide|SpawnOpts]),
     MonRef = monitor(port, Port),
     true = port_command(Port, SpawnInput),
@@ -33,23 +33,16 @@ cmd(Cmd, Opts) ->
     end.
 
 mk_cmd(Cmd) ->
-    %% Have to send command in like this in order to make sh commands like
-    %% cd and ulimit available
+    %% Have to send command in like this in order to make sh commands like cd and ulimit available
     {"/bin/sh -s unix:cmd", [out],
-     %% We insert a new line after the command, in case the command
-     %% contains a comment character.
-     %%
-     %% The </dev/null closes stdin, which means that programs
-     %% that use a closed stdin as an termination indicator works.
+     %% We insert a new line after the command, in case the command contains a comment character.
+     %% The </dev/null closes stdin, which means that programs that use a closed stdin as an termination indicator works.
      %% An example of such a program is 'more'.
-     %%
-     %% The "echo ^D" is used to indicate that the program has executed
-     %% and we should return any output we have gotten. We cannot use
-     %% termination of the child or closing of stdin/stdout as then
-     %% starting background jobs from os:cmd will block os:cmd.
-     %%
-     %% I tried changing this to be "better", but got bombarded with
-     %% backwards incompatibility bug reports, so leave this as it is.
+     %% The "echo ^D" is used to indicate that the program has executed and we should return any output we have gotten.
+     %% We cannot use termination of the child or closing of stdin/stdout as then starting background jobs from os:cmd
+     %% will block os:cmd.
+     %% I tried changing this to be "better",
+     %% but got bombarded with backwards incompatibility bug reports, so leave this as it is.
      ["(", unicode:characters_to_binary(Cmd), "\n) </dev/null; echo \"\^D\"\n"],
      <<$\^D>>}.
 
@@ -61,14 +54,12 @@ validate([]) -> ok.
 
 get_data(Port, MonRef, Eot, Sofar, Size, Max) ->
     receive
-        {Port, {data, Bytes}} -> if
-                                     Eot =:= <<>> ->
-                                         get_data(Port, MonRef, Eot, [Sofar, Bytes], Size + byte_size(Bytes), Max);
-                                     true ->
-                                         catch port_close(Port),
-                                         flush_until_down(Port, MonRef),
-                                         iolist_to_binary([Sofar, eot(Bytes, Eot, Size, Max)])
-                                 end;
+        {Port, {data, Bytes}} when Eot =:= <<>> ->
+            get_data(Port, MonRef, <<>>, [Sofar, Bytes], Size + byte_size(Bytes), Max);
+        {Port, {data, Bytes}} ->
+            catch port_close(Port),
+            flush_until_down(Port, MonRef),
+            iolist_to_binary([Sofar, eot(Bytes, Eot, Size, Max)]);
         {'DOWN', MonRef, _, _, _} ->
             flush_exit(Port),
             iolist_to_binary(Sofar)
