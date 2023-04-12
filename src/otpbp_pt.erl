@@ -221,8 +221,11 @@
                               {{user, interfaces, 1}, otpbp_user},
                               {{zlib, [adler32, crc32], [2, 3]}, otpbp_zlib},
                               {{zlib, [adler32_combine, crc32_combine], 4}, otpbp_zlib},
+                              {{zlib, inflate, 3}, otpbp_zlib},
+                              {{zlib, inflateGetDictionary, 1}, otpbp_zlib},
                               {{zlib, inflateChunk, [1, 2]}, otpbp_zlib},
                               {{zlib, getBufSize, 1}, otpbp_zlib},
+                              {{zlib, safeInflate, 2}, otpbp_zlib},
                               {{zlib, setBufSize, 2}, otpbp_zlib},
                               {{zlib, [compress, gzip, zip], 2}, otpbp_zlib}]).
 -define(TRANSFORM_BEHAVIOURS, [{gen_statem, otpbp_gen_statem}]).
