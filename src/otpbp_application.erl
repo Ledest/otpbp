@@ -27,7 +27,7 @@
 -endif.
 
 -ifndef(HAVE_application_controller__get_supervisor_2).
-% OTP 25.3
+% OTP 26.0
 -export([get_supervisor/1]).
 -endif.
 
