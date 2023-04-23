@@ -68,6 +68,7 @@
                               {{crypto, stream_init, [2, 3]}, otpbp_crypto},
                               {{crypto, [stream_decrypt, stream_encrypt], 2}, otpbp_crypto},
                               {{ct, get_progname, 0}, otpbp_ct},
+                              {{dbg, stop_clear, 0}, {dbg, stop}}, % OTP < 27
                               {{dict, take, 2}, otpbp_dict},
                               {{disk_log, accessible_logs, 0}, otpbp_disk_log},
                               {{disk_log, lclose, 1}, {disk_log, close}},
