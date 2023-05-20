@@ -1,6 +1,6 @@
 OTP Backports (otpbp)
 =====================
-[![Build Status](https://secure.travis-ci.org/Ledest/otpbp.png)](http://travis-ci.org/Ledest/otpbp)
+[![Build Status](https://github.com/Ledest/otpbp/actions/workflows/erlang.yml/badge.svg)](https://github.com/Ledest/otpbp/actions/workflows/erlang.yml/badge.svg)
 
 Parse transformer that implements some new OTP functions in old Erlang/OTP releases.
 
