@@ -36,6 +36,10 @@
 % OTP 24.0
 -export([get_stacktrace/0]).
 -endif.
+-ifndef(HAVE_erlang__error_3).
+% OTP 24.0
+-export([error/3]).
+-endif.
 -ifndef(HAVE_erlang__get_cookie_1).
 % OTP 24.1
 -export([get_cookie/1]).
@@ -85,6 +89,10 @@ term_to_iovec(T, O) -> [term_to_binary(T, O)].
 
 -ifndef(HAVE_erlang__get_stacktrace_0).
 get_stacktrace() -> [].
+-endif.
+
+-ifndef(HAVE_erlang__error_3).
+error(Reason, Args, _Options) -> error(Reason, Args).
 -endif.
 
 -ifndef(HAVE_erlang__get_cookie_1).
