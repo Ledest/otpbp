@@ -248,8 +248,8 @@ run(Args, Command, Options) ->
         {ok, ArgMap, Path, SubCmd} ->
             handle(Command, ArgMap, tl(Path), SubCmd);
         {error, Reason} ->
-            io:format("error: ~ts~n", [argparse:format_error(Reason)]),
-            io:format("~ts", [argparse:help(Command, Options#{command => tl(element(1, Reason))})]),
+            io:format("error: ~ts~n", [format_error(Reason)]),
+            io:format("~ts", [help(Command, Options#{command => tl(element(1, Reason))})]),
             erlang:halt(1)
     catch
         error:Reason:Stack ->
