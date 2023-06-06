@@ -1064,13 +1064,10 @@ format_help({ProgName, Root}, Format) ->
         {Prefix, 0, "", [], [], [], []}, AllArgs),
     %% collect and format sub-commands
     Immediate = maps:get(commands, Cmd, #{}),
-    {Long, Subs} = maps:fold(
-        fun (_Name, #{help := hidden}, {Long, SubAcc}) ->
-            {Long, SubAcc};
-            (Name, Sub, {Long, SubAcc}) ->
-            Help = maps:get(help, Sub, ""),
-            {max(Long, string:length(Name)), [{Name, Help}|SubAcc]}
-        end, {Longest, []}, maps:iterator(Immediate, ordered)),
+    {Long, Subs} = lists:foldl(fun({_Name, #{help := hidden}}, Acc) -> Acc;
+                                  ({Name, Sub}, {Long, SubAcc}) ->
+                                   {max(Long, string:length(Name)), [{Name, maps:get(help, Sub, "")}|SubAcc]}
+                               end, {Longest, []}, lists:keysort(1, maps:to_list(Immediate))),
     %% format sub-commands
     ShortCmd0 =
         case map_size(Immediate) of
