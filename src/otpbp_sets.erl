@@ -20,6 +20,10 @@
 % OTP 26.1
 -export([filtermap/2]).
 -endif.
+-ifndef(HAVE_sets__is_equal_2).
+% OTP 26.1
+-export([is_equal/2]).
+-endif.
 
 -ifndef(HAVE_sets__is_empty_1).
 is_empty(S) -> sets:size(S) =:= 0.
@@ -49,4 +53,10 @@ filtermap(F, S) when is_function(F, 1) ->
                       false -> A
                   end
               end, sets:new(), S).
+-endif.
+
+-ifndef(HAVE_sets__is_equal_2).
+is_equal(S1, S2) ->
+    sets:is_set(S1) andalso sets:is_set(S2) orelse error(function_clause, [S1, S2]),
+    S1 =:= S2 orelse sets:size(S1) =:= sets:size(S2) andalso sets:is_subset(S1, S2).
 -endif.
