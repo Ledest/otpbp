@@ -200,6 +200,7 @@ Funs = [{application, get_supervisor, 1},
         {orddict, take, 2},
         {ordsets, filtermap, 2},
         {ordsets, is_empty, 1},
+        {ordsets, is_equal, 2},
         {ordsets, map, 2},
         {os, cmd, 2},
         {os, env, 0}, % OTP 24.0
