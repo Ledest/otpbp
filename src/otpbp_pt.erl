@@ -108,7 +108,7 @@
                               {{http_uri, parse, [1, 2]}, otpbp_http_uri},
                               {{httpd_util, hexlist_to_integer, 1}, http_util},
                               {{httpd_util, [flatlength, integer_to_hexlist, strip, suffix], 1}, otpbp_httpd_util},
-                              {{gb_sets, [filtermap, map], 2}, otp_gb_sets},
+                              {{gb_sets, [filtermap, is_equal, map], 2}, otp_gb_sets},
                               {{gb_trees, [take, take_any], 2}, otpbp_gb_trees},
                               {{gen, get_parent, 0}, otpbp_gen},
                               {{gen, [debug_options, get_proc_name, name, unregister_name], 1}, otpbp_gen},
