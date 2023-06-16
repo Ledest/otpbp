@@ -313,7 +313,7 @@ init_parser(Prefixes, Cmd, Options) ->
     #eos{prefixes = Prefixes, current = Cmd, default = maps:find(default, Options)}.
 
 %% Optional or positional argument?
--define(IS_OPTION(Arg), is_map_key(short, Arg) orelse is_map_key(long, Arg)).
+-define(IS_OPTION(Arg), (maps:is_key(short, Arg) orelse maps:is_key(long, Arg))).
 
 %% helper function to match either a long form of "--arg=value", or just "--arg"
 match_long(Arg, LongOpts) ->
@@ -340,7 +340,11 @@ match_long(Arg, LongOpts) ->
 %% Clause: option starting with any prefix
 %% No separate clause for single-character short form, because there could be a single-character
 %%  long form taking precedence.
-parse_impl([[Prefix | Name] | Tail], #eos{prefixes = Pref} = Eos) when is_map_key(Prefix, Pref) ->
+parse_impl([[Prefix | _] | _] = Args, #eos{prefixes = Pref} = Eos) ->
+    parse_impl(Args, Eos, maps:is_key(Prefix, Pref));
+parse_impl(Args, Eos) -> parse_impl(Args, Eos, false).
+
+parse_impl([[Prefix | Name] = Opt | Tail] = Args, Eos, true) ->
     %% match "long" option from the list of currently known
     case match_long(Name, Eos#eos.long) of
         {ok, Option} ->
@@ -350,97 +354,101 @@ parse_impl([[Prefix | Name] | Tail], #eos{prefixes = Pref} = Eos) when is_map_ke
         nomatch ->
             %% try to match single-character flag
             case Name of
-                [Flag] when is_map_key(Flag, Eos#eos.short) ->
-                    %% found a flag
-                    consume(Tail, maps:get(Flag, Eos#eos.short), Eos);
-                [Flag | Rest] when is_map_key(Flag, Eos#eos.short) ->
-                    %% can be a combination of flags, or flag with value,
-                    %%  but can never be a negative integer, because otherwise
-                    %%  it will be reflected in no_digits
-                    case abbreviated(Name, [], Eos#eos.short) of
-                        false ->
-                            %% short option with Rest being an argument
-                            consume([Rest | Tail], maps:get(Flag, Eos#eos.short), Eos);
-                        Expanded ->
-                            %% expand multiple flags into actual list, adding prefix
-                            parse_impl([[Prefix,E] || E <- Expanded] ++ Tail, Eos)
-                    end;
-                MaybeNegative when Prefix =:= $-, Eos#eos.no_digits ->
-                    case is_digits(MaybeNegative) of
-                        true ->
-                            %% found a negative number
-                            parse_positional([Prefix|Name], Tail, Eos);
-                        false ->
-                            catch_all_positional([[Prefix|Name] | Tail], Eos)
-                    end;
-                _Unknown ->
-                    catch_all_positional([[Prefix|Name] | Tail], Eos)
+                [Flag|_] ->
+                    parse_impl(Args, Eos, Name, Opt, Tail, Prefix, maps:is_key(Flag, Eos#eos.short));
+                _ ->
+                    parse_impl(Args, Eos, Name, Opt, Tail, Prefix, false)
             end
     end;
-
 %% Arguments not starting with Prefix: attempt to match sub-command, if available
-parse_impl([Positional | Tail], #eos{current = #{commands := SubCommands}} = Eos) ->
-    case maps:find(Positional, SubCommands) of
-        error ->
-            %% sub-command not found, try positional argument
-            parse_positional(Positional, Tail, Eos);
-        {ok, SubCmd} ->
+parse_impl([Positional | Tail], #eos{current = #{commands := SubCommands}} = Eos, _) ->
+    case SubCommands of
+        #{Positional := SubCmd} ->
             %% found matching sub-command with arguments, descend into it
-            parse_impl(Tail, merge_arguments(Positional, SubCmd, Eos))
+            parse_impl(Tail, merge_arguments(Positional, SubCmd, Eos));
+        #{} ->
+            %% sub-command not found, try positional argument
+            parse_positional(Positional, Tail, Eos)
     end;
-
 %% Clause for arguments that don't have sub-commands (therefore check for
 %%  positional argument).
-parse_impl([Positional | Tail], Eos) ->
+parse_impl([Positional | Tail], Eos, _) ->
     parse_positional(Positional, Tail, Eos);
-
 %% Entire command line has been matched, go over missing arguments,
 %%  add defaults etc
-parse_impl([], #eos{argmap = ArgMap0, commands = Commands, current = Current, pos = Pos, default = Def} = Eos) ->
+parse_impl([], #eos{argmap = ArgMap0, commands = Commands, current = Current, pos = Pos, default = Def} = Eos, _) ->
     %% error if stopped at sub-command with no handler
     map_size(maps:get(commands, Current, #{})) >0 andalso
-        (not is_map_key(handler, Current)) andalso
+        (not maps:is_key(handler, Current)) andalso
         throw({Commands, undefined, undefined, <<"subcommand expected">>}),
-
     %% go over remaining positional, verify they are all not required
     ArgMap1 = fold_args_map(Commands, true, ArgMap0, Pos, Def),
     %% go over optionals, and either raise an error, or set default
     ArgMap2 = fold_args_map(Commands, false, ArgMap1, maps:values(Eos#eos.short), Def),
     ArgMap3 = fold_args_map(Commands, false, ArgMap2, maps:values(Eos#eos.long), Def),
-
     %% return argument map, command path taken, and the deepest
     %%  last command matched (usually it contains a handler to run)
     {ok, ArgMap3, Eos#eos.commands, Eos#eos.current}.
+
+parse_impl(_Args, Eos, [Flag], _Opt, Tail, _Prefix, true) ->
+    %% found a flag
+    consume(Tail, maps:get(Flag, Eos#eos.short), Eos);
+parse_impl(_Args, Eos, [Flag | Rest] = Name, _Opt, Tail, Prefix, true) ->
+    %% can be a combination of flags, or flag with value,
+    %%  but can never be a negative integer, because otherwise
+    %%  it will be reflected in no_digits
+    case abbreviated(Name, [], Eos#eos.short) of
+        false ->
+            %% short option with Rest being an argument
+            consume([Rest | Tail], maps:get(Flag, Eos#eos.short), Eos);
+        Expanded ->
+            %% expand multiple flags into actual list, adding prefix
+            parse_impl([[Prefix, E] || E <- Expanded] ++ Tail, Eos)
+    end;
+parse_impl(Args, #eos{no_digits = true} = Eos, MaybeNegative, Opt, Tail, $-, _) ->
+    case is_digits(MaybeNegative) of
+        true ->
+            %% found a negative number
+            parse_positional(Opt, Tail, Eos);
+        false ->
+            catch_all_positional(Args, Eos)
+    end;
+parse_impl(Args, Eos, _Unknown, _Opt, _Tail, _Prefix, _) ->
+    catch_all_positional(Args, Eos).
 
 %% Generate error for missing required argument, and supply defaults for
 %%  missing optional arguments that have defaults.
 fold_args_map(Commands, Req, ArgMap, Args, GlobalDefault) ->
     lists:foldl(
-        fun (#{name := Name}, Acc) when is_map_key(Name, Acc) ->
-                %% argument present
-                Acc;
-            (#{required := true} = Opt, _Acc) ->
-                %% missing, and required explicitly
-                throw({Commands, Opt, undefined, <<>>});
-            (#{name := Name, required := false, default := Default}, Acc) ->
-                %% explicitly not required argument with default
-                Acc#{Name => Default};
-            (#{name := Name, required := false}, Acc) ->
-                %% explicitly not required with no local default, try global one
-                try_global_default(Name, Acc, GlobalDefault);
-            (#{name := Name, default := Default}, Acc) when Req =:= true ->
-                %% positional argument with default
-                Acc#{Name => Default};
-            (Opt, _Acc) when Req =:= true ->
-                %% missing, for positional argument, implicitly required
-                throw({Commands, Opt, undefined, <<>>});
-            (#{name := Name, default := Default}, Acc) ->
-                %% missing, optional, and there is a default
-                Acc#{Name => Default};
-            (#{name := Name}, Acc) ->
-                %% missing, optional, no local default, try global default
-                try_global_default(Name, Acc, GlobalDefault)
+        fun (#{name := Name} = Opt, Acc) ->
+                case maps:is_key(Name, Acc) of
+                    true -> Acc; % argument present
+                    false -> args_map(Commands, Req, Opt, Acc, GlobalDefault)
+                end;
+            (Opt, Acc) -> args_map(Commands, Req, Opt, Acc, GlobalDefault)
         end, ArgMap, Args).
+
+args_map(Commands, _Req, #{required := true} = Opt, _Acc, _GlobalDefault) ->
+    %% missing, and required explicitly
+    throw({Commands, Opt, undefined, <<>>});
+args_map(_Commands, _Req, #{name := Name, required := false, default := Default}, Acc, _GlobalDefault) ->
+    %% explicitly not required argument with default
+    Acc#{Name => Default};
+args_map(_Commands, _Req, #{name := Name, required := false}, Acc, GlobalDefault) ->
+    %% explicitly not required with no local default, try global one
+    try_global_default(Name, Acc, GlobalDefault);
+args_map(_Commands, true, #{name := Name, default := Default}, Acc, _GlobalDefault) ->
+    %% positional argument with default
+    Acc#{Name => Default};
+args_map(Commands, true, Opt, _Acc, _GlobalDefault) ->
+    %% missing, for positional argument, implicitly required
+    throw({Commands, Opt, undefined, <<>>});
+args_map(_Commands, _Req, #{name := Name, default := Default}, Acc, _GlobalDefault) ->
+    %% missing, optional, and there is a default
+    Acc#{Name => Default};
+args_map(_Commands, _Req, #{name := Name}, Acc, GlobalDefault) ->
+    %% missing, optional, no local default, try global default
+    try_global_default(Name, Acc, GlobalDefault).
 
 try_global_default(_Name, Acc, error) ->
     Acc;
@@ -494,14 +502,8 @@ add_args([PosOpt | Tail], #eos{pos = Pos} = Eos) ->
 
 %% If no_digits is still true, try to find out whether it should turn false,
 %%  because added options look like negative numbers, and prefixes include -
-no_digits(false, _, _, _) ->
-    false;
-no_digits(true, Prefixes, _, _) when not is_map_key($-, Prefixes) ->
-    true;
-no_digits(true, _, Short, _) when Short >= $0, Short =< $9 ->
-    false;
-no_digits(true, _, _, Long) ->
-    not is_digits(Long).
+no_digits(Flag, Prefixes, Short, Long) ->
+    Flag andalso (not maps:is_key($-, Prefixes) orelse (Short < $0 orelse Short > $9) andalso not is_digits(Long)).
 
 %%--------------------------------------------------------------------
 %% additional functions for optional arguments processing
@@ -525,10 +527,8 @@ requires_argument(Opt) ->
     end.
 
 %% Attempts to find if passed list of flags can be expanded
-abbreviated([Last], Acc, AllShort) when is_map_key(Last, AllShort) ->
-    lists:reverse([Last | Acc]);
-abbreviated([_], _Acc, _Eos) ->
-    false;
+abbreviated([Last], Acc, AllShort) ->
+    maps:is_key(Last, AllShort) andalso lists:reverse([Last | Acc]);
 abbreviated([Flag | Tail], Acc, AllShort) ->
     case maps:find(Flag, AllShort) of
         error ->
@@ -607,13 +607,10 @@ consume(Tail, #{action := {Act, _Const}} = Opt, Eos) when Act =:= store; Act =:=
     action(Tail, undefined, Opt, Eos);
 
 %% optional: ensure not to consume another option start
-consume([[Prefix | _] = ArgValue | Tail], Opt, Eos) when ?IS_OPTION(Opt), is_map_key(Prefix, Eos#eos.prefixes) ->
-    case Eos#eos.no_digits andalso is_digits(ArgValue) of
-        true ->
-            action(Tail, ArgValue, Opt, Eos);
-        false ->
-            throw({Eos#eos.commands, Opt, undefined, <<"expected argument">>})
-    end;
+consume([[Prefix | _] = ArgValue | Tail], Opt, #eos{prefixes = Prefixes, no_digits = NoDigits} = Eos) ->
+    ?IS_OPTION(Opt) andalso maps:is_key(Prefix, Prefixes) andalso not (NoDigits andalso is_digits(ArgValue)) andalso
+        throw({Eos#eos.commands, Opt, undefined, <<"expected argument">>}),
+    action(Tail, ArgValue, Opt, Eos);
 
 consume([ArgValue | Tail], Opt, Eos) ->
     action(Tail, ArgValue, Opt, Eos);
@@ -629,22 +626,22 @@ consume([], Opt, Eos) ->
 
 %% smart split: ignore arguments that can be parsed as negative numbers,
 %%  unless there are arguments that look like negative numbers
-split_to_option([], _, _Eos, Acc) ->
-    {lists:reverse(Acc), []};
-split_to_option(Tail, 0, _Eos, Acc) ->
+split_to_option([[Prefix | _] | _] = All, Left, #eos{prefixes = Prefixes} = Eos, Acc) ->
+    split_to_option(All, Left, Eos, Acc, maps:is_key(Prefix, Prefixes));
+split_to_option(All, Left, Eos, Acc) -> split_to_option(All, Left, Eos, Acc, false).
+
+split_to_option(Tail, Left, _Eos, Acc, _) when Tail =:= []; Left =:= 0 ->
     {lists:reverse(Acc), Tail};
-split_to_option([[Prefix | _] = MaybeNumber | Tail] = All, Left,
-    #eos{no_digits = true, prefixes = Prefixes} = Eos, Acc) when is_map_key(Prefix, Prefixes) ->
+split_to_option([[_ | _] = MaybeNumber | Tail] = All, Left, #eos{no_digits = true} = Eos, Acc, true)->
     case is_digits(MaybeNumber) of
         true ->
             split_to_option(Tail, Left - 1, Eos, [MaybeNumber | Acc]);
         false ->
             {lists:reverse(Acc), All}
     end;
-split_to_option([[Prefix | _] | _] = All, _Left,
-    #eos{no_digits = false, prefixes = Prefixes}, Acc) when is_map_key(Prefix, Prefixes) ->
+split_to_option([[_ | _] | _] = All, _Left, #eos{no_digits = false}, Acc, true) ->
     {lists:reverse(Acc), All};
-split_to_option([Head | Tail], Left, Opts, Acc) ->
+split_to_option([Head | Tail], Left, Opts, Acc, _) ->
     split_to_option(Tail, Left - 1, Opts, [Head | Acc]).
 
 %%--------------------------------------------------------------------
@@ -678,12 +675,12 @@ action(Tail, ArgValue, #{name := ArgName} = Opt, #eos{argmap = ArgMap} = Eos) ->
     continue_parser(Tail,  Opt, Eos#eos{argmap = ArgMap#{ArgName => Value}}).
 
 %% pop last positional, unless nargs is list/nonempty_list
-continue_parser(Tail, Opt, Eos) when ?IS_OPTION(Opt) ->
-    parse_impl(Tail, Eos);
-continue_parser(Tail, #{nargs := List}, Eos) when List =:= list; List =:= nonempty_list ->
-    parse_impl(Tail, Eos);
-continue_parser(Tail, _Opt, Eos) ->
-    parse_impl(Tail, Eos#eos{pos = tl(Eos#eos.pos)}).
+continue_parser(Tail, Opt, Eos) ->
+    parse_impl(Tail,
+               case ?IS_OPTION(Opt) orelse lists:member(maps:get(nargs, Opt, undefined), [list, nonempty_list]) of
+                   true -> Eos;
+                   false -> Eos#eos{pos = tl(Eos#eos.pos)}
+               end).
 
 %%--------------------------------------------------------------------
 %% Type conversion
@@ -869,7 +866,7 @@ executable(_) ->
 
 %% Recursive command validator
 validate_command([{Name, Cmd} | _] = Path, Prefixes) ->
-    (is_list(Name) andalso (not is_map_key(hd(Name), Prefixes))) orelse
+    (is_list(Name) andalso (not maps:is_key(hd(Name), Prefixes))) orelse
         ?INVALID(command, Cmd, tl(Path), commands,
             <<"command name must be a string not starting with option prefix">>),
     is_map(Cmd) orelse
@@ -900,13 +897,13 @@ validate_command([{Name, Cmd} | _] = Path, Prefixes) ->
         fun ({_, #{arguments := Opts}}, Acc) ->
             lists:foldl(
                 fun (#{short := Short, name := OName} = Arg, {AllS, AllL}) ->
-                        is_map_key(Short, AllS) andalso
+                        maps:is_key(Short, AllS) andalso
                             ?INVALID(argument, Arg, Path, short,
                                 "short conflicting with previously defined short for "
                                     ++ atom_to_list(maps:get(Short, AllS))),
                         {AllS#{Short => OName}, AllL};
                     (#{long := Long, name := OName} = Arg, {AllS, AllL}) ->
-                        is_map_key(Long, AllL) andalso
+                        maps:is_key(Long, AllL) andalso
                             ?INVALID(argument, Arg, Path, long,
                                 "long conflicting with previously defined long for "
                                     ++ atom_to_list(maps:get(Long, AllL))),
@@ -947,10 +944,11 @@ validate_option(Path, #{name := Name} = Arg) when is_atom(Name); is_list(Name); 
 validate_option(Path, Arg) ->
     ?INVALID(argument, Arg, Path, name, <<"argument must be a map containing 'name' field">>).
 
-maybe_validate(Key, Map, Fun, Path) when is_map_key(Key, Map) ->
-    maps:put(Key, Fun(maps:get(Key, Map), Path, Map), Map);
-maybe_validate(_Key, Map, _Fun, _Path) ->
-    Map.
+maybe_validate(Key, Map, Fun, Path) ->
+    case Map of
+        #{Key := V} -> Map#{Key := Fun(V, Path, Map)};
+        _ -> Map
+    end.
 
 %% validate action field
 validate_action(store, _Path, _Opt) ->
@@ -1178,7 +1176,10 @@ wordwrap([Word | Tail], Max, Len, Line, Lines) ->
 %% format optional argument
 format_opt_help(#{help := hidden}, Acc) ->
     Acc;
-format_opt_help(Opt, {Prefix, Longest, Flags, Opts, Args, OptL, PosL}) when ?IS_OPTION(Opt) ->
+format_opt_help(Opt, Acc) ->
+    format_opt_help(Opt, Acc, ?IS_OPTION(Opt)).
+
+format_opt_help(Opt, {Prefix, Longest, Flags, Opts, Args, OptL, PosL}, true) ->
     Desc = format_description(Opt),
     %% does it need an argument? look for nargs and action
     RequiresArg = requires_argument(Opt),
@@ -1227,7 +1228,7 @@ format_opt_help(Opt, {Prefix, Longest, Flags, Opts, Args, OptL, PosL}) when ?IS_
     {Prefix, max(Capped, Longest), Flags ++ MaybeFlag, Opts ++ MaybeOpt2, Args, [{Name, Desc} | OptL], PosL};
 
 %% format positional argument
-format_opt_help(#{name := Name} = Opt, {Prefix, Longest, Flags, Opts, Args, OptL, PosL}) ->
+format_opt_help(#{name := Name} = Opt, {Prefix, Longest, Flags, Opts, Args, OptL, PosL}, false) ->
     Desc = format_description(Opt),
     %% positional, hence required
     LName = io_lib:format("~ts", [Name]),
