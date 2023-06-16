@@ -74,7 +74,7 @@
 -type argument() :: #{
     %% Argument name, and a destination to store value too
     %% It is allowed to have several arguments named the same, setting or appending to the same variable.
-    name := argument_name(),
+    name => argument_name(),
 
     %% short, single-character variant of command line option, omitting dash (example: $b, meaning -b),
     %%  when present, the argument is considered optional
