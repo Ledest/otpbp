@@ -275,11 +275,11 @@ format_error({Path, #{name := Name}, Value, Details}) ->
 %% Use `erl_error:format_exception/3,4' to get the shell-like output.
 -spec format_error(Reason :: validator_error(), erlang:stacktrace()) -> map().
 format_error({?MODULE, command, Path, Field, Reason}, [{_M, _F, [Cmd], Info} | _]) ->
-    #{cause := Cause} = proplists:get_value(error_info, Info, #{}),
+    Cause = maps:get(cause, proplists:get_value(error_info, Info, #{}), #{}),
     Cause#{general => <<"command specification is invalid">>, 1 => io_lib:format("~tp", [Cmd]),
         reason => io_lib:format("command \"~ts\": invalid field '~ts', reason: ~ts", [format_path(Path), Field, Reason])};
 format_error({?MODULE, argument, Path, Field, Reason}, [{_M, _F, [Arg], Info} | _]) ->
-    #{cause := Cause} = proplists:get_value(error_info, Info, #{}),
+    Cause = maps:get(cause, proplists:get_value(error_info, Info, #{}), #{}),
     ArgName = maps:get(name, Arg, ""),
     Cause#{general => "argument specification is invalid", 1 => io_lib:format("~tp", [Arg]),
         reason => io_lib:format("command \"~ts\", argument '~ts', invalid field '~ts': ~ts",
