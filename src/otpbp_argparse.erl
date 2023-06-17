@@ -550,7 +550,8 @@ consume(Tail, #{nargs := Count} = Opt, Eos) when is_integer(Count) ->
     {Consumed, Remain} = split_to_option(Tail, Count, Eos, []),
     length(Consumed) < Count andalso
         throw({Eos#eos.commands, Opt, Tail,
-            io_lib:format("expected ~b, found ~b argument(s)", [Count, length(Consumed)])}),
+              unicode:characters_to_list(io_lib:format("expected ~b, found ~b argument(s)",
+                                                       [Count, length(Consumed)]))}),
     action(Remain, Consumed, Opt#{type => {list, maps:get(type, Opt, string)}}, Eos);
 
 %% handle 'reminder' by just dumping everything in
