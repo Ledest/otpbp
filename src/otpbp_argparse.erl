@@ -1139,7 +1139,7 @@ format_width({ok, [ProgName, ShortCmd, FlagsForm, Opts, Args]}, usage, Width) ->
             io_lib:format("  ~ts~ts", [ProgName, ArgLines])
     end;
 format_width({ok, {Len, Texts}}, _Part, Width) ->
-    SubFormat = io_lib:format("  ~~-~bts ~~ts~n", [Len]),
+    SubFormat = unicode:characters_to_list(io_lib:format("  ~~-~bts ~~ts~n", [Len])),
     [io_lib:format(SubFormat, [N, wrap_text(D, Len + 3, Width)]) || {N, D} <- lists:reverse(Texts)].
 
 wrap_text(Text, Indent, Width) ->
