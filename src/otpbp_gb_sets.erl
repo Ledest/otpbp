@@ -12,6 +12,9 @@
 % OTP 26.1
 -export([is_equal/2]).
 -endif.
+-ifndef(HAVE_gb_sets__foreach_2).
+-export([foreach/2]).
+-endif.
 
 -ifndef(HAVE_gb_sets__map_2).
 map(F, {_, T}) when is_function(F, 1) -> gb_sets:from_list(map(T, F, [])).
@@ -38,4 +41,10 @@ filtermap(nil, _F, L) -> L.
 is_equal(S1, S2) ->
     gb_sets:is_set(S1) andalso gb_sets:is_set(S2) orelse error(function_clause, [S1, S2]),
     S1 == S2 orelse gb_sets:size(S1) =:= gb_sets:size(S2) andalso gb_sets:is_subset(S1, S2).
+-endif.
+
+-ifndef(HAVE_sets__foreach_2).
+foreach(F, S) when is_function(F, 1) ->
+    gb_sets:is_set(S) orelse error(function_clause, [F, S]),
+    lists:foreach(F, gb_sets:to_list(S)).
 -endif.
