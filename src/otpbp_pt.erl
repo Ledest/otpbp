@@ -162,6 +162,7 @@
                               {{math, [ceil, floor], 1}, otpbp_math},
                               {{math, fmod, 2}, otpbp_math},
                               {{math, tau, 0}, otpbp_math},
+                              {{orddict, foreach, 2}, otpbp_orddict},
                               {{orddict, take, 2}, otpbp_orddict},
                               {{ordsets, [filtermap, is_equal, map], 2}, otpbp_ordsets},
                               {{ordsets, is_empty, 1}, otpbp_ordsets},
