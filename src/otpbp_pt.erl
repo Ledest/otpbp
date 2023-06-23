@@ -165,6 +165,7 @@
                               {{orddict, foreach, 2}, otpbp_orddict},
                               {{orddict, take, 2}, otpbp_orddict},
                               {{ordsets, [filtermap, is_equal, map], 2}, otpbp_ordsets},
+                              {{ordsets, foreach, 2}, otpbp_orddict},
                               {{ordsets, is_empty, 1}, otpbp_ordsets},
                               {{os, cmd, 2}, otpbp_os},
                               {{os, [env, list_env_vars], 0}, otpbp_os},
