@@ -197,6 +197,7 @@
                               {{rand, uniform_real, 0}, otpbp_rand},
                               {{rand, uniform_real_s, 1}, otpbp_rand},
                               {{re, version, 0}, otpbp_re},
+                              {{sets, foreach, 2}, otpbp_sets},
                               {{sets, [filtermap, is_equal, map], 2}, otpbp_sets},
                               {{sets, from_list, 2}, otpbp_sets},
                               {{sets, is_empty, 1}, otpbp_sets},

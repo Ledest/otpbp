@@ -24,6 +24,9 @@
 % OTP 26.1
 -export([is_equal/2]).
 -endif.
+-ifndef(HAVE_sets__foreach_2).
+-export([foreach/2]).
+-endif.
 
 -ifndef(HAVE_sets__is_empty_1).
 is_empty(S) -> sets:size(S) =:= 0.
@@ -59,4 +62,10 @@ filtermap(F, S) when is_function(F, 1) ->
 is_equal(S1, S2) ->
     sets:is_set(S1) andalso sets:is_set(S2) orelse error(function_clause, [S1, S2]),
     S1 =:= S2 orelse sets:size(S1) =:= sets:size(S2) andalso sets:is_subset(S1, S2).
+-endif.
+
+-ifndef(HAVE_sets__foreach_2).
+foreach(F, S) when is_function(F, 1) ->
+    sets:is_set(S) orelse error(function_clause, [F, S]),
+    lists:foreach(F, sets:to_list(S)).
 -endif.
