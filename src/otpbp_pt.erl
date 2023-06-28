@@ -96,6 +96,7 @@
                               {{erlang, iolist_to_iovec, 1}, otpbp_erlang},
                               {{error_logger, get_format_depth, 0}, otpbp_error_logger},
                               {{error_logger, limit_term, 1}, otpbp_error_logger},
+                              {{erts_internal, [binary_to_integer, list_to_integer], 2}, otpbp_erts_internal},
                               {{erts_internal, map_next, 3}, otpbp_erts_internal},
                               {{ets, lookup_element, 4}, otpbp_ets},
                               {{ets, whereis, 1}, otpbp_ets},
