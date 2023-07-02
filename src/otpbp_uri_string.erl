@@ -532,12 +532,14 @@ parse_relative_part(?STRING_REST("//", Rest), URI) ->
     try parse_userinfo(Rest, URI) of
         {T, URI1} ->
             Userinfo = calculate_parsed_userinfo(Rest, T),
-            maps:put(userinfo, Userinfo, maybe_add_path(URI1))
+            URI2 = maybe_add_path(URI1),
+            URI2#{userinfo => Userinfo}
     catch
         throw:{_,_,_} ->
             {T, URI1} = parse_host(Rest, URI),
             Host = calculate_parsed_host_port(Rest, T),
-            maps:put(host, remove_brackets(Host), maybe_add_path(URI1))
+            URI2 = maybe_add_path(URI1),
+            URI2#{host => remove_brackets(Host)}
     end;
 parse_relative_part(?STRING_REST($/, Rest), URI) ->
     {T, URI1} = parse_segment(Rest, URI),  % path-absolute
@@ -546,11 +548,13 @@ parse_relative_part(?STRING_REST($/, Rest), URI) ->
 parse_relative_part(?STRING_REST($?, Rest), URI) ->
     {T, URI1} = parse_query(Rest, URI),  % path-empty ?query
     Query = calculate_parsed_query_fragment(Rest, T),
-    maps:put(query, Query, maybe_add_path(URI1));
+    URI2 = maybe_add_path(URI1),
+    URI2#{query => Query};
 parse_relative_part(?STRING_REST($#, Rest), URI) ->
     {T, URI1} = parse_fragment(Rest, URI),  % path-empty
     Fragment = calculate_parsed_query_fragment(Rest, T),
-    maps:put(fragment, Fragment, maybe_add_path(URI1));
+    URI2 = maybe_add_path(URI1),
+    URI2#{fragment => Fragment};
 parse_relative_part(?STRING_REST(Char, Rest), URI) ->
     case is_segment_nz_nc(Char) of
         true ->
@@ -663,7 +667,8 @@ parse_scheme_start(?STRING_REST(Char, Rest), URI) ->
     case is_alpha(Char) of
         true  -> {T, URI1} = parse_scheme(Rest, URI),
                  Scheme = calculate_parsed_scheme(Rest, T),
-                 maps:put(scheme, ?STRING_REST(Char, Scheme), maybe_add_path(URI1));
+                 URI2 = maybe_add_path(URI1),
+		 URI2#{scheme => ?STRING_REST(Char, Scheme)};
         false -> throw({error,invalid_uri,[Char]})
     end.
 
