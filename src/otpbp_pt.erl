@@ -224,7 +224,6 @@
                                otpbp_string},
                               {{string, [equal, pad, replace, take], 4}, otpbp_string},
                               {{supervisor, get_callback_module, 1}, otpbp_supervisor},
-                              {{supervisor, format_status, 2}, otpbp_supervisor},
                               {{supervisor, check_childspecs, 2}, otpbp_supervisor},
                               {{sys, get_log, 1}, otpbp_sys},
                               {{timer, tc, 4}, otpbp_timer},
