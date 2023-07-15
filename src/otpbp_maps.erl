@@ -2,18 +2,6 @@
 
 -compile([{parse_transform, otpbp_pt}]).
 
--ifndef(HAVE_maps__update_with_3).
-% OTP 19.0
--export([update_with/3]).
--endif.
--ifndef(HAVE_maps__update_with_4).
-% OTP 19.0
--export([update_with/4]).
--endif.
--ifndef(HAVE_maps__take_2).
-% OTP 19.0
--export([take/2]).
--endif.
 -ifndef(HAVE_maps__iterator_1).
 % OTP 21.0
 -export([iterator/1]).
@@ -53,35 +41,6 @@
 -ifndef(HAVE_maps__groups_from_list_3).
 % OTP 25.0
 -export([groups_from_list/3]).
--endif.
-
--ifndef(HAVE_maps__update_with_4).
-update_with(K, Fun, Init, M) ->
-    is_map(M) orelse error({badmap, M}, [K, Fun, Init, M]),
-    is_function(Fun, 1) orelse error(badarg, [K, Fun, Init, M]),
-    case M of
-        #{K := V} -> M#{K := Fun(V)};
-        _ -> M#{K => Init}
-    end.
--endif.
-
--ifndef(HAVE_maps__update_with_3).
-update_with(K, Fun, M) ->
-    is_map(M) orelse error({badmap, M}, [K, Fun, M]),
-    is_function(Fun, 1) orelse error(badarg, [K, Fun, M]),
-    case M of
-        #{K := V} -> M#{K := Fun(V)};
-        _ -> error({badkey, K}, [K, Fun, M])
-    end.
--endif.
-
--ifndef(HAVE_maps__take_2).
-take(K, M) ->
-    case M of
-        #{K := V} -> {V, maps:remove(K, M)};
-        #{} -> error;
-        _ -> error({badmap, M}, [K, M])
-    end.
 -endif.
 
 -ifndef(HAVE_maps__iterator_1).
