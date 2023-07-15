@@ -1,9 +1,5 @@
 -module(otpbp_lists).
 
--ifndef(HAVE_lists__join_2).
-% OTP 19.0
--export([join/2]).
--endif.
 -ifndef(HAVE_lists__search_2).
 % OTP 21.0
 -export([search/2]).
@@ -43,14 +39,6 @@
 -ifndef(HAVE_lists__zipwith3_5).
 % OTP 26.0
 -export([zipwith3/5]).
--endif.
-
--ifndef(HAVE_lists__join_2).
-join(_, []) -> [];
-join(Sep, [H|T]) -> [H|join_prepend(Sep, T)].
-
-join_prepend(_, []) -> [];
-join_prepend(Sep, [H|T]) -> [Sep, H|join_prepend(Sep, T)].
 -endif.
 
 -ifndef(HAVE_lists__search_2).
