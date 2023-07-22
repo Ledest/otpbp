@@ -4,4 +4,5 @@
                       {applications, [kernel, stdlib]},
                       {modules, []},
                       {env, []},
+                      {links, [{"GitHub", "https://github.com/Ledest/otpbp"}]},
                       {licenses, ["GPL-3.0+"]}]}.
