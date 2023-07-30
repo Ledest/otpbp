@@ -1,7 +1,7 @@
 -module(otpbp_re).
 
 -ifndef(HAVE_re__version_0).
-% OTP >= 20.0
+% OTP 20.0
 -export([version/0]).
 -endif.
 
