@@ -1,35 +1,35 @@
 -module(otpbp_queue).
 
 -ifndef(HAVE_queue__all_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([all/2]).
 -endif.
 -ifndef(HAVE_queue__any_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([any/2]).
 -endif.
 -ifndef(HAVE_queue__delete_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([delete/2]).
 -endif.
 -ifndef(HAVE_queue__delete_r_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([delete_r/2]).
 -endif.
 -ifndef(HAVE_queue__delete_with_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([delete_with/2]).
 -endif.
 -ifndef(HAVE_queue__delete_with_r_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([delete_with_r/2]).
 -endif.
 -ifndef(HAVE_queue__fold_3).
-% OTP 24.0 ?
+% OTP 24.0
 -export([fold/3]).
 -endif.
 -ifndef(HAVE_queue__filtermap_2).
-% OTP 24.0 ?
+% OTP 24.0
 -export([filtermap/2]).
 -endif.
 
