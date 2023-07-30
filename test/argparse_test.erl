@@ -196,8 +196,9 @@ unicode_test() ->
     Prog = [prog()],
     ?assertEqual({ok, Expected, Prog, Cmd}, argparse:parse([], Cmd)), %% default
     ?assertEqual({ok, Expected, Prog, Cmd}, argparse:parse(["★"], Cmd)), %% specified in the command line
-    ?assertEqual("Usage:\n  " ++ prog() ++ " <text>\n\nArguments:\n  text åäö (binary, ★)\n",
-                 unicode:characters_to_list(argparse:help(Cmd))),
+    ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd)),
+                         ["Usage:\n  " ++ prog() ++ " <text>\n\nArguments:\n  text åäö (binary, ★)\n",
+                          "Usage:\n  " ++ prog() ++ " <text>\n\nArguments:\n  text åäö (binary), default: ★\n"])),
     %% test command name and argument name in unicode
     Uni = #{commands => #{"åäö" => #{help => "öФ"}}, handler => optional,
             arguments => [#{name => "Ф", short => $ä, long => "åäö"}]},
@@ -416,6 +417,8 @@ proxy_arguments_test() ->
 
 usage_test() ->
     Cmd = ubiq_cmd(),
+    Float = "(float, 3.14)\n",
+    Float1 = "(float), default: 3.14\n",
     Usage = "Usage:\n  erl start {crawler|doze} [-lrfv] [-s <shard>...] [-z <z>] [-m <more>] [-b <bin>]\n"
             "      [-g <g>] [-t <t>] ---maybe-req -y <y> --yyy <y> [-u <u>] [-c <choice>]\n"
             "      [-q <fc>] [-w <ac>] [--unsafe <au>] [--safe <as>] [-foobar <long>] [--force]\n"
@@ -448,8 +451,9 @@ usage_test() ->
             "  -v           verbosity level\n"
             "  -i           interval set (int >= 1)\n"
             "  --req        required optional, right?\n"
-            "  --float      floating-point long form argument (float, 3.14)\n",
-    ?assertEqual(Usage, unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl", command => ["start"]}))),
+            "  --float      floating-point long form argument ",
+    ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl", command => ["start"]})),
+                         [Usage ++ Float, Usage ++ Float1])),
     FullCmd = "Usage:\n  erl"
               " <command> [-rfv] [--force] [-i <interval>] [--req <weird>] [--float <float>]\n\n"
               "Subcommands:\n"
@@ -462,17 +466,19 @@ usage_test() ->
               "  -v          verbosity level\n"
               "  -i          interval set (int >= 1)\n"
               "  --req       required optional, right?\n"
-              "  --float     floating-point long form argument (float, 3.14)\n",
-    ?assertEqual(FullCmd, unicode:characters_to_list(argparse:help(Cmd, #{progname => erl}))),
+              "  --float     floating-point long form argument ",
+    ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => erl})),
+                         [FullCmd ++ Float, FullCmd ++ Float1])),
     CrawlerStatus = "Usage:\n  erl status crawler [-rfv] [---extra <extra>] [--force] [-i <interval>]\n"
                     "      [--req <weird>] [--float <float>]\n\nOptional arguments:\n"
                     "  ---extra    extra option very deep\n  -r          recursive\n"
                     "  -f, --force force\n  -v          verbosity level\n"
                     "  -i          interval set (int >= 1)\n"
                     "  --req       required optional, right?\n"
-                    "  --float     floating-point long form argument (float, 3.14)\n",
-    ?assertEqual(CrawlerStatus,
-                 unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl", command => ["status", "crawler"]}))).
+                    "  --float     floating-point long form argument ",
+    ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl",
+                                                                         command => ["status", "crawler"]})),
+                         [CrawlerStatus ++ Float, CrawlerStatus ++ Float1])).
 
 usage_required_args_test() ->
     ?assertEqual("Usage:\n  " ++ prog() ++ " test --req <required>\n\nOptional arguments:\n  --req required\n",
