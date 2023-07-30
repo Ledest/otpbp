@@ -250,6 +250,13 @@
                 erts_version = erts_version() :: [non_neg_integer(),...],
                 funs = #{} :: #{{module(), {atom(), arity()}} => {module(), atom()}},
                 behaviours = maps:from_list(?TRANSFORM_BEHAVIOURS) :: #{module() => module()},
+                apply = lists:foldr(fun(FA, A) -> [FA, {erlang, FA}|A] end,
+                                    [{erlang, {hibernate, 3}},
+                                     {timer, {tc, 3}}, {timer, {tc, 4}},
+                                     {fprof, {apply, 3}}, {fprof, {apply, 4}}],
+                                    [{apply, 3}, {spawn, 3}, {spawn_link, 3}, {spawn_monitor, 3}, {spawn_request, 3},
+                                     {spawn_opt, 4}, {spawn_request, 4}]) ::
+                            [{atom(), arity()}|{atom(), {atom(), arity()}}],
                 file = "" :: string()}).
 
 parse_transform(Forms, Options) ->
@@ -397,14 +404,44 @@ application_guard_ceil_floor(Node, Op) ->
                          [copy_pos(A, erl_syntax:infix_expr(A, copy_pos(A, erl_syntax:operator(Op)),
                                                             copy_pos(A, erl_syntax:float(0.5))))])).
 
-application_transform(#param{funs = L} = P, Node) ->
+application_transform(#param{funs = FL, apply = AL} = P, Node) ->
     A = erl_syntax_lib:analyze_application(Node),
+    application_transform(P,
+                          case lists:member(A, AL) of
+                              false -> Node;
+                              _true -> apply_transform(P, Node)
+                          end,
+                          A, FL).
+
+application_transform(P, Node, A, L) ->
     case L of
         #{A := {M, N}} ->
             replace_message(A, M, N, Node, P),
             application(M, N, Node, A);
         #{} -> false
     end.
+
+apply_transform(P, Node) ->
+    case erl_syntax:application_arguments(Node) of
+        [MT, FT|[AT|_] = T] ->
+            case erl_syntax:type(MT) =:= atom andalso erl_syntax:type(FT) =:= atom andalso
+                     erl_syntax:is_list_skeleton(AT) of
+                true ->
+                    A = {erl_syntax:atom_value(MT), {erl_syntax:atom_value(FT), erl_syntax:list_length(AT)}},
+                    case P#param.funs of
+                        #{A := {M, F}} ->
+                            replace_message(A, M, F, Node, P),
+                            erl_syntax:application(erl_syntax:application_operator(Node),
+                                                   lists:foldr(fun({X, Y}, L) -> [copy_pos(X, erl_syntax:atom(Y))|L] end,
+                                                               T, [{MT, M}, {FT, F}]));
+                        #{} -> Node
+                    end;
+                _false -> Node
+            end;
+        _ -> Node
+    end.
+
+-compile({inline, [application_transform/4, apply_transform/2]}).
 
 application(M, N, Node, A) ->
     application(M, N, Node, erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node), A).
