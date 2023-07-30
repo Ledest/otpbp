@@ -551,11 +551,12 @@ erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_i
 -compile({inline, [otp_release/0, erts_version/0]}).
 
 replace_message(_Node, #param{verbose = false}, _F, _NM, _NN) -> ok;
-replace_message(Node, #param{file = File}, F, NM, NN) -> do_replace_message(Node, File, F, NM, NN).
+replace_message(Node, #param{file = File}, F, NM, NN) -> replace_message_(erl_syntax:get_pos(Node), File, F, NM, NN).
 
-do_replace_message(Node, F, {M, {N, A}}, NM, NN) -> do_replace_message({lists:concat([M, ":", N]), A}, NM, NN, Node, F);
-do_replace_message(Node, F, {N, A}, NM, NN) ->
-    io:fwrite("~ts:~p: replace ~s/~B to ~s:~s/~B~n", [F, erl_syntax:get_pos(Node), N, A, NM, NN, A]).
+replace_message_(P, F, {M, {N, A}}, NM, NN) -> replace_message_(P, F, lists:concat([M, ":", N]), NM, NN, A);
+replace_message_(P, F, {N, A}, NM, NN) -> replace_message_(P, F, N, NM, NN, A).
+
+replace_message_(P, F, N, NM, NN, A) -> io:fwrite("~ts:~p: replace ~ts/~B to ~s:~ts/~B~n", [F, P, N, A, NM, NN, A]).
 
 cp(S, T) -> erl_syntax:copy_pos(S, T).
 
