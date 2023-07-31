@@ -175,6 +175,7 @@
                               {{queue, fold, 3}, otpbp_queue},
                               {{rand, bytes, 1}, otpbp_rand},
                               {{rand, bytes_s, 2}, otpbp_rand},
+                              {{rand, jump, [1, 2]}, otpbp_rand},
                               {{rand, [exsp_jump, exsp_next], 1}, otpbp_rand},
                               {{rand, [mwc59, mwc59_float, mwc59_value, mwc59_value32], 1}, otpbp_rand},
                               {{rand, mwc59_seed, [0, 1]}, otpbp_rand},
