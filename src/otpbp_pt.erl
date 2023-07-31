@@ -121,6 +121,7 @@
                               {{gen, debug_options, 2}, otpbp_gen},
                               {{gen_event, [start, start_link], 2}, otpbp_gen_event},
                               {{gen_event, start_monitor, [0, 1, 2]}, otpbp_gen_event},
+                              {{gen_server, start_monitor, [3, 4]}, otpbp_gen_server},
                               {{gen_statem, enter_loop, 4}, otpbp_gen_statem},
                               {{inet, [info, ipv4_mapped_ipv6_address], 1}, otpbp_inet},
                               {{io_lib, format, 3}, otpbp_io_lib},
