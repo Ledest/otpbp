@@ -234,6 +234,8 @@ Funs = [{application, get_supervisor, 1},
         {pg2, start, 0}, % OTP < 24.0
         {pg2, start_link, 0}, % OTP < 24.0
         {pg2, which_groups, 0}, % OTP < 24.0
+        {proc_lib, init_fail, 2},
+        {proc_lib, init_fail, 3},
         {proc_lib, start_monitor, 3},
         {proc_lib, start_monitor, 4},
         {proc_lib, start_monitor, 5},

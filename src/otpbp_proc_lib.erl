@@ -13,6 +13,21 @@
 -export([start_monitor/5]).
 -endif.
 
+-ifndef(HAVE_proc_lib__init_fail_2).
+% OTP 26.0
+-export([init_fail/2]).
+-endif.
+-ifndef(HAVE_proc_lib__init_fail_3).
+% OTP 26.0
+-export([init_fail/3]).
+-endif.
+
+-ifndef(HAVE_proc_lib__init_fail_2).
+-ifdef(HAVE_proc_lib__init_fail_3).
+-import(proc_lib, [init_fail/3]).
+-endif.
+-endif.
+
 -ifndef(HAVE_proc_lib__start_monitor_3).
 start_monitor(M, F, A) when is_atom(M), is_atom(F), is_list(A) -> start_monitor(M, F, A, infinity).
 -endif.
@@ -82,5 +97,20 @@ kill_flush(Pid) ->
     receive
         {'EXIT', Pid, _} -> ok
     after 0 -> ok
+    end.
+-endif.
+
+-ifndef(HAVE_proc_lib__init_fail_2).
+init_fail(Return, Exception) ->
+    [Parent|_] = get('$ancestors'),
+    init_fail(Parent, Return, Exception).
+-endif.
+
+-ifndef(HAVE_proc_lib__init_fail_3).
+init_fail(Parent, Return, Exception) ->
+    Parent ! {nack, self(), Return},
+    case Exception of
+        {Class, Reason} when Class =:= error; Class =:= exit; Class =:= throw -> erlang:Class(Reason);
+        {Class, Reason, Stacktrace} -> error(erlang:raise(Class, Reason, Stacktrace), [Parent, Return, Exception])
     end.
 -endif.
