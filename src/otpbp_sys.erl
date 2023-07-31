@@ -13,11 +13,8 @@ nlog_new() -> nlog_new(10).
 nlog_new([_|_] = NLog) -> nlog_new(10, NLog);
 nlog_new(N) -> [N]. % Empty log size N >= 1
 
-nlog_new(N, NLog) ->
-    lists:foldl(fun(Item, NL) -> nlog_put(Item, NL) end,
-                nlog_new(N), nlog_get(NLog)).
+nlog_new(N, NLog) -> lists:foldl(fun nlog_put/2, nlog_new(N), nlog_get(NLog)).
 
--compile({inline, [nlog_put/2]}).
 nlog_put(Item, [R|[_|F]]) when is_list(R) -> [[Item|R]|F];
 nlog_put(Item, [R|[]]) when is_list(R) ->
     [_|F] = lists:reverse(R, [Item]),
