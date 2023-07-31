@@ -167,6 +167,7 @@
                               {{pg2, [start, start_link, which_groups], 0}, otpbp_pg2},
                               {{pg2, [create, delete, get_closest_pid, get_local_members, get_members], 1}, otpbp_pg2},
                               {{pg2, [join, leave], 2}, otpbp_pg2},
+                              {{proc_lib, init_fail, [2, 3]}, otpbp_proc_lib},
                               {{proc_lib, start_monitor, [3, 4, 5]}, otpbp_proc_lib},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0
                               {{proplists, to_map, [1, 2]}, otpbp_proplists},
