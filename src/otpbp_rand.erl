@@ -132,7 +132,6 @@ bytes_s(N, {#{max := Mask, next := Next} = AlgHandler, R}) when is_integer(N), 0
     bytes_r(N, AlgHandler, Next, R, 58, 2).
 
 -compile({inline, [bytes_r/6]}).
-
 bytes_r(N, AlgHandler, Next, R, Bits, WeakLowBits) ->
     %% We use whole bytes from each generator word,
     %% GoodBytes: that number of bytes
@@ -173,7 +172,6 @@ uniform_real_s({#{next := Next} = Alg, R0}) ->
     uniform_real_s(Alg, V1, R1, Next).
 
 -compile({inline, [uniform_real_s/5]}).
-
 uniform_real_s(#{bits := Bits} = Alg, V1, R1, Next) ->
     case V1 bsr (Bits - 56) of
         M1 when ?BIT(55) =< M1 -> %% We have 56 bits - waste 3
@@ -281,7 +279,7 @@ exsplus_jump(S, [AS0|AS1], J, N) ->
                  case ?MASK(1, J) of
                      1 ->
                          [S0|S1] = S,
-                         [(AS0 bxor S0)|(AS1 bxor S1)];
+                         [AS0 bxor S0|AS1 bxor S1];
                      0 -> [AS0|AS1]
                  end,
                  J bsr 1,
