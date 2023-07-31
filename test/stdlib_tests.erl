@@ -632,16 +632,16 @@ math_test() ->
     ok.
 
 timer_test() ->
-    ?assertEqual(ok, case timer:tc(timer, sleep, [500], milli_seconds) of
+    ?assertEqual(ok, case timer:tc(timer, sleep, [500], millisecond) of
                          {Res, ok} when Res < 500 -> {too_early, Res};
                          {Res, ok} when Res > 800 -> {too_late, Res};
                          {_, ok} -> ok
                      end),
-    ?assertEqual(ok, try timer:tc(erlang, exit, [foo], seconds)
+    ?assertEqual(ok, try timer:tc(erlang, exit, [foo], second)
                      catch exit:foo -> ok
                      end),
     Self = self(),
-    ?assertMatch({_, Self}, timer:tc(erlang, self, [], seconds)),
+    ?assertMatch({_, Self}, timer:tc(erlang, self, [], second)),
     ok.
 
 -ifdef(OTP_RELEASE).
@@ -701,14 +701,14 @@ calendar_test() ->
     ?assertEqual("1969-12-31T00:01:00Z", test_parse("1970-01-01T00:00:00+23:59")),
     ?assertEqual("1918-11-11T09:00:00.000000Z", test_parse("1918-11-11T11:00:00+02:00", [{unit, microsecond}])),
     ?assertEqual("1970-01-01T00:00:00.000001Z", test_parse("1970-01-01T00:00:00.000001Z", [{unit, microsecond}])),
-    STS = erlang:system_time(seconds),
+    STS = erlang:system_time(second),
     ?assertEqual(STS, test_time(STS, [])),
     ?assertEqual(STS, test_time(STS, [{offset, "Z"}])),
     ?assertEqual(STS, test_time(STS, [{offset, "Z"}, {unit, second}])),
     ?assertEqual(STS, test_time(STS, [{offset, "+02:20"}])),
-    STMs = erlang:system_time(milli_seconds),
+    STMs = erlang:system_time(millisecond),
     ?assertEqual(STMs, test_time(STMs, [{unit, millisecond}])),
-    STUs = erlang:system_time(micro_seconds),
+    STUs = erlang:system_time(microsecond),
     ?assertEqual(STUs, test_time(STUs, [{unit, microsecond}, {offset, "-02:20"}])),
     TO = 946720800,
     ?assertEqual(TO, calendar:rfc3339_to_system_time("2000-01-01 10:00:00Z", [])),

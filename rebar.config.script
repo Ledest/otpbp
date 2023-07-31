@@ -357,11 +357,6 @@ lists:keystore(erl_opts, 1,
                                                                     non_existing -> SrcDirs ++ ["src_ext"];
                                                                     _ -> SrcDirs -- ["src_ext"]
                                                                 end}) ++
-                try erlang:convert_time_unit(1, second, second) of
-                    _ -> [{d, 'HAVE_NEW_TIME_UNITS'}]
-                catch
-                    _:_ -> []
-                end ++
                 lists:map(fun(E) ->
                               {d, list_to_atom(lists:flatten(io_lib:format("HAVE_~s__~s_~B",
                                                                            case E of

@@ -27,10 +27,6 @@
 -export([rfc3339_to_system_time/2]).
 -endif.
 
--ifdef(HAVE_NEW_TIME_UNITS).
--import(erlang, [convert_time_unit/3]).
--endif.
-
 -ifndef(HAVE_calendar__system_time_to_local_time_2).
 -ifdef(HAVE_calendar__system_time_to_universal_time_2).
 -import(calendar, [system_time_to_universal_time/2]).
@@ -45,10 +41,7 @@
 
 -ifndef(HAVE_calendar__system_time_to_universal_time_2).
 system_time_to_universal_time(Time, Unit) ->
-    calendar:gregorian_seconds_to_datetime(convert_time_unit(Time, Unit, second) + ?SECONDS_FROM_0_TO_1970).
--ifndef(NEED_convert_time_unit_3).
--define(NEED_convert_time_unit_3, true).
--endif.
+    calendar:gregorian_seconds_to_datetime(erlang:convert_time_unit(Time, Unit, second) + ?SECONDS_FROM_0_TO_1970).
 -endif.
 
 -ifndef(HAVE_calendar__system_time_to_local_time_2).
@@ -82,10 +75,10 @@ system_time_to_rfc3339(Time) ->
 system_time_to_rfc3339(Time, Options) ->
     case proplists:get_value(unit, Options, second) of
         native ->
-            system_time_to_rfc3339(convert_time_unit(Time, native, millisecond), Options, millisecond,
+            system_time_to_rfc3339(erlang:convert_time_unit(Time, native, millisecond), Options, millisecond,
                                    case proplists:get_value(offset, Options, "") of
                                        OffsetOpt when is_integer(OffsetOpt) ->
-                                           convert_time_unit(OffsetOpt, native, millisecond);
+                                           erlang:convert_time_unit(OffsetOpt, native, millisecond);
                                        OffsetOpt -> OffsetOpt
                                    end);
         Unit -> system_time_to_rfc3339(Time, Options, Unit, proplists:get_value(offset, Options, ""))
@@ -93,7 +86,7 @@ system_time_to_rfc3339(Time, Options) ->
 
 system_time_to_rfc3339(Time, Options, Unit, OffsetOption) ->
     AdjustmentSecs = offset_adjustment(Time, Unit, OffsetOption),
-    AdjustedTime = Time + convert_time_unit(AdjustmentSecs, second, Unit),
+    AdjustedTime = Time + erlang:convert_time_unit(AdjustmentSecs, second, Unit),
     Factor = factor(Unit),
     case AdjustedTime div Factor of
         Secs when Secs >= -?SECONDS_FROM_0_TO_1970, Secs < ?SECONDS_FROM_0_TO_10000 ->
@@ -107,9 +100,6 @@ system_time_to_rfc3339(Time, Options, Unit, OffsetOption) ->
         _ -> error({badarg, [Time, Options]})
     end.
 
--ifndef(NEED_convert_time_unit_3).
--define(NEED_convert_time_unit_3, true).
--endif.
 -ifndef(NEED_factor_1).
 -define(NEED_factor_1, true).
 -endif.
@@ -120,7 +110,7 @@ system_time_to_rfc3339(Time, Options, Unit, OffsetOption) ->
 offset_adjustment(Time, Unit, "") -> local_offset(Time, Unit);
 offset_adjustment(_Time, _Unit, OffsetString) when is_list(OffsetString) ->
     offset_string_adjustment(OffsetString);
-offset_adjustment(_Time, Unit, Offset) when is_integer(Offset) -> convert_time_unit(Offset, Unit, second).
+offset_adjustment(_Time, Unit, Offset) when is_integer(Offset) -> erlang:convert_time_unit(Offset, Unit, second).
 
 -ifndef(NEED_local_offset_2).
 -define(NEED_local_offset_2, true).
@@ -172,14 +162,11 @@ rfc3339_to_system_time(DateTimeString, Options) ->
     case Time - offset_string_adjustment(UtcOffset) of
         Secs when Secs >= -?SECONDS_FROM_0_TO_1970, Secs < ?SECONDS_FROM_0_TO_10000 ->
             Unit = proplists:get_value(unit, Options, second),
-            ScaledEpoch = convert_time_unit(Secs, second, Unit),
+            ScaledEpoch = erlang:convert_time_unit(Secs, second, Unit),
             ScaledEpoch + copy_sign(fraction(Unit, FractionStr), ScaledEpoch);
         _ -> error({badarg, [DateTimeString, Options]})
     end.
 
--ifndef(NEED_convert_time_unit_3).
--define(NEED_convert_time_unit_3, true).
--endif.
 -ifndef(NEED_datetime_str_1).
 -define(NEED_datetime_str_1, true).
 -endif.
@@ -208,10 +195,7 @@ local_offset(SystemTime, Unit) ->
         calendar:datetime_to_gregorian_seconds(UniversalTime).
 -endif.
 -ifdef(NEED_factor_1).
-factor(Unit) -> convert_time_unit(1, second, Unit).
--ifndef(NEED_convert_time_unit_3).
--define(NEED_convert_time_unit_3, true).
--endif.
+factor(Unit) -> erlang:convert_time_unit(1, second, Unit).
 -endif.
 -ifdef(NEED_offset_string_adjustment_1).
 offset_string_adjustment(TZ) when TZ =:= "Z"; TZ =:= "z" -> 0;
@@ -240,16 +224,4 @@ is_fraction_char(C) -> C =:= $. orelse C >= $0 andalso C =< $9.
 -endif.
 -ifdef(NEED_system_time_to_datetime_1).
 system_time_to_datetime(Seconds) -> calendar:gregorian_seconds_to_datetime(Seconds + ?SECONDS_FROM_0_TO_1970).
--endif.
-
--ifndef(HAVE_NEW_TIME_UNITS).
--ifdef(NEED_convert_time_unit_3).
-convert_time_unit(Time, FromUnit, ToUnit) -> erlang:convert_time_unit(Time, unit(FromUnit), unit(ToUnit)).
-
-unit(second) -> seconds;
-unit(millisecond) -> milli_seconds;
-unit(microsecond) -> micro_seconds;
-unit(nanosecond) -> nano_seconds;
-unit(Unit) -> Unit.
--endif.
 -endif.
