@@ -9,8 +9,8 @@
 interfaces(User) ->
     case process_info(User, dictionary) of
         {dictionary, Dict} ->
-            case lists:keysearch(shell, 1, Dict) of
-                {value, {shell, Shell} = Sh} when is_pid(Shell) -> [Sh];
+            case lists:keyfind(shell, 1, Dict) of
+                {_shell, Shell} = Sh when is_pid(Shell) -> [Sh];
                 _ -> []
             end;
         _ -> []
