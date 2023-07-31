@@ -1,7 +1,7 @@
 -module(otpbp_timer).
 
 -ifndef(HAVE_timer__tc_4).
-% OTP 25.3
+% OTP 26.0
 -export([tc/4]).
 -endif.
 
