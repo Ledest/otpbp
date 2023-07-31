@@ -277,6 +277,7 @@ parse_transform(Forms, Options) ->
         _ -> Forms
     end.
 
+-compile({inline, [get_funs/2]}).
 get_funs(AF, TL) ->
     lists:foldl(fun({M, Fs}, IA) ->
                     lists:foldl(fun(FA, IAM) ->
@@ -289,10 +290,9 @@ get_funs(AF, TL) ->
                 maps:without(get_no_auto_import(AF), TL),
                 proplists:get_value(imports, AF, [])).
 
+-compile({inline, [get_no_auto_import/1]}).
 get_no_auto_import(AF) ->
     proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
-
--compile({inline, [get_funs/2, get_no_auto_import/1]}).
 
 transform(Tree, P) ->
     case type(Tree) of
@@ -301,6 +301,7 @@ transform(Tree, P) ->
         _ -> {Tree, P}
     end.
 
+-compile({inline, [transform_function/2]}).
 transform_function(Tree, P) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
                                     case function_transform(E, P) of
@@ -312,6 +313,7 @@ transform_function(Tree, P) ->
         _ -> Tree
     end.
 
+-compile({inline, [transform_attribute/2]}).
 transform_attribute(Tree, P) ->
     case erl_syntax_lib:analyze_attribute(Tree) of
         {file, {F, _}} -> {Tree, P#param{file = F}};
@@ -331,14 +333,13 @@ transform_behaviour({_, _, _, B} = Tree, #param{behaviours = Bs}) ->
     end;
 transform_behaviour(Tree, _) -> Tree.
 
+-compile({inline, [check_behaviour/1]}).
 check_behaviour(B) ->
     try B:module_info(exports) of
         Exports -> lists:member({behaviour_info, 1}, Exports)
     catch
         _:_ -> false
     end.
-
--compile({inline, [transform_function/2, transform_attribute/2, check_behaviour/1]}).
 
 add_func(F, MF, D, I) -> lists:foldl(fun(A, Acc) -> add_func(setelement(I, F, A), MF, Acc) end, D, element(I, F)).
 
@@ -365,8 +366,8 @@ store_func(F, {_, _} = MF, D) -> D#{F => MF};
 store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
-transform_list() -> lists:foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, #{}, ?TRANSFORM_FUNCTIONS).
 -compile({inline, [transform_list/0]}).
+transform_list() -> lists:foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, #{}, ?TRANSFORM_FUNCTIONS).
 
 function_transform(Node, #param{} = P) ->
     case type(Node) of
@@ -377,6 +378,7 @@ function_transform(Node, #param{} = P) ->
         _ -> false
     end.
 
+-compile({inline, [conjunction_transform/1]}).
 conjunction_transform(Node) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
                                     case type(E) =:= application andalso application_transform_guard(E) of
@@ -388,29 +390,24 @@ conjunction_transform(Node) ->
         _ -> Node
     end.
 
--compile({inline, [conjunction_transform/1]}).
-
+-compile({inline, [application_transform_guard/1]}).
 application_transform_guard(Node) ->
     case erl_syntax_lib:analyze_application(Node) of
         {M, {N, _}} -> application_guard(Node, M, N);
         _ -> false
     end.
 
--compile({inline, [application_transform_guard/1]}).
-
+-compile({inline, [application_guard/3]}).
 application_guard(Node, otpbp_erlang, ceil) -> application_guard_ceil_floor(Node, '+');
 application_guard(Node, otpbp_erlang, floor) -> application_guard_ceil_floor(Node, '-');
 application_guard(_, _, _) -> false.
 
--compile({inline, [application_guard/3]}).
-
 application_guard_ceil_floor(Node, Op) ->
     [A] = erl_syntax:application_arguments(Node),
-    O = erl_syntax:application_operator(Node),
     cp(Node,
-       applicationr(erlang, round,
-                    [cp(A, erl_syntax:infix_expr(A, cp(A, erl_syntax:operator(Op)), cp(A, erl_syntax:float(0.5))))],
-                    O)).
+       application(remote, erl_syntax:application_operator(Node),
+                   [cp(A, erl_syntax:infix_expr(A, cp(A, erl_syntax:operator(Op)), cp(A, erl_syntax:float(0.5))))],
+                   erlang, round)).
 
 application_transform(Node, #param{funs = FL} = P) ->
     A = erl_syntax_lib:analyze_application(Node),
@@ -423,20 +420,21 @@ application_transform(Node, #param{funs = FL} = P) ->
             end
     end.
 
+-compile({inline, [application_transform/2]}).
 application_transform(Node, P, A, L) ->
     case L of
         #{A := {M, N}} ->
             replace_message(Node, P, A, M, N),
-            O = erl_syntax:application_operator(Node),
-            As = erl_syntax:application_arguments(Node),
             cp(Node,
-               case A of
-                   {_, {_, _}} -> applicationr(M, N, As, O);
-                   {_, _} -> applicationl(M, N, As, O)
-               end);
+               application(case A of
+                               {_, {_, _}} -> remote;
+                               {_, _} -> local
+                           end,
+                           erl_syntax:application_operator(Node), erl_syntax:application_arguments(Node), M, N));
         #{} -> false
     end.
 
+-compile({inline, [apply_transform/3]}).
 apply_transform(Node, #param{apply = AL} = P, A) ->
     lists:member(A, AL) andalso
         case erl_syntax:application_arguments(Node) of
@@ -456,14 +454,15 @@ apply_transform(Node, #param{apply = AL} = P, A) ->
             _ -> false
         end.
 
--compile({inline, [application_transform/2, apply_transform/3]}).
+application(local, O, As, M, N) -> application_(O, O, As, M, N);
+application(remote, O, As, M, N) -> application_(mqa(O), mqb(O), As, M, N).
 
-applicationl(M, N, As, O) -> application(atom(O, M), atom(O, N), As).
+application_(O1, O2, As, M, N) -> application_(atom(O1, M), atom(O2, N), As).
 
-applicationr(M, N, As, O) -> application(atom(mqa(O), M), atom(mqb(O), N), As).
+-compile({inline, [application_/3]}).
+application_(M, N, As) -> erl_syntax:application(cp(M, erl_syntax:module_qualifier(M, N)), As).
 
-application(M, N, As) -> erl_syntax:application(cp(M, erl_syntax:module_qualifier(M, N)), As).
-
+-compile({inline, [implicit_fun_transform/2]}).
 implicit_fun_transform(Node, #param{funs = L} = P) ->
     try erl_syntax_lib:analyze_implicit_fun(Node) of
         F -> case L of
@@ -483,8 +482,7 @@ implicit_fun_transform(Node, #param{funs = L} = P) ->
         throw:syntax_error -> false
     end.
 
--compile({inline, [implicit_fun_transform/2]}).
-
+-compile({inline, [try_expr_transform/1]}).
 try_expr_transform(Node) ->
     case lists:mapfoldr(fun(H, A) ->
                             case try_expr_handler_transform(H) of
@@ -499,6 +497,7 @@ try_expr_transform(Node) ->
                                    Hs, erl_syntax:try_expr_after(Node)))
     end.
 
+-compile({inline, [try_expr_handler_transform/1]}).
 try_expr_handler_transform(Node) ->
     case type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
         {P, {true, B}} ->
@@ -506,6 +505,7 @@ try_expr_handler_transform(Node) ->
         _ -> false
     end.
 
+-compile({inline, [try_expr_clause_patterns_transform/1]}).
 try_expr_clause_patterns_transform(Ps) ->
     lists:mapfoldr(fun(P, {_, L} = A) ->
                        case type(P) of
@@ -538,32 +538,33 @@ class_qualifier(P) -> class_qualifier(P, P, erl_syntax:atom('throw')).
 
 class_qualifier(P, B, C) -> cp(P, erl_syntax:class_qualifier(C, mqa(B))).
 
-match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, applicationl(erlang, get_stacktrace, [], M))))|L].
-
--compile({inline, [try_expr_transform/1, try_expr_handler_transform/1, try_expr_clause_patterns_transform/1]}).
+match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, application(local, M, [], erlang, get_stacktrace))))|L].
 
 atom(P, A) when is_tuple(P), is_atom(A) -> cp(P, erl_syntax:atom(A)).
 
+-compile({inline, [otp_release/0]}).
 otp_release() -> list_to_integer(erlang:system_info(otp_release)).
 
+-compile({inline, [erts_version/0]}).
 erts_version() -> lists:map(fun list_to_integer/1, string:tokens(erlang:system_info(version), ".")).
-
--compile({inline, [otp_release/0, erts_version/0]}).
 
 replace_message(_Node, #param{verbose = false}, _F, _NM, _NN) -> ok;
 replace_message(Node, #param{file = File}, F, NM, NN) -> replace_message_(erl_syntax:get_pos(Node), File, F, NM, NN).
 
+-compile({inline, [replace_message_/5]}).
 replace_message_(P, F, {M, {N, A}}, NM, NN) -> replace_message_(P, F, lists:concat([M, ":", N]), NM, NN, A);
 replace_message_(P, F, {N, A}, NM, NN) -> replace_message_(P, F, N, NM, NN, A).
 
 replace_message_(P, F, N, NM, NN, A) -> io:fwrite("~ts:~p: replace ~ts/~B to ~s:~ts/~B~n", [F, P, N, A, NM, NN, A]).
 
+-compile({inline, [cp/2]}).
 cp(S, T) -> erl_syntax:copy_pos(S, T).
 
+-compile({inline, [type/1]}).
 type(N) -> erl_syntax:type(N).
 
+-compile({inline, [mqa/1]}).
 mqa(N) -> erl_syntax:module_qualifier_argument(N).
 
+-compile({inline, [mqb/1]}).
 mqb(N) -> erl_syntax:module_qualifier_body(N).
-
--compile({inline, [cp/2, type/1, mqa/1, mqb/1]}).
