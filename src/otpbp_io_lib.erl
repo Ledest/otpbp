@@ -8,6 +8,9 @@
 % OTP 20.0
 -export([format/3]).
 -endif.
+-ifndef(HAVE_io_lib__write_atom_as_latin1_1).
+-export([write_atom_as_latin1/1]).
+-endif.
 
 -ifndef(HAVE_io_lib__limit_term_2).
 %% The intention is to mimic the depth limitation of io_lib:write()
@@ -122,4 +125,34 @@ test_limit_bitstring(_, _) -> ok.
 -ifndef(HAVE_io_lib__format_3).
 format(Format, Data, []) -> io_lib:format(Format, Data);
 format(Format, Data, [{chars_limit, L}]) when is_integer(L), L >= -1 -> io_lib:format(Format, Data).
+-endif.
+
+-ifndef(HAVE_io_lib__write_atom_as_latin1_1).
+write_atom_as_latin1(Atom) ->
+    Chars = atom_to_list(Atom),
+    case quote_atom(Atom, Chars) of
+        true -> io_lib:write_string_as_latin1(Chars, $');
+        false -> Chars
+    end.
+
+-compile({inline, [quote_atom/2]}).
+quote_atom(_Atom, []) -> true;
+quote_atom(Atom, [C|Cs]) when is_integer(C) ->
+    if
+        C >= $a, C =< $z; C >= $ß, C =< $ÿ, C =/= $÷ -> not name_chars(Cs) orelse erl_scan:reserved_word(Atom);
+        true -> true
+    end.
+
+name_chars([C|Cs]) when is_integer(C) -> name_char(C) andalso name_chars(Cs);
+name_chars([]) -> true.
+
+-compile({inline, [name_char/1]}).
+name_char(C) ->
+    C >= $0 andalso C =< $9 orelse
+    C >= $a andalso C =< $z orelse
+    C >= $A andalso C =< $Z orelse
+    C >= $ß andalso C =< $ÿ andalso C =/= $÷ orelse
+    C >= $À andalso C =< $Þ andalso C =/= $× orelse
+    C =:= $_ orelse
+    C =:= $@.
 -endif.
