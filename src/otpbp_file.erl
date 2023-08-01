@@ -6,6 +6,7 @@
 -endif.
 
 -ifndef(HAVE_file__delete_2).
+% OTP 24.0
 -export([delete/2]).
 -endif.
 
@@ -39,6 +40,7 @@ check_args([raw|Rest], _) -> check_args(Rest, raw);
 check_args([_Name|Rest], R) -> check_args(Rest, R);
 check_args([], R) -> R.
 
+-compile({inline, [file_name/1]}).
 file_name(N) when is_binary(N) -> N;
 file_name(N) ->
     try
