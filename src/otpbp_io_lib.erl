@@ -9,6 +9,7 @@
 -export([format/3]).
 -endif.
 -ifndef(HAVE_io_lib__write_atom_as_latin1_1).
+% OTP 20.0
 -export([write_atom_as_latin1/1]).
 -endif.
 
