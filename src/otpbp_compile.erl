@@ -31,6 +31,8 @@ env_compiler_options() ->
 -endif.
 
 -ifndef(HAVE_compile__iofile_1).
-iofile(F) when is_atom(F) -> iofile(atom_to_list(F));
-iofile(F) -> {filename:dirname(F), filename:basename(F, ".erl")}.
+iofile(F) when is_atom(F) -> iofile_(atom_to_list(F));
+iofile(F) -> iofile_(F).
+
+iofile_(F) -> {filename:dirname(F), filename:basename(F, ".erl")}.
 -endif.
