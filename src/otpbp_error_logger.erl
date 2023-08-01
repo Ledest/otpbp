@@ -2,18 +2,17 @@
 
 -compile([{parse_transform, otpbp_pt}]).
 
--ifdef(HAVE_error_logger__get_format_depth_0).
--import(error_logger, [get_format_depth/0]).
--endif.
-
 -ifndef(HAVE_error_logger__limit_term_1).
 % OTP 20.0
 -export([limit_term/1]).
 -endif.
-
 -ifndef(HAVE_error_logger__get_format_depth_0).
 % OTP 20.0
 -export([get_format_depth/0]).
+-endif.
+
+-ifdef(HAVE_error_logger__get_format_depth_0).
+-import(error_logger, [get_format_depth/0]).
 -endif.
 
 -ifndef(HAVE_error_logger__limit_term_1).
