@@ -127,7 +127,7 @@
                               {{io_lib, format, 3}, otpbp_io_lib},
                               {{io_lib, fwrite, 3}, {otpbp_io_lib, format}},
                               {{io_lib, limit_term, 2}, otpbp_io_lib},
-                              {{io_lib, write_atom_as_latin1, 1}, {io_lib, write_atom}},
+                              {{io_lib, write_atom_as_latin1, 1}, otpbp_io_lib},
                               {{lib, [flush_receive, progname], 0}, otpbp_lib},
                               {{lib, nonl, 1}, otpbp_lib},
                               {{lib, [error_message, send, sendw], 2}, otpbp_lib},
