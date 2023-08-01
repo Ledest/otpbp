@@ -85,7 +85,7 @@ ensure_path(Path) ->
     case filelib:is_dir(Path) of
         true -> ok;
         false ->
-            case filename:dirname(Path) of 
+            case filename:dirname(Path) of
                 Path -> {error, einval};
                 Parent ->
                     _ = ensure_path(Parent),
