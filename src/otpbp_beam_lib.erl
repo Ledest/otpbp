@@ -76,10 +76,9 @@ strip_fils(Files, AdditionalChunks) ->
 strip_file(File, AdditionalChunks) ->
     {Mod, Chunks} = read_significant_chunks(File, AdditionalChunks ++ significant_chunks()),
     {ok, Stripped} = beam_lib:build_module(Chunks),
-    strip_file(File, Mod, compress(Stripped)).
+    strip_file(File, Mod, zlib:gzip(Stripped)).
 
--compile({inline, [strip_file/3, read_significant_chunks/2, mandatory_chunks/0, filter_significant_chunks/3, compress/1]}).
-
+-compile({inline, [strip_file/3]}).
 strip_file(File, Mod, Stripped) when is_binary(File) -> {ok, {Mod, Stripped}};
 strip_file(File, Mod, Stripped) ->
     FileName = filename:rootname(File, ".beam") ++ ".beam",
@@ -92,18 +91,16 @@ strip_file(File, Mod, Stripped) ->
         Error -> file_error(FileName, Error)
     end.
 
+-compile({inline, [read_significant_chunks/2]}).
 read_significant_chunks(File, ChunkList) ->
     {ok, {Module, Chunks}} = beam_lib:chunks(File, ChunkList, [allow_missing_chunks]),
-    {Module, filter_significant_chunks(Chunks, mandatory_chunks(), File)}.
+    {Module, lists:filter(fun({_, Data}) when is_binary(Data) -> true;
+                             ({Id, missing_chunk}) ->
+                              lists:member(Id, mandatory_chunks()) andalso error({missing_chunk, File, Id})
+                          end, Chunks)}.
 
+-compile({inline, [mandatory_chunks/0]}).
 mandatory_chunks() -> ["Code", "ExpT", "ImpT", "StrT"].
-
-filter_significant_chunks(Chunks, Mandatory, File) ->
-    lists:filter(fun({_, Data}) when is_binary(Data) -> true;
-                    ({Id, missing_chunk}) -> lists:member(Id, Mandatory) andalso error({missing_chunk, File, Id})
-                 end, Chunks).
-
-compress(IOData) -> zlib:gzip(IOData).
 
 file_error(FileName, {error, Reason}) -> error({file_error, FileName, Reason}).
 -endif.
