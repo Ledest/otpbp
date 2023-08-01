@@ -52,6 +52,7 @@ where_is_file(T, File, D, Files) ->
         _false -> where_is_file(T, File)
     end.
 
+-compile({inline, [module_changed_on_disk/2]}).
 module_changed_on_disk(Module, Path) ->
     Arch = erlang:system_info(hipe_architecture),
     case Arch =/= undefined andalso code:is_module_native(Module) of
@@ -65,7 +66,6 @@ module_changed_on_disk(Module, Path) ->
                       _ -> undefined
                   end
     end =/= erlang:get_module_info(Module, md5).
--compile({inline, [module_changed_on_disk/2]}).
 
 -ifndef(HAVE_code__modified_modules_0).
 modified_modules() ->
