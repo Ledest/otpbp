@@ -1,15 +1,15 @@
 -module(otpbp_filename).
 
 -ifndef(HAVE_filename__basedir_2).
-% OTP-19.0
+% OTP 19.0
 -export([basedir/2]).
 -endif.
 -ifndef(HAVE_filename__basedir_3).
-% OTP-19.0
+% OTP 19.0
 -export([basedir/3]).
 -endif.
 -ifndef(HAVE_filename__safe_relative_path_1).
-% OTP-19.3
+% OTP 19.3
 -export([safe_relative_path/1]).
 -endif.
 
