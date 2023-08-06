@@ -1,5 +1,5 @@
 {application, otpbp, [{description, "OTP backports"},
-                      {vsn, "5.4.0"},
+                      {vsn, "5.4.1"},
                       {registered, []},
                       {applications, [kernel, stdlib]},
                       {modules, []},
@@ -7,4 +7,5 @@
                       {links, [{"GitHub", "https://github.com/Ledest/otpbp"}]},
                       {licenses, ["GPL-3.0+"]},
                       {build_tools, [rebar, rebar3]},
-                      {exclude_patterns, ["rebar.lock"]}]}.
+                      {include_paths, ["src_ext"]},
+                      {exclude_paths, ["rebar.lock"]}]}.
