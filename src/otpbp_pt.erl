@@ -271,7 +271,7 @@ parse_transform(Forms, Options) ->
                                                                                 end
                                                                              end, IA, Fs)
                                                                   end,
-                                                                  maps:without(get_no_auto_import(AF), TL),
+                                                                  maps:without(get_no_auto_import(AF, Options), TL),
                                                                   proplists:get_value(imports, AF, []))},
                                               Forms),
                      NF
@@ -285,11 +285,13 @@ parse_transform(Forms, Options) ->
         _ -> Forms
     end.
 
-get_no_auto_import(AF) ->
-    proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
+-compile({inline, [get_no_auto_import/2]}).
+get_no_auto_import(AF, Options) ->
+    lists:usort(proplists:append_values(no_auto_import,
+                                        proplists:append_values(compile,
+                                                                proplists:get_value(attributes, AF, [])) ++ Options)).
 
--compile({inline, [get_no_auto_import/1, transform/3]}).
-
+-compile({inline, [transform/3]}).
 transform(Tree, P, function) -> {transform_function(Tree, P), P};
 transform(Tree, P, attribute) -> transform_attribute(Tree, P);
 transform(Tree, P, _) -> {Tree, P}.
