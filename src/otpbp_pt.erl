@@ -255,7 +255,7 @@ parse_transform(Forms, Options) ->
                      {NF, _} = lists:mapfoldl(fun transform/2,
                                               #param{options = Options,
                                                      verbose = proplists:get_bool(verbose, Options),
-                                                     funs = get_funs(AF, TL)},
+                                                     funs = get_funs(AF, Options, TL)},
                                               Forms),
                      NF
             catch
@@ -268,8 +268,8 @@ parse_transform(Forms, Options) ->
         _ -> Forms
     end.
 
--compile({inline, [get_funs/2]}).
-get_funs(AF, TL) ->
+-compile({inline, [get_funs/3]}).
+get_funs(AF, Options, TL) ->
     lists:foldl(fun({M, Fs}, IA) ->
                     lists:foldl(fun(FA, IAM) ->
                                     case maps:find({M, FA}, TL) of
@@ -278,12 +278,14 @@ get_funs(AF, TL) ->
                                     end
                                  end, IA, Fs)
                 end,
-                maps:without(get_no_auto_import(AF), TL),
+                maps:without(get_no_auto_import(AF, Options), TL),
                 proplists:get_value(imports, AF, [])).
 
--compile({inline, [get_no_auto_import/1]}).
-get_no_auto_import(AF) ->
-    proplists:append_values(no_auto_import, proplists:append_values(compile, proplists:get_value(attributes, AF, []))).
+-compile({inline, [get_no_auto_import/2]}).
+get_no_auto_import(AF, Options) ->
+    lists:usort(proplists:append_values(no_auto_import,
+                                        proplists:append_values(compile,
+                                                                proplists:get_value(attributes, AF, [])) ++ Options)).
 
 transform(Tree, P) ->
     case type(Tree) of
