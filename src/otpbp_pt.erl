@@ -512,6 +512,19 @@ try_expr_clause_patterns_transform(Ps) ->
                                            underscore -> {class_qualifier(P, B), {true, L}};
                                            _ -> {P, A}
                                        end;
+                                   match_expr ->
+                                       E = erl_syntax:match_expr_body(B),
+                                       case erl_syntax:type(E) of
+                                           module_qualifier ->
+                                               M = mqb(E),
+                                               case erl_syntax:type(M) of
+                                                   variable ->
+                                                       {class_qualifier_match(P, B, E), {true, match_expr_list(M, L)}};
+                                                   underscore -> {class_qualifier_match(P, B, E), {true, L}};
+                                                   _ -> {P, A}
+                                               end;
+                                           _ -> {P, A}
+                                       end;
                                    _ -> {P, A}
                                end;
                            module_qualifier ->
@@ -530,6 +543,10 @@ class_qualifier(P, B) -> class_qualifier(P, B, erl_syntax:class_qualifier_argume
 class_qualifier(P) -> class_qualifier(P, P, erl_syntax:atom('throw')).
 
 class_qualifier(P, B, C) -> cp(P, erl_syntax:class_qualifier(C, mqa(B))).
+
+class_qualifier_match(P, B, E) ->
+    erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
+                               cp(B, erl_syntax:match_expr(erl_syntax:match_expr_pattern(B), mqa(E)))).
 
 match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, application(local, M, [], erlang, get_stacktrace))))|L].
 
