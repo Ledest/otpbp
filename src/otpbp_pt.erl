@@ -56,6 +56,7 @@
                               {{crypto, hmac_final_n, 2}, otpbp_crypto},
                               {{crypto, poly1305, 2}, otpbp_crypto},
                               {{crypto, mac, [3, 4]}, otpbp_crypto},
+                              {{crypto, macN, [4, 5]}, otpbp_crypto},
                               {{crypto, [dss_sign, rsa_sign], [2, 3]}, otpbp_crypto},
                               {{crypto, [dss_verify, rsa_verify], [3, 4]}, otpbp_crypto},
                               {{crypto, [md4_init, md5_init, sha_init], 0}, otpbp_crypto},
