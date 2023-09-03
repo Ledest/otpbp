@@ -114,6 +114,14 @@
 % OTP 22.1
 -export([mac/4]).
 -endif.
+-ifndef(HAVE_crypto__macN_5).
+% OTP 22.1
+-export([macN/5]).
+-endif.
+-ifndef(HAVE_crypto__macN_4).
+% OTP 22.1
+-export([macN/4]).
+-endif.
 
 -ifndef(HAVE_crypto__hmac_3).
 % OTP < 24
@@ -199,6 +207,16 @@
 -ifndef(HAVE_crypto__mac_3).
 -ifdef(HAVE_crypto__mac_4).
 -import(crypto, [mac/4]).
+-endif.
+-endif.
+-ifndef(HAVE_crypto__macN_5).
+-ifdef(HAVE_crypto__mac_4).
+-import(crypto, [mac/4]).
+-endif.
+-endif.
+-ifndef(HAVE_crypto__macN_4).
+-ifdef(HAVE_crypto__macN_5).
+-import(crypto, [macN/5]).
 -endif.
 -endif.
 
@@ -400,6 +418,14 @@ mac_cmac(T, Key, Data) -> mac_unknown(cmac, T, Key, Data).
 mac_unknown(T, SubType, Key, Data) -> error({badarg, {"mac.c", 229}, "Unknown mac algorithm"}, [T, SubType, Key, Data]).
 
 -compile({inline, [mac_hmac/3, mac_cmac/3, mac_unknown/4]}).
+-endif.
+
+-ifndef(HAVE_crypto__macN_5).
+macN(Type, SubType, Key, Data, MacLength) -> binary:part(mac(Type, SubType, Key, Data), 0, MacLength).
+-endif.
+
+-ifndef(HAVE_crypto__macN_4).
+macN(Type, Key, Data, MacLength) -> macN(Type, undefined, Key, Data, MacLength).
 -endif.
 
 -ifndef(HAVE_crypto__hmac_3).
