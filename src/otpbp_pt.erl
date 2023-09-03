@@ -514,10 +514,10 @@ try_expr_clause_patterns_transform(Ps) ->
                                        end;
                                    match_expr ->
                                        E = erl_syntax:match_expr_body(B),
-                                       case erl_syntax:type(E) of
+                                       case type(E) of
                                            module_qualifier ->
                                                M = mqb(E),
-                                               case erl_syntax:type(M) of
+                                               case type(M) of
                                                    variable ->
                                                        {class_qualifier_match(P, B, E), {true, match_expr_list(M, L)}};
                                                    underscore -> {class_qualifier_match(P, B, E), {true, L}};
