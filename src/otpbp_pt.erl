@@ -112,6 +112,7 @@
                               {{http_uri, scheme_defaults, 0}, otpbp_http_uri},
                               {{http_uri, [decode, encode], 1}, otpbp_http_uri},
                               {{http_uri, parse, [1, 2]}, otpbp_http_uri},
+                              {{httpd, [serve, start], 1}, otpbp_httpd},
                               {{httpd_util, hexlist_to_integer, 1}, http_util},
                               {{httpd_util, [flatlength, integer_to_hexlist, strip, suffix], 1}, otpbp_httpd_util},
                               {{gb_sets, [filtermap, is_equal, map], 2}, otp_gb_sets},
