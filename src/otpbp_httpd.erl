@@ -49,20 +49,21 @@ do_serve(#{help := true}) ->
 do_serve(#{address := Address, port := Port, directory := Path}) -> do_serve(Address, Port, Path).
 
 -compile({inline, [do_serve/3]}).
-do_serve({_, _, _, _} = Address, Port, Path) -> do_serve(Address, Port, Path, []);
-do_serve(Address, Port, Path) -> do_serve(Address, Port, Path, [{ipfamily, inet6}]).
+do_serve({_, _, _, _} = Address, Port, Path) -> do_serve(Address, Port, Path, inet);
+do_serve(Address, Port, Path) -> do_serve(Address, Port, Path, inet6).
 
-do_serve(Address, Port, Path, IpFamilyOpts) ->
+do_serve(Address, Port, Path, IpFamily) ->
     AbsPath = string:trim(filename:absname(Path), trailing, "/."),
     inets:start(),
     {ok, Pid} = httpd:start_service([{bind_address, Address},
+                                     {ipfamily, IpFamily},
                                      {document_root, AbsPath},
                                      {server_root, AbsPath},
                                      {directory_index, ["index.html"]},
                                      {port, Port},
                                      {mime_type, "application/octet-stream"},
                                      {mime_types, default_mime_types()},
-                                     {modules, [mod_alias, mod_dir, mod_get]}] ++ IpFamilyOpts),
+                                     {modules, [mod_alias, mod_dir, mod_get]}]),
     % This is needed to support random port assignment (--port 0)
     [{port, ActualPort}] = httpd:info(Pid, [port]),
     io:fwrite("~nStarted HTTP server on http://~s:~w at ~s~n", [inet:ntoa(Address), ActualPort, AbsPath]),
