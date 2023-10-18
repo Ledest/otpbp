@@ -632,6 +632,8 @@ math_test() ->
     ok.
 
 timer_test() ->
+    Self = self(),
+    % tc/4
     ?assertEqual(ok, case timer:tc(timer, sleep, [500], millisecond) of
                          {Res, ok} when Res < 500 -> {too_early, Res};
                          {Res, ok} when Res > 800 -> {too_late, Res};
@@ -640,9 +642,67 @@ timer_test() ->
     ?assertEqual(ok, try timer:tc(erlang, exit, [foo], second)
                      catch exit:foo -> ok
                      end),
-    Self = self(),
     ?assertMatch({_, Self}, timer:tc(erlang, self, [], second)),
     ok.
+
+-ifndef(MODULE).
+timer_apply_test() ->
+    Self = self(),
+    Msg = make_ref(),
+    % apply_after/2,3
+    ?assertMatch({ok, _}, timer:apply_after(0, fun erlang:send/2, [self(), {Msg, 2}])),
+    ?assertMatch({ok, _}, timer:apply_after(0, fun() -> Self ! {Msg, 3} end)),
+    ?assertEqual(ok, get_messes(200, Msg, [2, 3])),
+    ?assertMatch({ok, _}, timer:apply_after(100, fun erlang:send/2, [self(), {Msg, 2}])),
+    ?assertMatch({ok, _}, timer:apply_after(100, fun() -> Self ! {Msg, 3} end)),
+    ?assertEqual(ok, get_messes(200, Msg, [2, 3])),
+    ?assertEqual({error, badarg}, timer:apply_after(-1, fun() -> ok end)),
+    ?assertEqual({error, badarg}, timer:apply_after(0, foo)),
+    ?assertEqual({error, badarg}, timer:apply_after(0, fun(_X) -> ok end)),
+    ?assertEqual({error, badarg}, timer:apply_after(-1, fun(_X) -> ok end, [foo])),
+    ?assertEqual({error, badarg}, timer:apply_after(0, foo, [])),
+    ?assertEqual({error, badarg}, timer:apply_after(0, fun(_X) -> ok end, [])),
+    ?assertEqual({error, badarg}, timer:apply_after(0, fun(_X) -> ok end, [foo, bar])),
+    ?assertEqual({error, badarg}, timer:apply_after(0, fun(_X) -> ok end, foo)),
+    % apply_interval/2,3
+    {ok, Ref21} = timer:apply_interval(100, fun erlang:send/2, [self(), {Msg, 2}]),
+    {ok, Ref31} = timer:apply_interval(100, fun() -> Self ! {Msg, 3} end),
+    ?assertEqual(ok, get_messes(400, Msg, [2, 3], 3)),
+    ?assertEqual({ok, cancel}, timer:cancel(Ref21)),
+    ?assertEqual({ok, cancel}, timer:cancel(Ref31)),
+    ?assertEqual(nor, get_messes(200, Msg, [2, 3])),
+    Fn = fun(P, Idx) ->
+             P ! {Msg, Idx},
+             receive after 200 -> ok end
+         end,
+    {ok, Ref22} = timer:apply_interval(100, Fn, [self(), 2]),
+    {ok, Ref32} = timer:apply_interval(100, fun() -> Fn(Self, 3) end),
+    receive after 400 -> ok end,
+    ?assertEqual({ok, cancel}, timer:cancel(Ref22)),
+    ?assertEqual({ok, cancel}, timer:cancel(Ref32)),
+    ?assertEqual(ok, get_messes(200, Msg, [2, 3], 3)),
+    ?assertEqual(nor, get_messes(200, Msg, [2, 3])),
+    ?assertEqual({error, badarg}, timer:apply_interval(-1, fun() -> ok end)),
+    ?assertEqual({error, badarg}, timer:apply_interval(0, foo)),
+    ?assertEqual({error, badarg}, timer:apply_interval(0, fun(_X) -> ok end)),
+    ?assertEqual({error, badarg}, timer:apply_interval(-1, fun(_X) -> ok end, [foo])),
+    ?assertEqual({error, badarg}, timer:apply_interval(0, foo, [])),
+    ?assertEqual({error, badarg}, timer:apply_interval(0, fun(_X) -> ok end, [])),
+    ?assertEqual({error, badarg}, timer:apply_interval(0, fun(_X) -> ok end, [foo, bar])),
+    ?assertEqual({error, badarg}, timer:apply_interval(0, fun(_X) -> ok end, foo)),
+    ok.
+-endif.
+
+get_messes(Time, Mess, Indexes) -> get_messes(Time, Mess, Indexes, 1).
+
+get_messes(Time, Mess, Indexes, N) -> get_messes1(Time, Mess, lists:append(lists:duplicate(N, Indexes))).
+
+get_messes1(_, _, []) -> ok;
+get_messes1(Time, Mess, Indexes) ->
+    receive
+        {Mess, Index} -> get_messes1(Time, Mess, lists:delete(Index, Indexes))
+    after Time -> nor
+    end.
 
 -ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 21).

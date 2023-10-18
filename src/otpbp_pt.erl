@@ -217,6 +217,7 @@
                               {{string, [equal, pad, replace, take], 4}, otpbp_string},
                               {{supervisor, check_childspecs, 2}, otpbp_supervisor},
                               {{sys, get_log, 1}, otpbp_sys},
+                              {{timer, [apply_after, apply_interval], [2, 3]}, otpbp_timer},
                               {{timer, tc, 4}, otpbp_timer},
                               {{unicode_util, [spec_version, whitespace], 0}, otpbp_unicode_util},
                               {{unicode_util, [casefold, cp, gc, get_case, is_whitespace, lookup, lowercase, nfc, nfd,
