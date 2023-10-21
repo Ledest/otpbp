@@ -37,6 +37,7 @@
                               {{beam_lib, [strip, strip_files, strip_release], 2}, otpbp_beam_lib},
                               {{binary, [decode_hex, encode_hex], 1}, otpbp_binary},
                               {{binary, encode_hex, 2}, otpbp_binary},
+                              {{c, erlangrc, 1}, otpbp_c},
                               {{c, lm, 0}, otpbp_c},
                               {{c, mm, 0}, {otpbp_code, modified_modules}},
                               {{calendar, [rfc3339_to_system_time, system_time_to_rfc3339], [1, 2]}, otpbp_calendar},
