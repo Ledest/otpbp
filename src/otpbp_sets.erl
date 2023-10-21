@@ -13,15 +13,15 @@
 -export([new/1]).
 -endif.
 -ifndef(HAVE_sets__map_2).
-% OTP 26.1
+% OTP 27.0
 -export([map/2]).
 -endif.
 -ifndef(HAVE_sets__filtermap_2).
-% OTP 26.1
+% OTP 27.0
 -export([filtermap/2]).
 -endif.
 -ifndef(HAVE_sets__is_equal_2).
-% OTP 26.1
+% OTP 27.0
 -export([is_equal/2]).
 -endif.
 -ifndef(HAVE_sets__foreach_2).
