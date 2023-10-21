@@ -37,6 +37,7 @@
                               {{beam_lib, [strip, strip_files, strip_release], 2}, otpbp_beam_lib},
                               {{binary, [decode_hex, encode_hex], 1}, otpbp_binary},
                               {{binary, encode_hex, 2}, otpbp_binary},
+                              {{c, c, 3}, otpbp_c},
                               {{c, erlangrc, 1}, otpbp_c},
                               {{c, lm, 0}, otpbp_c},
                               {{c, mm, 0}, {otpbp_code, modified_modules}},
