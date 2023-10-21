@@ -14,6 +14,18 @@
 % OTP 21.0
 -export([erlangrc/1]).
 -endif.
+-ifndef(HAVE_c__h_1).
+% OTP 23.0
+-export([h/1]).
+-endif.
+-ifndef(HAVE_c__h_2).
+% OTP 23.0
+-export([h/2]).
+-endif.
+-ifndef(HAVE_c__h_3).
+% OTP 23.0
+-export([h/3]).
+-endif.
 
 -ifndef(HAVE_c__lm_0).
 lm() -> lists:map(fun c:l/1, c:mm()).
@@ -179,4 +191,16 @@ src_suffix([]) -> ".erl".
 outdir([{outdir, D}|_]) -> D;
 outdir([_|Rest]) -> outdir(Rest);
 outdir([]) -> ".".
+-endif.
+
+-ifndef(HAVE_c__h_1).
+h(M) when is_atom(M) -> {error, missing}.
+-endif.
+
+-ifndef(HAVE_c__h_2).
+h(M, F) when is_atom(M), is_atom(F) -> {error, missing}.
+-endif.
+
+-ifndef(HAVE_c__h_3).
+h(M, F, A) when is_atom(M), is_atom(F), is_integer(A) -> {error, missing}.
 -endif.
