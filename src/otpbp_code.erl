@@ -127,7 +127,7 @@ comp_modules(A, B) -> A =< B.
 -endif.
 
 -ifndef(HAVE_code__get_doc_1).
-get_doc(_Mod) -> {error, missing}.
+get_doc(M) when is_atom(M) -> {error, missing}.
 -endif.
 
 -ifndef(HAVE_code__module_status_0).
