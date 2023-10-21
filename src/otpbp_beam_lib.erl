@@ -55,9 +55,10 @@ strip_release(Root, AdditionalChunks) -> catch strip_rel(Root, AdditionalChunks)
 -define(NEED_error_1, true).
 -endif.
 
+-compile({inline, [strip_rel/2]}).
 strip_rel(Root, AdditionalChunks) ->
     filelib:is_dir(Root) orelse error({not_a_directory, Root}),
-    strip_fils(filelib:wildcard(filename:join(Root, "lib/*/ebin/*.beam")), AdditionalChunks).
+    strip_fils(filelib:wildcard(filename:join([Root, "lib", "*", "ebin", "*.beam"])), AdditionalChunks).
 -endif.
 
 -ifdef(NEED_strip_fils_2).
