@@ -39,7 +39,7 @@
                               {{binary, encode_hex, 2}, otpbp_binary},
                               {{c, c, 3}, otpbp_c},
                               {{c, erlangrc, 1}, otpbp_c},
-                              {{c, h, [1, 2, 3]}, otpbp_c},
+                              {{c, [h, hcb], [1, 2, 3]}, otpbp_c},
                               {{c, lm, 0}, otpbp_c},
                               {{c, mm, 0}, {otpbp_code, modified_modules}},
                               {{calendar, [rfc3339_to_system_time, system_time_to_rfc3339], [1, 2]}, otpbp_calendar},
