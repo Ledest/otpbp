@@ -360,8 +360,7 @@ maps_test() ->
     ?assertMatch(#{1 := 1, 10 := 10, 21 := 21 * 21, 30 := 30 * 30}, M3),
     ?assertNot(maps:is_key(11, M3)),
     ?assertNot(maps:is_key(20, M3)),
-    % maps:iterator/1 requires Erlang/OTP >= 21
-    %?assertEqual(M3, maps:filtermap(Pred, maps:iterator(M0))),
+    ?assertEqual(M3, maps:filtermap(Pred, maps:iterator(M0))),
     % Errors
     ?assertError({badmap, a}, maps:filtermap(fun(_, _) -> ok end, a)),
     ?assertError(badarg, maps:filtermap(<<>>, #{})),
