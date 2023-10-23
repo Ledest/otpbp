@@ -244,9 +244,8 @@ maps_test() ->
     ?assertMatch(#{key3 := Init}, maps:update_with(key3, Fun, Init, Map)),
     ?assertError({badmap, b}, maps:update_with([a, b], a, Init, b)),
     ?assertError(badarg, maps:update_with([a, b], a, Init, #{})),
-    % Disabled for Erlang/OTP < 18
-    %?assertError({badmap,a}, maps:size(a)),
-    %?assertError({badmap,<<>>}, maps:size(<<>>)),
+    ?assertError({badmap, a}, maps:size(a)),
+    ?assertError({badmap, <<>>}, maps:size(<<>>)),
     %% iterator/1
     % Small map test
     M4 = #{a => 1, b => 2},
