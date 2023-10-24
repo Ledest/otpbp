@@ -831,3 +831,104 @@ test_parse(String, Options) -> calendar:system_time_to_rfc3339(calendar:rfc3339_
 
 test_time(Time, Options) -> calendar:rfc3339_to_system_time(calendar:system_time_to_rfc3339(Time, Options), Options).
 -endif.
+
+unicode_test() ->
+    list_to_integer(erlang:system_info(otp_release)) >= 24 andalso
+    begin
+    ?assertError(badarg, unicode:characters_to_nfc_list({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfd_list({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfkc_list({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfkd_list({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfc_binary({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfd_binary({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfkc_binary({tuple})),
+    ?assertError(badarg, unicode:characters_to_nfkd_binary({tuple}))
+    end,
+    String = ["abc..åäö", <<"Ωµe`è"/utf8>>, "œŒþæÆħ§ß ホンダ"],
+    NFD_l = unicode:characters_to_nfd_list(String),
+    NFD_b = unicode:characters_to_nfd_binary(String),
+    NFC_l = unicode:characters_to_nfc_list(String),
+    NFC_b = unicode:characters_to_nfc_binary(String),
+    %
+    ?assertEqual(NFD_l, unicode:characters_to_nfd_list(NFD_l)),
+    ?assertEqual(NFD_l, unicode:characters_to_nfd_list(NFD_b)),
+    ?assertEqual(NFD_l, unicode:characters_to_nfd_list(NFC_l)),
+    ?assertEqual(NFD_l, unicode:characters_to_nfd_list(NFC_b)),
+    %
+    ?assertEqual(NFD_b, unicode:characters_to_nfd_binary(NFD_b)),
+    ?assertEqual(NFD_b, unicode:characters_to_nfd_binary(NFD_l)),
+    ?assertEqual(NFD_b, unicode:characters_to_nfd_binary(NFC_b)),
+    ?assertEqual(NFD_b, unicode:characters_to_nfd_binary(NFC_l)),
+    %
+    ?assertEqual(NFC_l, unicode:characters_to_nfc_list(NFD_l)),
+    ?assertEqual(NFC_l, unicode:characters_to_nfc_list(NFD_b)),
+    ?assertEqual(NFC_l, unicode:characters_to_nfc_list(NFC_l)),
+    ?assertEqual(NFC_l, unicode:characters_to_nfc_list(NFC_b)),
+    %
+    ?assertEqual(NFC_b, unicode:characters_to_nfc_binary(NFD_b)),
+    ?assertEqual(NFC_b, unicode:characters_to_nfc_binary(NFD_l)),
+    ?assertEqual(NFC_b, unicode:characters_to_nfc_binary(NFC_b)),
+    ?assertEqual(NFC_b, unicode:characters_to_nfc_binary(NFC_l)),
+    %
+    Str = [lists:duplicate(20,lists:seq($a, $q))|String],
+    StrD_bin = unicode:characters_to_binary(unicode:characters_to_nfd_list(Str)),
+    ?assertEqual(StrD_bin, unicode:characters_to_nfd_binary(Str)),
+    StrC_bin = unicode:characters_to_binary(unicode:characters_to_nfc_list(StrD_bin)),
+    ?assertEqual(StrC_bin, unicode:characters_to_nfc_binary(Str)),
+    %
+    NFKD_l = unicode:characters_to_nfkd_list(String),
+    NFKD_b = unicode:characters_to_nfkd_binary(String),
+    NFKC_l = unicode:characters_to_nfkc_list(String),
+    NFKC_b = unicode:characters_to_nfkc_binary(String),
+    %
+    ?assertEqual(NFKD_l, unicode:characters_to_nfkd_list(NFKD_l)),
+    ?assertEqual(NFKD_l, unicode:characters_to_nfkd_list(NFKD_b)),
+    ?assertEqual(NFKD_l, unicode:characters_to_nfkd_list(NFKC_l)),
+    ?assertEqual(NFKD_l, unicode:characters_to_nfkd_list(NFKC_b)),
+    %
+    ?assertEqual(NFKD_b, unicode:characters_to_nfd_binary(NFKD_b)),
+    ?assertEqual(NFKD_b, unicode:characters_to_nfd_binary(NFKD_l)),
+    ?assertEqual(NFKD_b, unicode:characters_to_nfd_binary(NFKC_b)),
+    ?assertEqual(NFKD_b, unicode:characters_to_nfd_binary(NFKC_l)),
+    %
+    ?assertEqual(NFKC_l, unicode:characters_to_nfc_list(NFKD_l)),
+    ?assertEqual(NFKC_l, unicode:characters_to_nfc_list(NFKD_b)),
+    ?assertEqual(NFKC_l, unicode:characters_to_nfc_list(NFKC_l)),
+    ?assertEqual(NFKC_l, unicode:characters_to_nfc_list(NFKC_b)),
+    %
+    ?assertEqual(NFKC_b, unicode:characters_to_nfc_binary(NFKD_b)),
+    ?assertEqual(NFKC_b, unicode:characters_to_nfc_binary(NFKD_l)),
+    ?assertEqual(NFKC_b, unicode:characters_to_nfc_binary(NFKC_b)),
+    ?assertEqual(NFKC_b, unicode:characters_to_nfc_binary(NFKC_l)),
+    %
+    StrKD_bin = unicode:characters_to_binary(unicode:characters_to_nfkd_list(Str)),
+    ?assertEqual(StrKD_bin, unicode:characters_to_nfkd_binary(Str)),
+    StrKC_bin = unicode:characters_to_binary(unicode:characters_to_nfkc_list(StrD_bin)),
+    ?assertEqual(StrKC_bin, unicode:characters_to_nfkc_binary(Str)),
+    %
+    ?assertEqual(unicode:characters_to_nfkc_list("ホンダ"), unicode:characters_to_nfkc_list("ﾎﾝﾀﾞ")),
+    ?assertEqual(unicode:characters_to_nfkd_list("32"), unicode:characters_to_nfkd_list("３２")),
+    %
+    ?assertEqual({error, [0], <<128>>}, unicode:characters_to_nfc_list(<<0, 128>>)),
+    ?assertEqual({error, [0], <<128>>}, unicode:characters_to_nfkc_list(<<0, 128>>)),
+    ?assertEqual({error, [0], <<128>>}, unicode:characters_to_nfd_list(<<0, 128>>)),
+    ?assertEqual({error, [0], <<128>>}, unicode:characters_to_nfkd_list(<<0, 128>>)),
+    %
+    ?assertEqual({error, <<0>>, <<128>>}, unicode:characters_to_nfc_binary(<<0, 128>>)),
+    ?assertEqual({error, <<0>>, <<128>>}, unicode:characters_to_nfkc_binary(<<0, 128>>)),
+    ?assertEqual({error, <<0>>, <<128>>}, unicode:characters_to_nfd_binary(<<0, 128>>)),
+    ?assertEqual({error, <<0>>, <<128>>}, unicode:characters_to_nfkd_binary(<<0, 128>>)),
+    %
+    LargeBin = binary:copy(<<"abcde">>, 50),
+    LargeList = binary_to_list(LargeBin),
+    %
+    ?assertEqual({error, LargeList, <<128>>}, unicode:characters_to_nfc_list(<<LargeBin/binary, 128>>)),
+    ?assertEqual({error, LargeList, <<128>>}, unicode:characters_to_nfkc_list(<<LargeBin/binary, 128>>)),
+    ?assertEqual({error, LargeList, <<128>>}, unicode:characters_to_nfd_list(<<LargeBin/binary, 128>>)),
+    ?assertEqual({error, LargeList, <<128>>}, unicode:characters_to_nfkd_list(<<LargeBin/binary, 128>>)),
+    %
+    ?assertEqual({error, LargeBin, <<128>>}, unicode:characters_to_nfc_binary(<<LargeBin/binary, 128>>)),
+    ?assertEqual({error, LargeBin, <<128>>}, unicode:characters_to_nfkc_binary(<<LargeBin/binary, 128>>)),
+    ?assertEqual({error, LargeBin, <<128>>}, unicode:characters_to_nfd_binary(<<LargeBin/binary, 128>>)),
+    ?assertEqual({error, LargeBin, <<128>>}, unicode:characters_to_nfkd_binary(<<LargeBin/binary, 128>>)),
+    ok.
