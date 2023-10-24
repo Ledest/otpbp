@@ -367,10 +367,10 @@ to_lower(Cs) when is_binary(Cs) -> to_lower_(Cs);
 to_lower(Cs) when is_list(Cs) -> convert_to_list(to_lower_(convert_to_binary(Cs, utf8, utf8)), utf8).
 
 to_lower_(Cs) ->
-    <<if
-          C >= $A, C =< $Z -> <<(C + ($a -$A))>>;
-          true -> <<C>>
-      end || <<C>> <= Cs>>.
+    <<<<(if
+             C >= $A, C =< $Z -> C + ($a -$A);
+             true -> C
+         end)>> || <<C>> <= Cs>>.
 
 -compile({inline, normalize_scheme_based/1}).
 normalize_scheme_based(Map) ->
