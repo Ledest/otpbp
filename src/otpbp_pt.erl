@@ -90,6 +90,8 @@
                               {{disk_log_server, all, 0}, otpbp_disk_log_server},
                               {{edlin, keymap, 0}, otpbp_edlin},
                               {{epp, scan_file, [1, 2]}, otpbp_epp},
+                              {{erl_epmd, listen_port_please, 2}, otpbp_erl_epmd},
+                              {{erl_epmd, port_please, [2, 3]}, otpbp_erl_epmd},
                               {{erl_error, format_fun, [1, 2]}, lib},
                               {{erl_error, [format_call, format_stacktrace], [4, 5]}, lib},
                               {{erl_error, format_exception, [6, 7]}, lib},
