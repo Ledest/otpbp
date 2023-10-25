@@ -4,6 +4,11 @@
 % OTP 21.0
 -export([ipv4_mapped_ipv6_address/1]).
 -endif.
+-ifndef(HAVE_inet__ensure_sockaddr_1).
+% OTP 24.0
+-export([ensure_sockaddr/1]).
+-compile({parse_transform, otpbp_pt}).
+-endif.
 -ifndef(HAVE_inet__info_1).
 % OTP 24.0
 -export([info/1]).
@@ -15,6 +20,15 @@ ipv4_mapped_ipv6_address({D1, D2, D3, D4}) when (D1 bor D2 bor D3 bor D4) =< 16#
 ipv4_mapped_ipv6_address({D1, D2, D3, D4, D5, D6, D7, D8})
   when (D1 bor D2 bor D3 bor D4 bor D5 bor D6 bor D7 bor D8) =< 16#FFFF ->
     {D7 bsr 8, D7 band 16#FF, D8 bsr 8, D8 band 16#FF}.
+-endif.
+
+-ifndef(HAVE_inet__ensure_sockaddr_1).
+ensure_sockaddr(SockAddr) ->
+    try
+        prim_socket:enc_sockaddr(SockAddr)
+    catch
+        throw:{invalid, Invalid}:Stacktrace -> erlang:raise(error, {invalid, Invalid}, Stacktrace)
+    end.
 -endif.
 
 -ifndef(HAVE_inet__info_1).

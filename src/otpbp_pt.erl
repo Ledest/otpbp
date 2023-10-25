@@ -139,7 +139,7 @@
                               {{gen_event, start_monitor, [0, 1, 2]}, otpbp_gen_event},
                               {{gen_server, start_monitor, [3, 4]}, otpbp_gen_server},
                               {{gen_statem, enter_loop, 4}, otpbp_gen_statem},
-                              {{inet, [info, ipv4_mapped_ipv6_address], 1}, otpbp_inet},
+                              {{inet, [ensure_sockaddr, info, ipv4_mapped_ipv6_address], 1}, otpbp_inet},
                               {{io_lib, format, 3}, otpbp_io_lib},
                               {{io_lib, fwrite, 3}, {otpbp_io_lib, format}},
                               {{io_lib, limit_term, 2}, otpbp_io_lib},
