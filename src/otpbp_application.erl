@@ -17,6 +17,10 @@
 -endif.
 -endif.
 
+-ifndef(HAVE_application__ensure_all_started_3).
+% OTP 26.0
+-export([ensure_all_started/3]).
+-endif.
 -ifndef(HAVE_application_controller__get_supervisor_2).
 % OTP 26.0
 -export([get_supervisor/1]).
@@ -36,8 +40,12 @@ set_env(Config) when is_list(Config) -> set_env(Config, []).
 -endif.
 -endif.
 
+-ifndef(HAVE_application__ensure_all_started_3).
+ensure_all_started(Applications, Type, Mode) when Mode =:= serial; Mode =:= concurrent ->
+    application:ensure_all_started(Applications, Type).
+-endif.
+
 -ifndef(HAVE_application_controller__get_supervisor_2).
-% OTP 25.3
 get_supervisor(Application) when is_atom(Application) ->
     case application_controller:get_master(Application) of
         undefined -> undefined;
