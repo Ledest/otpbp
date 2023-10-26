@@ -141,6 +141,8 @@
                               {{gen_server, start_monitor, [3, 4]}, otpbp_gen_server},
                               {{gen_statem, enter_loop, 4}, otpbp_gen_statem},
                               {{gen_tcp, connect, 2}, otpbp_gen_tcp},
+                              {{gen_udp, connect, 2}, otpbp_gen_udp},
+                              {{gen_udp, send, [3, 5]}, otpbp_gen_udp},
                               {{inet,
                                 [ensure_sockaddr, gen_tcp_module, gen_udp_module, info,
                                  ipv4_mapped_ipv6_address, is_ip_address, is_ipv4_address, is_ipv6_address],
