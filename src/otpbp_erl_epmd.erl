@@ -41,8 +41,16 @@ port_please(Node, HostName) -> port_please(Node, HostName, infinity).
 -endif.
 
 -ifndef(HAVE_erl_epmd__port_please_3).
+-ifdef(ERL_DIST_VER_HIGH).
 -define(epmd_dist_high, ?ERL_DIST_VER_HIGH).
+-else.
+-define(epmd_dist_high, 5).
+-endif.
+-ifdef(ERL_DIST_VER_LOW).
 -define(epmd_dist_low, ?ERL_DIST_VER_LOW).
+-else.
+-define(epmd_dist_low, 5).
+-endif.
 
 port_please(Node, HostName, Timeout) ->
     case listen_port_please(Node, HostName) of
