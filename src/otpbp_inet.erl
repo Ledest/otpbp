@@ -4,6 +4,10 @@
 % OTP 21.0
 -export([ipv4_mapped_ipv6_address/1]).
 -endif.
+-ifndef(HAVE_inet__gen_tcp_module_1).
+% OTP 23.0
+-export([gen_tcp_module/1]).
+-endif.
 -ifndef(HAVE_inet__ensure_sockaddr_1).
 % OTP 24.0
 -export([ensure_sockaddr/1]).
@@ -12,6 +16,10 @@
 -ifndef(HAVE_inet__info_1).
 % OTP 24.0
 -export([info/1]).
+-endif.
+-ifndef(HAVE_inet__gen_udp_module_1).
+% OTP 24.1
+-export([gen_udp_module/1]).
 -endif.
 -ifndef(HAVE_inet__is_ip_address_1).
 % OTP 25.0
@@ -41,6 +49,10 @@ ipv4_mapped_ipv6_address({D1, D2, D3, D4}) when (D1 bor D2 bor D3 bor D4) =< 16#
 ipv4_mapped_ipv6_address({D1, D2, D3, D4, D5, D6, D7, D8})
   when (D1 bor D2 bor D3 bor D4 bor D5 bor D6 bor D7 bor D8) =< 16#FFFF ->
     {D7 bsr 8, D7 band 16#FF, D8 bsr 8, D8 band 16#FF}.
+-endif.
+
+-ifndef(HAVE_inet__gen_tcp_module_1).
+gen_tcp_module(Opts) -> {gen_tcp, Opts}.
 -endif.
 
 -ifndef(HAVE_inet__ensure_sockaddr_1).
@@ -74,6 +86,10 @@ port_info(PI, Items) -> port_info(PI, Items, []).
 
 port_info(_PI, [], Acc) -> Acc;
 port_info(PI, [Item | Items], Acc) -> port_info(PI, Items, [{Item, proplists:get_value(Item, PI)}|Acc]).
+-endif.
+
+-ifndef(HAVE_inet__gen_udp_module_1).
+gen_udp_module(Opts) -> {gen_udp, Opts}.
 -endif.
 
 -ifndef(HAVE_inet__is_ip_address_1).
