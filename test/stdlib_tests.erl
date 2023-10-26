@@ -608,7 +608,7 @@ math_test() ->
     % floor/1
     ?assertEqual(-43.0, math:floor(-42.1)),
     ?assertEqual(-43.0, math:floor(-42.7)),
-    ?assertEqual(0.0, math:floor(-0.0)),
+    ?assert(0.0 == math:floor(-0.0)),
     ?assertEqual(10.0, math:floor(10.1)),
     ?assertEqual(10.0, math:floor(10.9)),
     ?assertEqual(-533.0, math:floor(-533.0)),
@@ -618,7 +618,7 @@ math_test() ->
     % ceil/1
     ?assertEqual(-42.0, math:ceil(-42.1)),
     ?assertEqual(-42.0, math:ceil(-42.7)),
-    ?assertEqual(0.0, math:ceil(-0.0)),
+    ?assert(0.0 == math:ceil(-0.0)),
     ?assertEqual(11.0, math:ceil(10.1)),
     ?assertEqual(11.0, math:ceil(10.9)),
     ?assertEqual(-533.0, math:ceil(-533.0)),
