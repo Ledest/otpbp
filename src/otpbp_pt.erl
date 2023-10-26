@@ -140,6 +140,7 @@
                               {{geb_sctp, [connect, connect_init], 3}, otpbp_gen_sctp},
                               {{gen_server, start_monitor, [3, 4]}, otpbp_gen_server},
                               {{gen_statem, enter_loop, 4}, otpbp_gen_statem},
+                              {{gen_tcp, connect, 2}, otpbp_gen_tcp},
                               {{inet,
                                 [ensure_sockaddr, gen_tcp_module, gen_udp_module, info,
                                  ipv4_mapped_ipv6_address, is_ip_address, is_ipv4_address, is_ipv6_address],
