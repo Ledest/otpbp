@@ -44,7 +44,7 @@ serve_cli() ->
       handler => fun do_serve/1}.
 
 do_serve(#{help := true}) ->
-    io:fwrite("~ts", [argparse:help(serve_cli())]),
+    io:put_chars(argparse:help(serve_cli())),
     halt(0);
 do_serve(#{address := Address, port := Port, directory := Path}) -> do_serve(Address, Port, Path).
 
