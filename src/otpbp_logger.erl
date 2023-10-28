@@ -91,18 +91,19 @@ i(What) -> error(badarg, [What]).
 
 -ifdef(NEED_modifier_0).
 i_primary(#{level := Level, filters := Filters, filter_default := FilterDefault}, M) ->
-    io:format("Primary configuration: ~n", []),
-    io:format("    Level: ~p~n", [Level]),
-    io:format("    Filter Default: ~p~n", [FilterDefault]),
-    io:format("    Filters: ~n", []),
+    io:fwrite("Primary configuration: ~n",
+              "    Level: ~p~n"
+              "    Filter Default: ~p~n"
+              "    Filters: ~n",
+              [Level, FilterDefault]),
     print_filters("        ", Filters, M).
 
 i_handlers(HandlerConfigs, M) ->
-    io:format("Handler configuration: ~n", []),
+    io:put_chars("Handler configuration: \n"),
     print_handlers(HandlerConfigs, M).
 
 i_modules(Modules, M) ->
-    io:format("Level set per module: ~n", []),
+    io:put_chars("Level set per module: \n"),
     print_module_levels(Modules,M).
 
 encoding() ->
@@ -117,17 +118,17 @@ modifier(latin1) -> "";
 modifier(_) -> "t".
 
 print_filters(Indent, {Id, {Fun, Arg}}, M) ->
-    io:format("~sId: ~" ++ M ++ "p~n"
+    io:fwrite("~sId: ~" ++ M ++ "p~n"
               "~s    Fun: ~" ++ M ++ "p~n"
               "~s    Arg: ~" ++ M ++ "p~n",
               [Indent, Id, Indent, Fun, Indent, Arg]);
-print_filters(Indent, [], _M) -> io:format("~s(none)~n", [Indent]);
+print_filters(Indent, [], _M) -> io:fwrite("~s(none)~n", [Indent]);
 print_filters(Indent, Filters, M) -> lists:foreach(fun(Filter) -> print_filters(Indent, Filter, M) end, Filters).
 
 print_handlers(#{id := Id, module := Module, level := Level, filters := Filters, filter_default := FilterDefault,
                  formatter := {FormatterModule, FormatterConfig}} = Config,
                M) ->
-    io:format("    Id: ~" ++ M ++ "p~n"
+    io:fwrite("    Id: ~" ++ M ++ "p~n"
               "        Module: ~p~n"
               "        Level:  ~p~n"
               "        Formatter:~n"
@@ -135,37 +136,37 @@ print_handlers(#{id := Id, module := Module, level := Level, filters := Filters,
               "            Config:~n",
               [Id, Module, Level, FormatterModule]),
     print_custom("                ", FormatterConfig, M),
-    io:format("        Filter Default: ~p~n"
+    io:fwrite("        Filter Default: ~p~n"
               "        Filters:~n",
               [FilterDefault]),
     print_filters("            ", Filters, M),
     case Config of
         #{config := HandlerConfig} ->
-            io:format("        Handler Config:~n"),
+            io:put_chars("        Handler Config:\n"),
             print_custom("            ", HandlerConfig, M);
         _ -> ok
     end,
     case maps:without([filter_default, filters, formatter, level, module, id, config], Config) of
         Empty when map_size(Empty) =:= 0 -> ok;
         Unhandled ->
-            io:format("        Custom Config:~n"),
+            io:put_chars("        Custom Config:\n"),
             print_custom("            ", Unhandled, M)
     end;
-print_handlers([], _M) -> io:format("    (none)~n");
+print_handlers([], _M) -> io:put_chars("    (none)\n");
 print_handlers(HandlerConfigs, M) ->
     lists:foreach(fun(HandlerConfig) -> print_handlers(HandlerConfig, M) end, HandlerConfigs).
 
-print_custom(Indent, {Key, Value}, M) -> io:format("~s~" ++ M ++ "p: ~" ++ M ++ "p~n", [Indent, Key, Value]);
+print_custom(Indent, {Key, Value}, M) -> io:fwrite("~s~" ++ M ++ "p: ~" ++ M ++ "p~n", [Indent, Key, Value]);
 print_custom(Indent, Map, M) when is_map(Map) -> print_custom(Indent, lists:keysort(1, maps:to_list(Map)), M);
 print_custom(Indent, List, M) when is_list(List), is_tuple(hd(List)) ->
     lists:foreach(fun(X) -> print_custom(Indent, X, M) end, List);
-print_custom(Indent, Value, M) -> io:format("~s~" ++ M ++ "p~n", [Indent, Value]).
+print_custom(Indent, Value, M) -> io:fwrite("~s~" ++ M ++ "p~n", [Indent, Value]).
 
 print_module_levels({Module,Level},M) ->
-    io:format("    Module: ~" ++ M ++ "p~n"
+    io:fwrite("    Module: ~" ++ M ++ "p~n"
               "        Level: ~p~n",
               [Module, Level]);
-print_module_levels([],_M) -> io:format("    (none)~n");
+print_module_levels([],_M) -> io:put_chars("    (none)\n");
 print_module_levels(Modules,M) -> lists:foreach(fun(Module) -> print_module_levels(Module, M) end, Modules).
 -endif.
 
