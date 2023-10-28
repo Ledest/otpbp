@@ -204,7 +204,7 @@ purge_and_load(Mod, File, Opts) ->
                     io:fwrite("** Module name '~p' does not match file name '~tp' **~n", [Mod, File]),
                     {error, badfile}
             end;
-        false -> io:fwrite("** Warning: No object file created - nothing loaded **~n")
+        false -> io:put_chars("** Warning: No object file created - nothing loaded **\n")
     end.
 
 src_suffix([from_core|_]) -> ".core";
