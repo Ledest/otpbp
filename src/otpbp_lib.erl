@@ -52,7 +52,7 @@ flush_receive() ->
 -endif.
 
 -ifndef(HAVE_lib__error_message_2).
-error_message(Format, Args) -> io:format("** ~ts **\n", [io_lib:format(Format, Args)]).
+error_message(Format, Args) -> io:fwrite("** ~ts **\n", [io_lib:format(Format, Args)]).
 -endif.
 
 -ifndef(HAVE_lib__progname_0).
