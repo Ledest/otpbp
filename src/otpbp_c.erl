@@ -201,7 +201,7 @@ purge_and_load(Mod, File, Opts) ->
                         _ -> {ok, Mod}
                     end;
                 _OtherMod ->
-                    io:fwrite("** Module name '~p' does not match file name '~tp' **~n", [Mod, File]),
+                    io:fwrite("** Module name '~s' does not match file name '~tp' **~n", [Mod, File]),
                     {error, badfile}
             end;
         false -> io:put_chars("** Warning: No object file created - nothing loaded **\n")
