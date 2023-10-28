@@ -216,6 +216,8 @@
                               {{rand, uniform_real, 0}, otpbp_rand},
                               {{rand, uniform_real_s, 1}, otpbp_rand},
                               {{re, version, 0}, otpbp_re},
+                              {{scheduler, [get_sample, get_sample_all, sample, sample_all], 0}, otpbp_scheduler},
+                              {{scheduler, utilization, [1, 2]}, otpbp_scheduler},
                               {{sets, foreach, 2}, otpbp_sets},
                               {{sets, [filtermap, is_equal, map], 2}, otpbp_sets},
                               {{sets, from_list, 2}, otpbp_sets},
