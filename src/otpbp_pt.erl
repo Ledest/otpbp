@@ -581,19 +581,34 @@ try_expr_clause_patterns_transform(Ps) ->
                                    underscore -> {class_qualifier(P), {true, L}};
                                    _ -> {P, A}
                                end;
+                           match_expr ->
+                               E = erl_syntax:match_expr_body(P),
+                               case type(E) of
+                                   module_qualifier ->
+                                       M = mqb(E),
+                                       case type(M) of
+                                           variable -> {class_qualifier_match(P, E), {true, match_expr_list(M, L)}};
+                                           underscore -> {class_qualifier_match(P, E), {true, L}};
+                                           _ -> {P, A}
+                                       end;
+                                   _ -> {P, A}
+                               end;
                            _ -> {P, A}
                        end
                    end, {false, []}, Ps).
 
-class_qualifier(P, B) -> class_qualifier(P, B, erl_syntax:class_qualifier_argument(P)).
-
 class_qualifier(P) -> class_qualifier(P, P, erl_syntax:atom('throw')).
+
+class_qualifier(P, B) -> class_qualifier(P, B, erl_syntax:class_qualifier_argument(P)).
 
 class_qualifier(P, B, C) -> cp(P, erl_syntax:class_qualifier(C, mqa(B))).
 
-class_qualifier_match(P, B, E) ->
-    erl_syntax:class_qualifier(erl_syntax:class_qualifier_argument(P),
-                               cp(B, erl_syntax:match_expr(erl_syntax:match_expr_pattern(B), mqa(E)))).
+class_qualifier_match(B, E) -> class_qualifier_match(B, B, E, cp(B, erl_syntax:atom('throw'))).
+
+class_qualifier_match(P, B, E) -> class_qualifier_match(P, B, E, erl_syntax:class_qualifier_argument(P)).
+
+class_qualifier_match(P, B, E, C) ->
+   cp(P, erl_syntax:class_qualifier(C, cp(B, erl_syntax:match_expr(erl_syntax:match_expr_pattern(B), mqa(E))))).
 
 match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, application(local, M, [], erlang, get_stacktrace))))|L].
 
