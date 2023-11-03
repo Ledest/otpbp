@@ -60,7 +60,7 @@ ensure_sockaddr(SockAddr) ->
     try
         prim_socket:enc_sockaddr(SockAddr)
     catch
-        throw:{invalid, Invalid}:Stacktrace -> erlang:raise(error, {invalid, Invalid}, Stacktrace)
+        throw:{invalid, _} = Invalid:Stacktrace -> erlang:raise(error, Invalid, Stacktrace)
     end.
 -endif.
 
