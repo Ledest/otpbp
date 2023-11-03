@@ -55,7 +55,7 @@
 -module(pg).
 
 
-% OTP 19.0, 24.0
+% OTP 24.0
 -compile([{parse_transform, otpbp_pt}]).
 
 %% API: default scope
