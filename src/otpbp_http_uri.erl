@@ -1,27 +1,16 @@
 -module(otpbp_http_uri).
 
--ifndef(HAVE_http_uri__encode_1).
+-ifndef(HAVE_http_uri__parse_1).
 % OTP < 25.0
--export([encode/1]).
--endif.
--ifndef(HAVE_http_uri__decode_1).
-% OTP < 25.0
--export([decode/1]).
--endif.
--ifndef(HAVE_http_uri__scheme_defaults_0).
-% OTP < 25.0
--export([scheme_defaults/0]).
+-export([parse/1]).
 -endif.
 -ifndef(HAVE_http_uri__parse_2).
 % OTP < 25.0
 -export([parse/2]).
 -endif.
--ifndef(HAVE_http_uri__parse_1).
+-ifndef(HAVE_http_uri__scheme_defaults_0).
 % OTP < 25.0
--export([parse/1]).
--ifdef(HAVE_http_uri__parse_2).
--import(http_uri, [parse/2]).
--endif.
+-export([scheme_defaults/0]).
 -endif.
 
 -ifndef(HAVE_http_uri__parse_1).
@@ -29,35 +18,14 @@
 -import(http_uri, [parse/2]).
 -endif.
 -endif.
-
 -ifndef(HAVE_http_uri__parse_2).
 -ifdef(HAVE_http_uri__scheme_defaults_0).
 -import(http_uri, [scheme_defaults/0]).
 -endif.
 -endif.
 
--ifndef(HAVE_http_uri__encode_1).
-encode(URI) when is_list(URI) ->
-    R = reserved(),
-    lists:foldr(fun(C, A) ->
-                    case sets:is_element(C, R) of
-                        true -> [$%|http_util:integer_to_hexlist(C) ++ A];
-                        false -> [C|A]
-                    end
-                end, [], URI);
-encode(URI) when is_binary(URI) -> list_to_binary(encode(binary_to_list(URI))).
-
--compile({inline, reserved/0}).
-reserved() ->
-    sets:from_list([$;, $:, $@, $&, $=, $+, $,, $/, $?, $#, $[, $], $<, $>, ${, $}, $|, $", $\\, $', $^, $%, $\s]).
--endif.
-
--ifndef(HAVE_http_uri__decode_1).
-decode(URI) when is_list(URI); is_binary(URI) ->
-    case uri_string:percent_decode(URI) of
-        {error, _, _} -> error(function_clause);
-        R -> R
-    end.
+-ifndef(HAVE_http_uri__parse_2).
+parse(URI) -> parse(URI, []).
 -endif.
 
 -ifndef(HAVE_http_uri__parse_2).
@@ -103,6 +71,7 @@ parse(M, Options, Scheme, H, Port) ->
               end}
      end}.
 
+-compile({inline, prefix/2}).
 prefix([_|_] = S, C) -> [C|S];
 prefix(S, C) when byte_size(S) =/= 0 -> <<C, S/binary>>;
 prefix(S, _) -> S.
@@ -110,19 +79,23 @@ prefix(S, _) -> S.
 scheme(S) when is_list(S) -> list_to_atom(S);
 scheme(S) when is_binary(S) -> binary_to_atom(S, latin1).
 
+-compile({inline, path/1}).
 path("") -> "/";
 path(<<>>) -> <<$/>>;
 path(S) -> S.
 
+-compile({inline, fragment/1}).
 fragment(F) when is_list(F) -> [$#|F];
 fragment(F) when is_binary(F) -> <<$#, F/binary>>.
 
+-compile({inline, host/2}).
 host(H, Options) ->
     case lists:member({ipv6_host_with_brackets, true}, Options) of
         false -> H;
         true -> ipv6(H)
     end.
 
+-compile({inline, ipv6/1}).
 ipv6(H) when is_list(H) ->
     case string:chr(H, $:) of
         0 -> H;
@@ -134,25 +107,22 @@ ipv6(H) when is_binary(H) ->
         _ -> <<$[, H/binary, $]>>
     end.
 
+-compile({inline, protocol/1}).
 protocol(URI) when is_list(URI) -> string:sub_word(URI, 1, $:);
 protocol(URI) when is_binary(URI) ->
     {I, _} = binary:match(URI, <<$:>>),
     binary:part(URI, 0, I).
 
+-compile({inline, scheme_defaults/1}).
 scheme_defaults(Options) ->
     case lists:keyfind(scheme_defaults, 1, Options) of
         false -> scheme_defaults();
         {_scheme_defaults, SD} -> SD
     end.
 
+-compile({inline, empty/1}).
 empty(URI) when is_list(URI) -> "";
 empty(URI) when is_binary(URI) -> <<>>.
-
--compile({inline, [empty/1, fragment/1, host/2, ipv6/1, protocol/1, scheme_defaults/1]}).
--endif.
-
--ifndef(HAVE_http_uri__parse_2).
-parse(URI) -> parse(URI, []).
 -endif.
 
 -ifndef(HAVE_http_uri__scheme_defaults_0).
