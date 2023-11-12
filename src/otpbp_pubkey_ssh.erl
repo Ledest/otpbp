@@ -39,16 +39,15 @@ encode(Bin, Type) -> ssh_file:encode(Bin, Type).
 -ifdef(HAVE_ssh_file__decode_2).
 new_openssh_decode(Bin) -> ssh_file:decode(Bin, openssh_key_v1).
 -else.
-new_openssh_decode(<<"openssh-key-v1", 0, 4:32, "none", 4:32, "none", 0:32, 1:32, L4:32, PublicKey:L4, L5:32,
-                     CheckInt:32, CheckInt:32, 11:32, "ssh-ed25519", Lpu:32, PubKey:Lpu, Lpripub:32, PrivPubKey:Lpripub,
+new_openssh_decode(<<"openssh-key-v1", 0, 4:32, "none", 4:32, "none", 0:32, 1:32, L4:32, _:L4, _:32,
+                     CheckInt:32, CheckInt:32, Lt:32, Type:Lt, Lpu:32, PubKey:Lpu, Lpripub:32, PrivPubKey:Lpripub,
                      C1:32, _Comment:C1, _Pad/binary>>) ->
-    <<PrivKey:32/binary, PubKey:32/binary>> = PrivPubKey,
+    new_openssh_decode(Type, PubKey, PrivPubKey).
+
+-compile({inline, new_openssh_decode/3}).
+new_openssh_decode(<<"ssh-ed25519">>, PubKey, <<PrivKey:32/binary, PubKey:32/binary>>) ->
     {ed_pri, ed25519, PubKey, PrivKey};
-new_openssh_decode(<<"openssh-key-v1", 0, 4:32, "none", 4:32, "none", 0:32, 1:32, L4:32, PublicKey:L4, L5:32,
-                     CheckInt:32, CheckInt:32, 9:32, "ssh-ed448", Lpu:32, PubKey:Lpu, Lpripub:32, PrivPubKey:Lpripub,
-                     C1:32, _Comment:C1, _Pad/binary>>) ->
-    <<PrivKey:57/binary, PubKey/binary>> = PrivPubKey,
-    {ed_pri, ed448, PubKey, PrivKey}.
+new_openssh_decode(<<"ssh-ed448">>, PubKey, <<PrivKey:57/binary, PubKey/binary>>) -> {ed_pri, ed448, PubKey, PrivKey}.
 -endif.
 -endif.
 
@@ -59,8 +58,8 @@ new_openssh_encode(Bin) -> ssh_file:encode(Bin, openssh_key_v1).
 -define(STRING(X), (byte_size(X)):32, X/binary).
 -define(CHECK_INT, (17 * 256 + 17)). % crypto:strong_rand_bytes(4),
 
-new_openssh_encode({ed_pri, ed25519, PubKey, PrivKey} = Key) -> new_openssh_encode(<<"ssh-ed25519">>, PubKey, PrivKey);
-new_openssh_encode({ed_pri, ed448, PubKey, PrivKey} = Key) -> new_openssh_encode(<<"ssh-ed448">>, PubKey, PrivKey).
+new_openssh_encode({ed_pri, ed25519, PubKey, PrivKey}) -> new_openssh_encode(<<"ssh-ed25519">>, PubKey, PrivKey);
+new_openssh_encode({ed_pri, ed448, PubKey, PrivKey}) -> new_openssh_encode(<<"ssh-ed448">>, PubKey, PrivKey).
 
 new_openssh_encode(Type, PubKey, PrivKey) ->
     PublicKey = <<?STRING(Type), ?STRING(PubKey)>>,
