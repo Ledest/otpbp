@@ -198,6 +198,9 @@
                               {{proc_lib, start_monitor, [3, 4, 5]}, otpbp_proc_lib},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0
                               {{proplists, to_map, [1, 2]}, otpbp_proplists},
+                              {{pubkey_os_cacerts, [clear, get], 0}, otpbp_pubkey_os_cacerts},
+                              {{pubkey_os_cacerts, load, [0, 1]}, otpbp_pubkey_os_cacerts},
+                              {{pubkey_os_cacerts, format_error, 2}, otpbp_pubkey_os_cacerts},
                               {{public_key, ssh_decode, 2}, {ssh_file, decode}},
                               {{public_key, ssh_encode, 2}, {ssh_file, encode}},
                               {{public_key, ssh_hostkey_fingerprint, [1, 2]}, {ssh, hostkey_fingerprint}},

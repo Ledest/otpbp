@@ -286,6 +286,10 @@ Funs = [{application, get_supervisor, 1},
         {peer, start_link, 0}, % OTP 25.0
         {peer, start_link, 1}, % OTP 25.0
         {peer, stop, 1}, % OTP 25.0
+        {persistent_term, erase, 1},
+        {persistent_term, get, 1},
+        {persistent_term, get, 2},
+        {persistent_term, put, 2},
         {pg2, create, 1}, % OTP < 24.0
         {pg2, delete, 1}, % OTP < 24.0
         {pg2, get_closest_pid, 1}, % OTP < 24.0
@@ -304,6 +308,11 @@ Funs = [{application, get_supervisor, 1},
         {proc_lib, start_monitor, 5},
         {proplists, to_map, 1},
         {proplists, to_map, 2},
+        {pubkey_os_cacerts, clear, 0},
+        {pubkey_os_cacerts, format_error, 2},
+        {pubkey_os_cacerts, get, 0},
+        {pubkey_os_cacerts, load, 0},
+        {pubkey_os_cacerts, load, 1},
         {queue, all, 2},
         {queue, any, 2},
         {queue, delete, 2},
