@@ -208,6 +208,7 @@
                               {{public_key, cacerts_get, 0}, {pubkey_os_cacerts, get}},
                               {{public_key, cacerts_load, 0}, {pubkey_os_cacerts, load}},
                               {{public_key, cacerts_load, 1}, otpbp_public_key},
+                              {{public_key, [encrypt_private, encrypt_public], 3}, otpbp_public_key},
                               {{public_key, ssh_decode, 2}, {ssh_file, decode}},
                               {{public_key, ssh_encode, 2}, {ssh_file, encode}},
                               {{public_key, ssh_hostkey_fingerprint, [1, 2]}, {ssh, hostkey_fingerprint}},
