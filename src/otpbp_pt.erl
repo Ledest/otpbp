@@ -198,8 +198,8 @@
                               {{proc_lib, start_monitor, [3, 4, 5]}, otpbp_proc_lib},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0
                               {{proplists, to_map, [1, 2]}, otpbp_proplists},
+                              {{pubkey_cert, [gen_test_certs, subject_id], 1}, otpbp_pubkey_cert},
                               {{pubkey_cert, root_cert, 2}, otpbp_pubkey_cert},
-                              {{pubkey_cert, subject_id, 1}, otpbp_pubkey_cert},
                               {{pubkey_ocsp, otp_cert, 1}, otpbp_pubkey_ocsp},
                               {{pubkey_os_cacerts, [clear, get], 0}, otpbp_pubkey_os_cacerts},
                               {{pubkey_os_cacerts, load, [0, 1]}, otpbp_pubkey_os_cacerts},
