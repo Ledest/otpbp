@@ -199,6 +199,8 @@
                               {{pubkey_os_cacerts, [clear, get], 0}, otpbp_pubkey_os_cacerts},
                               {{pubkey_os_cacerts, load, [0, 1]}, otpbp_pubkey_os_cacerts},
                               {{pubkey_os_cacerts, format_error, 2}, otpbp_pubkey_os_cacerts},
+                              {{pubkey_ssh, [new_openssh_decode, new_openssh_encode], 1}, otpbp_pubkey_ssh},
+                              {{pubkey_ssh, [decode, encode, pad], 2}, otpbp_pubkey_ssh},
                               {{public_key, ssh_decode, 2}, {ssh_file, decode}},
                               {{public_key, ssh_encode, 2}, {ssh_file, encode}},
                               {{public_key, ssh_hostkey_fingerprint, [1, 2]}, {ssh, hostkey_fingerprint}},
