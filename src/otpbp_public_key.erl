@@ -166,20 +166,19 @@ fqdn_fun(Opts) -> proplists:get_value(fqdn_fun, Opts, fun verify_hostname_extrac
 reference_ids(ReferenceIDs) -> [{T, to_string(V)} || {T, V} <- ReferenceIDs].
 
 verify_hostname_fqnds(L, FqdnFun) ->
-    [E || E0 <- L, [_|_] = E <- [verify_hostname_fqnds1(E0, FqdnFun)], {error, einval} =:= inet:parse_address(E)].
+    lists:filtermap(fun(E0) ->
+                        try verify_hostname_fqnds_(E0, FqdnFun) of
+                            [_|_] = E -> inet:parse_address(E) =:= {error, einval} andalso {true, E};
+                            _ -> false
+                        catch
+                            _:_ -> false
+                        end
+                    end, L).
 
-verify_hostname_fqnds1(E, FqdnFun) ->
-    try
-        verify_hostname_fqnds2(E, FqdnFun)
-    catch
-        _:_-> undefined % will make the "is_list(E)" test fail
-    end.
-
--compile({inline, verify_hostname_fqnds2/2}).
-verify_hostname_fqnds2(E, FqdnFun) ->
+-compile({inline, verify_hostname_fqnds_/2}).
+verify_hostname_fqnds_(E, FqdnFun) ->
     case FqdnFun(E) of
         default -> verify_hostname_extract_fqdn_default(E);
-        undefined -> undefined; % will make the "is_list(E)" test fail
         Other -> Other
     end.
 
