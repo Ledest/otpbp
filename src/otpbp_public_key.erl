@@ -4,6 +4,18 @@
 
 -include_lib("public_key/include/OTP-PUB-KEY.hrl").
 
+-ifndef(HAVE_public_key__cacerts_clear_0).
+% OTP 25.0
+-export([cacerts_clear/0]).
+-endif.
+-ifndef(HAVE_public_key__cacerts_get_0).
+% OTP 25.0
+-export([cacerts_get/0]).
+-endif.
+-ifndef(HAVE_public_key__cacerts_load_0).
+% OTP 25.0
+-export([cacerts_load/0]).
+-endif.
 -ifndef(HAVE_public_key__cacerts_load_1).
 % OTP 25.0
 -export([cacerts_load/1]).
@@ -64,6 +76,18 @@
 -endif.
 -ifndef('id-Ed25519').
 -define('id-Ed25519', {1, 3, 101, 112}).
+-endif.
+
+-ifndef(HAVE_public_key__cacerts_clear_0).
+cacerts_clear() -> pubkey_os_cacerts:clear().
+-endif.
+
+-ifndef(HAVE_public_key__cacerts_get_0).
+cacerts_get() -> pubkey_os_cacerts:get().
+-endif.
+
+-ifndef(HAVE_public_key__cacerts_load_0).
+cacerts_load() -> pubkey_os_cacerts:load().
 -endif.
 
 -ifndef(HAVE_public_key__cacerts_load_1).
