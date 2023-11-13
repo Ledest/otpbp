@@ -116,9 +116,8 @@ verify_hostname_match_wildcard(FQDN, Name) ->
     [[F1|Fs], [N1|Ns]] = [string:tokens(to_lower_ascii(S), ".") || S <- [FQDN, Name]],
     match_wild(F1, N1) andalso Fs =:= Ns.
 
-to_lower_ascii({ip, _} = X) -> X;
-to_lower_ascii({iPAddress, _} = X) -> X;
 to_lower_ascii(S) when is_list(S) -> lists:map(fun to_lower_ascii/1, S);
+to_lower_ascii({T, _} = X) when T =:= ip; T =:= iPAddress -> X;
 to_lower_ascii({T, S}) -> {T, to_lower_ascii(S)};
 to_lower_ascii(C) when C >= $A, C =< $Z -> C + ($a - $A);
 to_lower_ascii(C) -> C.
