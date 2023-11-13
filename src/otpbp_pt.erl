@@ -212,6 +212,7 @@
                               {{public_key, cacerts_load, 1}, otpbp_public_key},
                               {{public_key, [encrypt_private, encrypt_public], 3}, otpbp_public_key},
                               {{public_key, [pkix_hash_type, pkix_subject_id, pkix_test_data], 1}, otpbp_public_key},
+                              {{public_key, pkix_verify_hostname, [2, 3]}, otpbp_public_key},
                               {{public_key, pkix_verify_hostname_match_fun, 1}, otpbp_public_key},
                               {{public_key, pkix_test_root_cert, 2}, otpbp_public_key},
                               {{public_key, sign, 4}, otpbp_public_key},

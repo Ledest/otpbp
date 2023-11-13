@@ -32,6 +32,14 @@
 % OTP 20.2
 -export([pkix_test_root_cert/2]).
 -endif.
+-ifndef(HAVE_public_key__pkix_verify_hostname_2).
+% OTP 19.3
+-export([pkix_verify_hostname/2]).
+-endif.
+-ifndef(HAVE_public_key__pkix_verify_hostname_3).
+% OTP 19.3
+-export([pkix_verify_hostname/3]).
+-endif.
 -ifndef(HAVE_public_key__pkix_verify_hostname_match_fun_1).
 % OTP 21.0
 -export([pkix_verify_hostname_match_fun/1]).
@@ -43,6 +51,12 @@
 -ifndef(HAVE_public_key__verify_5).
 % OTP 20.1
 -export([verify/5]).
+-endif.
+
+-ifndef(HAVE_public_key__pkix_verify_hostname_2).
+-ifdef(HAVE_public_key__pkix_verify_hostname_3).
+-import(public_key, [pkix_verify_hostname/3]).
+-endif.
 -endif.
 
 -ifndef('id-Ed448').
@@ -105,33 +119,144 @@ pkix_test_data(Chain) when is_map(Chain) -> pubkey_cert:gen_test_certs(maps:merg
 pkix_test_root_cert(Name, Opts) -> pubkey_cert:root_cert(Name, Opts).
 -endif.
 
+-ifndef(HAVE_public_key__pkix_verify_hostname_2).
+pkix_verify_hostname(Cert, ReferenceIDs) -> pkix_verify_hostname(Cert, ReferenceIDs, []).
+-endif.
+
+-ifndef(HAVE_public_key__pkix_verify_hostname_3).
+pkix_verify_hostname(BinCert, ReferenceIDs, Options) when is_binary(BinCert) ->
+    pkix_verify_hostname(public_key:pkix_decode_cert(BinCert, otp), ReferenceIDs, Options);
+
+pkix_verify_hostname(Cert = #'OTPCertificate'{tbsCertificate = TbsCert}, ReferenceIDs0, Opts) ->
+    ExtVals = try lists:keyfind(?'id-ce-subjectAltName', #'Extension'.extnID, TbsCert#'OTPTBSCertificate'.extensions) of
+                  #'Extension'{extnValue = EV} -> EV;
+                  false -> []
+              catch
+                  _:_ -> []
+              end,
+    case [{T, to_string(V)} || {T, V} <- ExtVals] of
+        [] ->
+            case TbsCert#'OTPTBSCertificate'.subject of
+                {rdnSequence, RDNseq} ->
+                    PresentedCNs = [{cn, to_string(V)} || ATVs <- RDNseq,
+                                                          #'AttributeTypeAndValue'{type = ?'id-at-commonName',
+                                                                                   value = {_T, V}} <- ATVs],
+                    verify_hostname_match_loop(verify_hostname_fqnds(reference_ids(ReferenceIDs0), fqdn_fun(Opts)),
+                                               PresentedCNs, match_fun(Opts), fail_callback(Opts), Cert);
+            _ -> false
+            end;
+        PresentedIDs ->
+            MatchFun = match_fun(Opts),
+            FailCB = fail_callback(Opts),
+            ReferenceIDs = reference_ids(ReferenceIDs0),
+            case verify_hostname_match_loop(ReferenceIDs, PresentedIDs, MatchFun, FailCB, Cert) of
+                false ->
+                    verify_hostname_match_loop([{dns_id, X} || X <- verify_hostname_fqnds(ReferenceIDs, fqdn_fun(Opts))],
+                                               PresentedIDs, MatchFun, FailCB, Cert);
+                true -> true
+            end
+    end.
+
+match_fun(Opts) -> proplists:get_value(match_fun, Opts, undefined).
+
+fail_callback(Opts) -> proplists:get_value(fail_callback, Opts, fun(_Cert) -> false end).
+
+fqdn_fun(Opts) -> proplists:get_value(fqdn_fun, Opts, fun verify_hostname_extract_fqdn_default/1).
+
+reference_ids(ReferenceIDs) -> [{T, to_string(V)} || {T, V} <- ReferenceIDs].
+
+verify_hostname_fqnds(L, FqdnFun) ->
+    [E || E0 <- L, [_|_] = E <- [verify_hostname_fqnds1(E0, FqdnFun)], {error, einval} =:= inet:parse_address(E)].
+
+verify_hostname_fqnds1(E, FqdnFun) ->
+    try
+        verify_hostname_fqnds2(E, FqdnFun)
+    catch
+        _:_-> undefined % will make the "is_list(E)" test fail
+    end.
+
+-compile({inline, verify_hostname_fqnds2/2}).
+verify_hostname_fqnds2(E, FqdnFun) ->
+    case FqdnFun(E) of
+        default -> verify_hostname_extract_fqdn_default(E);
+        undefined -> undefined; % will make the "is_list(E)" test fail
+        Other -> Other
+    end.
+
+verify_hostname_extract_fqdn_default({dns_id, S}) -> S;
+verify_hostname_extract_fqdn_default({uri_id, URI}) ->
+    #{scheme := "https", host := Host} = uri_string:normalize(URI, [return_map]),
+    Host.
+
+to_string(B) when is_binary(B) -> binary_to_list(B);
+to_string(X) -> X.
+
+verify_hostname_match_loop(Refs, Pres0, undefined, FailCB, Cert) ->
+    Pres = lists:map(fun to_lower_ascii/1, Pres0),
+    lists:any(fun(R) -> lists:any(fun(P) -> verify_hostname_match_default(R, P) orelse FailCB(Cert) end, Pres) end,
+              lists:map(fun to_lower_ascii/1, Refs));
+verify_hostname_match_loop(Refs, Pres, MatchFun, FailCB, Cert) ->
+    lists:any(fun(R) ->
+                  lists:any(fun(P) ->
+                                case MatchFun(R, P) of
+                                    default -> verify_hostname_match_default(R, P);
+                                    Bool -> Bool
+                                end orelse FailCB(Cert)
+                            end,
+                            Pres)
+              end,
+              Refs).
+
+verify_hostname_match_default(Ref, Pres) -> verify_hostname_match_default_(to_lower_ascii(Ref), to_lower_ascii(Pres)).
+
+-ifndef(srvName_OID).
+-define(srvName_OID, {1, 3, 6, 1, 4, 1, 434, 2, 2, 1, 37, 0}).
+-endif.
+
+-compile({inline, verify_hostname_match_default_/2}).
+verify_hostname_match_default_([_|_] = FQDN, {cn, FQDN}) -> not lists:member($*, FQDN);
+verify_hostname_match_default_([_|_] = FQDN, {cn, [_|_] = Name}) -> verify_hostname_match_wildcard(FQDN, Name);
+verify_hostname_match_default_({dns_id, R}, {dNSName, P}) -> R =:= P;
+verify_hostname_match_default_({uri_id, R}, {uniformResourceIdentifier, P}) -> R =:= P;
+verify_hostname_match_default_({ip, {A, B, C, D}}, {iPAddress, [A, B, C, D]}) -> true;
+verify_hostname_match_default_({ip, R}, {iPAddress, [A, B, C, D] = P}) when is_list(R) ->
+    case inet:parse_ipv4strict_address(R) of
+        {ok, {A, B, C, D}} -> true;
+        _ -> false
+    end;
+verify_hostname_match_default_({ip, R}, {iPAddress, P}) when length(P) =:= 16 ->
+    try l16_to_tup(P) of
+        Pt when tuple_size(R) =:= 8 -> Pt =:= R;
+        Pt -> inet:parse_ipv6strict_address(R) =:= {ok, Pt}
+    catch
+        _:_ -> false
+    end;
+verify_hostname_match_default_({srv_id, R}, {T, P}) when T =:= srvName; T =:= ?srvName_OID -> R =:= P;
+verify_hostname_match_default_(_, _) -> false.
+
+-compile({inline, l16_to_tup/1}).
+l16_to_tup(L) -> list_to_tuple(l16_to_tup(L, [])).
+
+l16_to_tup([A, B|T], Acc) -> l16_to_tup(T, [(A bsl 8) bor B|Acc]);
+l16_to_tup([], Acc) -> lists:reverse(Acc).
+
+-ifndef(NEED_verify_hostname_match_wildcard_2).
+-define(NEED_verify_hostname_match_wildcard_2, true).
+-endif.
+-ifndef(NEED_to_lower_ascii_1).
+-define(NEED_to_lower_ascii_1, true).
+-endif.
+-endif.
+
 -ifndef(HAVE_public_key__pkix_verify_hostname_match_fun_1).
 pkix_verify_hostname_match_fun(https) ->
     fun({dns_id, [_|_] = FQDN}, {dNSName, [_|_] = Name}) -> verify_hostname_match_wildcard(FQDN, Name);
        (_, _) -> default
     end.
 
--compile({inline, verify_hostname_match_wildcard/2}).
-verify_hostname_match_wildcard(FQDN, Name) ->
-    [[F1|Fs], [N1|Ns]] = [string:tokens(to_lower_ascii(S), ".") || S <- [FQDN, Name]],
-    match_wild(F1, N1) andalso Fs =:= Ns.
-
-to_lower_ascii({ip, _} = X) -> X;
-to_lower_ascii({iPAddress, _} = X) -> X;
-to_lower_ascii(S) when is_list(S) -> lists:map(fun to_lower_ascii/1, S);
-to_lower_ascii({T, S}) -> {T, to_lower_ascii(S)};
-to_lower_ascii(C) when C >= $A, C =< $Z -> C + ($a - $A);
-to_lower_ascii(C) -> C.
-
-match_wild(A, [$*|B]) -> match_wild_sfx(lists:reverse(A), lists:reverse(B));
-match_wild([C|A], [C|B]) -> match_wild(A, B);
-match_wild(A, B) -> A =:= [] andalso B =:= [].
-
-match_wild_sfx([$*|_], _) -> false; % Bad name (no wildcards allowed)
-match_wild_sfx(_, [$*|_]) -> false; % Bad pattern (no more wildcards allowed)
-match_wild_sfx([A|Ar], [A|Br]) -> match_wild_sfx(Ar, Br);
-match_wild_sfx(Ar, []) -> not lists:member($*, Ar); % Chk for bad name (= wildcards)
-match_wild_sfx(_, _) -> false.
+-ifndef(NEED_verify_hostname_match_wildcard_2).
+-define(NEED_verify_hostname_match_wildcard_2, true).
+-endif.
 -endif.
 
 -ifndef(HAVE_public_key__sign_4).
@@ -256,4 +381,32 @@ ec_curve_spec({namedCurve, OID}) when is_tuple(OID), is_integer(element(1, OID))
     ec_curve_spec({namedCurve,  pubkey_cert_records:namedCurves(OID)});
 ec_curve_spec({namedCurve, Name}) when Name =:= x25519; Name =:= x448; Name =:= ed25519; Name =:= ed448 -> Name;
 ec_curve_spec({namedCurve, Name}) when is_atom(Name) -> crypto:ec_curve(Name).
+-endif.
+
+-ifdef(NEED_verify_hostname_match_wildcard_2).
+verify_hostname_match_wildcard(FQDN, Name) ->
+    [[F1|Fs], [N1|Ns]] = [string:tokens(to_lower_ascii(S), ".") || S <- [FQDN, Name]],
+    match_wild(F1, N1) andalso Fs =:= Ns.
+
+match_wild(A, [$*|B]) -> match_wild_sfx(lists:reverse(A), lists:reverse(B));
+match_wild([C|A], [C|B]) -> match_wild(A, B);
+match_wild(A, B) -> A =:= [] andalso B =:= [].
+
+match_wild_sfx([$*|_], _) -> false; % Bad name (no wildcards allowed)
+match_wild_sfx(_, [$*|_]) -> false; % Bad pattern (no more wildcards allowed)
+match_wild_sfx([A|Ar], [A|Br]) -> match_wild_sfx(Ar, Br);
+match_wild_sfx(Ar, []) -> not lists:member($*, Ar); % Chk for bad name (= wildcards)
+match_wild_sfx(_, _) -> false.
+
+-ifndef(NEED_to_lower_ascii_1).
+-define(NEED_to_lower_ascii_1, true).
+-endif.
+-endif.
+
+-ifdef(NEED_to_lower_ascii_1).
+to_lower_ascii(S) when is_list(S) -> lists:map(fun to_lower_ascii/1, S);
+to_lower_ascii({T, _} = X) when T =:= ip; T =:= iPAddress -> X;
+to_lower_ascii({T, S}) -> {T, to_lower_ascii(S)};
+to_lower_ascii(C) when C >= $A, C =< $Z -> C + ($a - $A);
+to_lower_ascii(C) -> C.
 -endif.
