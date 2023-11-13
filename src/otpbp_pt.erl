@@ -129,6 +129,7 @@
                               {{http_uri, decode, 1}, {uri_string, unquote}},
                               {{http_uri, encode, 1}, {uri_string, quote}},
                               {{http_uri, parse, [1, 2]}, otpbp_http_uri},
+                              {{httpc, ssl_verify_host_options, 1}, otpbp_httpc},
                               {{httpd, [serve, start], 1}, otpbp_httpd},
                               {{httpd_util, hexlist_to_integer, 1}, http_util},
                               {{httpd_util, [flatlength, integer_to_hexlist, strip, suffix], 1}, otpbp_httpd_util},
