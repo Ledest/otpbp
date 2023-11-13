@@ -89,6 +89,8 @@
                               {{disk_log_server, all, 0}, otpbp_disk_log_server},
                               {{disksup, get_disk_info, [0, 1]}, otpbp_disksup},
                               {{disksup, parse_df, 2}, otpbp_disksup},
+                              {{eldap, paged_result_control, [1, 2]}, otpbp_eldap},
+                              {{eldap, paged_result_cookie, 1}, otpbp_eldap},
                               {{edlin, keymap, 0}, otpbp_edlin},
                               {{epp, scan_file, [1, 2]}, otpbp_epp},
                               {{erl_epmd, listen_port_please, 2}, otpbp_erl_epmd},
