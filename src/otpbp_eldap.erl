@@ -25,25 +25,20 @@
 paged_result_control(PageSize) -> paged_result_control(PageSize, "").
 -endif.
 
--record('RealSearchControlValue', {size, cookie}).
-
 -ifndef(HAVE_eldap__paged_result_control_2).
 paged_result_control(PageSize, Cookie) when is_integer(PageSize) ->
-    {ok, ControlValue} = 'ELDAPv3':encode('RealSearchControlValue',
-                                          #'RealSearchControlValue'{size = PageSize, cookie = Cookie}),
+    {ok, ControlValue} = 'ELDAPv3':encode('RealSearchControlValue', {'RealSearchControlValue', PageSize, Cookie}),
     {control, "1.2.840.113556.1.4.319", true, ControlValue}.
 -endif.
 
 -ifndef(HAVE_eldap__paged_result_cookie_1).
--record('Control', {controlType, criticality = asn1_DEFAULT, controlValue = asn1_NOVALUE}).
-
 paged_result_cookie({eldap_search_result, _, _, Controls}) ->
-    case lists:search(fun(#'Control'{controlType = "1.2.840.113556.1.4.319"}) -> true;
+    case lists:search(fun({'Control',"1.2.840.113556.1.4.319", _, _}) -> true;
                          (_) -> false
                       end,
                       Controls) of
-        {value, #'Control'{controlValue = ControlValue}} ->
-            {ok, #'RealSearchControlValue'{cookie = Cookie}} = 'ELDAPv3':decode('RealSearchControlValue', ControlValue),
+        {value, {'Control', _, _, ControlValue}} ->
+            {ok, {'RealSearchControlValue', _, Cookie}} = 'ELDAPv3':decode('RealSearchControlValue', ControlValue),
             {ok, Cookie};
         _false -> {error, no_cookie}
     end;
