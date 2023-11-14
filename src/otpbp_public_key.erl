@@ -71,13 +71,6 @@
 -endif.
 -endif.
 
--ifndef('id-Ed448').
--define('id-Ed448', {1, 3, 101, 113}).
--endif.
--ifndef('id-Ed25519').
--define('id-Ed25519', {1, 3, 101, 112}).
--endif.
-
 -ifndef(HAVE_public_key__cacerts_clear_0).
 cacerts_clear() -> pubkey_os_cacerts:clear().
 -endif.
@@ -298,9 +291,6 @@ sign(DigestOrPlainText, DigestType, Key, []) ->
 
 format_sign_key(#'RSAPrivateKey'{} = Key) -> {rsa, format_rsa_private_key(Key)};
 format_sign_key(#'DSAPrivateKey'{p = P, q = Q, g = G, x = X}) -> {dss, [P, Q, G, X]};
-format_sign_key(#'ECPrivateKey'{privateKey = PrivKey, parameters = {namedCurve, Curve} = Param})
-  when Curve =:= ?'id-Ed25519'; Curve =:= ?'id-Ed448' ->
-    {eddsa, [PrivKey, ec_curve_spec(Param)]};
 format_sign_key(#'ECPrivateKey'{privateKey = PrivKey, parameters = Param}) -> {ecdsa, [PrivKey, ec_curve_spec(Param)]};
 format_sign_key({ed_pri, Curve, _Pub, Priv}) -> {eddsa, [Priv, Curve]};
 format_sign_key(_) -> badarg.
@@ -340,22 +330,17 @@ verify(DigestOrPlainText, DigestType, Signature, Key, []) when is_binary(Signatu
                 end
         end.
 
--record('ECPoint', {point}).
-
 format_verify_key(#'RSAPublicKey'{modulus = Mod, publicExponent = Exp}) -> {rsa, [Exp, Mod]};
-format_verify_key({#'ECPoint'{point = Point}, {namedCurve, Curve} = Param})
-  when Curve =:= ?'id-Ed25519'; Curve =:= ?'id-Ed448' ->
-    {eddsa, [Point, ec_curve_spec(Param)]};
-format_verify_key({#'ECPoint'{point = Point}, Param}) -> {ecdsa, [Point, ec_curve_spec(Param)]};
+format_verify_key({{'ECPoint', Point}, Param}) -> {ecdsa, [Point, ec_curve_spec(Param)]};
 format_verify_key({Key,  #'Dss-Parms'{p = P, q = Q, g = G}}) -> {dss, [P, Q, G, Key]};
 format_verify_key({ed_pub, Curve, Key}) -> {eddsa, [Key, Curve]};
 %% Convert private keys to public keys
 format_verify_key(#'RSAPrivateKey'{modulus = Mod, publicExponent = Exp}) ->
     format_verify_key(#'RSAPublicKey'{modulus = Mod, publicExponent = Exp});
 format_verify_key(#'ECPrivateKey'{parameters = Param, publicKey = {_, Point}}) ->
-    format_verify_key({#'ECPoint'{point = Point}, Param});
+    format_verify_key({{'ECPoint', Point}, Param});
 format_verify_key(#'ECPrivateKey'{parameters = Param, publicKey = Point}) ->
-    format_verify_key({#'ECPoint'{point = Point}, Param});
+    format_verify_key({{'ECPoint', Point}, Param});
 format_verify_key(#'DSAPrivateKey'{y = Y, p = P, q = Q, g = G}) ->
     format_verify_key({Y, #'Dss-Parms'{p = P, q = Q, g = G}});
 format_verify_key(_) -> badarg.
@@ -402,7 +387,6 @@ ec_curve_spec( #'ECParameters'{fieldID = #'FieldID'{fieldType = Type, parameters
 ec_curve_spec({ecParameters, ECParams}) -> ec_curve_spec(ECParams);
 ec_curve_spec({namedCurve, OID}) when is_tuple(OID), is_integer(element(1, OID)) ->
     ec_curve_spec({namedCurve,  pubkey_cert_records:namedCurves(OID)});
-ec_curve_spec({namedCurve, Name}) when Name =:= x25519; Name =:= x448; Name =:= ed25519; Name =:= ed448 -> Name;
 ec_curve_spec({namedCurve, Name}) when is_atom(Name) -> Name.
 -endif.
 
