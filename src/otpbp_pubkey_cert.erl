@@ -270,15 +270,6 @@ subject_enc({country, Country}) -> {?'id-at-countryName', Country}.
 -endif.
 
 -ifdef(NEED_public_key_2).
--ifndef('id-Ed448').
--define('id-Ed448', {1, 3, 101, 113}).
--endif.
--ifndef('id-Ed25519').
--define('id-Ed25519', {1, 3, 101, 112}).
--endif.
-
--record('ECPoint', {point}).
-
 public_key(#'RSAPrivateKey'{modulus = N, publicExponent = E},
            #'SignatureAlgorithm'{algorithm  = ?rsaEncryption, parameters = #'RSASSA-PSS-params'{} = Params}) ->
     #'OTPSubjectPublicKeyInfo'{algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = Params},
@@ -295,15 +286,9 @@ public_key(#'DSAPrivateKey'{p = P, q = Q, g = G, y = Y}, _) ->
                                                                  parameters = {params,
                                                                                #'Dss-Parms'{p = P, q = Q, g = G}}},
                                subjectPublicKey = Y};
-public_key(#'ECPrivateKey'{parameters = {namedCurve, ?'id-Ed25519' = ID}, publicKey = PubKey}, _) ->
-    #'OTPSubjectPublicKeyInfo'{algorithm = #'PublicKeyAlgorithm'{algorithm = ID, parameters = asn1_NOVALUE},
-                               subjectPublicKey = #'ECPoint'{point = PubKey}};
-public_key(#'ECPrivateKey'{parameters = {namedCurve, ?'id-Ed448' = ID}, publicKey = PubKey}, _) ->
-    #'OTPSubjectPublicKeyInfo'{algorithm = #'PublicKeyAlgorithm'{algorithm = ID, parameters = asn1_NOVALUE},
-                               subjectPublicKey = #'ECPoint'{point = PubKey}};
 public_key(#'ECPrivateKey'{parameters = Params, publicKey = PubKey}, _) ->
     #'OTPSubjectPublicKeyInfo'{algorithm = #'PublicKeyAlgorithm'{algorithm = ?'id-ecPublicKey', parameters = Params},
-                               subjectPublicKey = #'ECPoint'{point = PubKey}}.
+                               subjectPublicKey = {'ECPoint', PubKey}}.
 -endif.
 
 -ifdef(NEED_extensions_3).
