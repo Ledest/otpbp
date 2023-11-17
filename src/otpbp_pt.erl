@@ -195,6 +195,7 @@
                               {{pg2, [create, delete, get_closest_pid, get_local_members, get_members], 1}, otpbp_pg2},
                               {{pg2, [join, leave], 2}, otpbp_pg2},
                               {{prim_socket, enc_sockaddr, 1}, otpbp_prim_socket},
+                              {{proc_lib, [get_label, set_label], 1}, otpbp_proc_lib},
                               {{proc_lib, init_fail, [2, 3]}, otpbp_proc_lib},
                               {{proc_lib, start_monitor, [3, 4, 5]}, otpbp_proc_lib},
                               {{proplists, from_map, 1}, {maps, to_list}}, % OTP 24.0

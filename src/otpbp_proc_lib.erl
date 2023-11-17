@@ -12,7 +12,6 @@
 % OTP 23.0
 -export([start_monitor/5]).
 -endif.
-
 -ifndef(HAVE_proc_lib__init_fail_2).
 % OTP 26.0
 -export([init_fail/2]).
@@ -20,6 +19,14 @@
 -ifndef(HAVE_proc_lib__init_fail_3).
 % OTP 26.0
 -export([init_fail/3]).
+-endif.
+-ifndef(HAVE_proc_lib__get_label_1).
+% OTP 27.0
+-export([get_label/1]).
+-endif.
+-ifndef(HAVE_proc_lib__set_label_1).
+% OTP 27.0
+-export([set_label/1]).
 -endif.
 
 -ifndef(HAVE_proc_lib__init_fail_2).
@@ -36,27 +43,17 @@ start_monitor(M, F, A) when is_atom(M), is_atom(F), is_list(A) -> start_monitor(
 start_monitor(M, F, A, Timeout) when is_atom(M), is_atom(F), is_list(A) ->
     sync_start_monitor(spawn_mon(M, F, A), Timeout).
 
--compile({inline, [spawn_mon/3, get_my_name/0, proc_info/2, check/1, get_ancestors/0]}).
-
+-compile({inline, spawn_mon/3}).
 spawn_mon(M, F, A) -> spawn_monitor(proc_lib, init_p, [get_my_name(), get_ancestors(), M, F, A]).
 
+-compile({inline, get_my_name/0}).
 get_my_name() ->
     case proc_info(self(), registered_name) of
         {registered_name, Name} -> Name;
         _ -> self()
     end.
 
-proc_info(Pid, Item) when node(Pid) =:= node() -> process_info(Pid, Item);
-proc_info(Pid, Item) ->
-    case lists:member(node(Pid), nodes()) of
-        true -> check(rpc:call(node(Pid), erlang, process_info, [Pid, Item]));
-        _ -> hidden
-    end.
-
-check({badrpc, nodedown}) -> undefined;
-check({badrpc, Error}) -> Error;
-check(Res) -> Res.
-
+-compile({inline, get_ancestors/0}).
 get_ancestors() ->
     case get('$ancestors') of
         A when is_list(A) -> A;
@@ -65,6 +62,9 @@ get_ancestors() ->
 
 -ifndef(NEED_sync_start_monitor_2).
 -define(NEED_sync_start_monitor_2, true).
+-endif.
+-ifndef(NEED_proc_info_2).
+-define(NEED_proc_info_2, true).
 -endif.
 -endif.
 
@@ -112,5 +112,48 @@ init_fail(Parent, Return, Exception) ->
     case Exception of
         {Class, Reason} when Class =:= error; Class =:= exit; Class =:= throw -> erlang:Class(Reason);
         {Class, Reason, Stacktrace} -> error(erlang:raise(Class, Reason, Stacktrace), [Parent, Return, Exception])
+    end.
+-endif.
+
+-ifndef(HAVE_proc_lib__get_label_1).
+get_label(Pid) when Pid =:= self() -> get('$process_label');
+get_label(Pid) ->
+    try get_process_info(Pid, {dictionary, '$process_label'}) of
+        {process_label, Id} -> Id;
+        _ -> undefined
+    catch
+        _:_ -> %% Old Node
+            undefined
+    end.
+
+get_process_info(Pid, Tag) -> translate_process_info(Tag, catch proc_info(Pid, Tag)).
+
+-compile({inline, translate_process_info/2}).
+translate_process_info(registered_name, []) -> {registered_name, []};
+translate_process_info(_ , {'EXIT', _}) -> undefined;
+translate_process_info(_, Result) -> Result.
+
+-ifndef(NEED_proc_info_2).
+-define(NEED_proc_info_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_proc_lib__set_label_1).
+set_label(Label) ->
+    put('$process_label', Label),
+    ok.
+-endif.
+
+-ifdef(NEED_proc_info_2).
+proc_info(Pid, Item) when node(Pid) =:= node() -> process_info(Pid,Item);
+proc_info(Pid, Item) ->
+    case lists:member(node(Pid), nodes()) of
+        true ->
+            case rpc:call(node(Pid), erlang, process_info, [Pid, Item]) of
+                {badrpc, nodedown} -> undefined;
+                {badrpc, Error} -> Error;
+                Res -> Res
+            end;
+        _ -> hidden
     end.
 -endif.
