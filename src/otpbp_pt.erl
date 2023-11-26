@@ -1,4 +1,4 @@
-%%% Copyright 2015-2019 Oleksandr Chumachenko <ledest@gmail.com>
+%%% Copyright 2015-2023 Oleksandr Chumachenko <ledest@gmail.com>
 %%%
 %%% This file is part of OTPBP.
 %%%
@@ -252,13 +252,16 @@
                               {{snmpm, sync_set, [3, 4, 5, 6]}, {snmpm, sync_set2}},
                               {{ssl, cipher_suites, [0, 1]}, otpbp_ssl},
                               {{ssl, [handshake, ssl_accept], [1, 2, 3]}, otpbp_ssl},
-                              {{string, [casefold, chomp, is_empty, length, lowercase, next_codepoint,
-                                         next_grapheme, reverse, titlecase, to_graphemes, trim, uppercase], 1},
-                               otpbp_string},
-                              {{string, [equal, find, lexemes, pad, prefix, slice, split, take, trim], 2}, otpbp_string},
-                              {{string, [equal, find, nth_lexeme, pad, replace, slice, split, take, trim], 3},
-                               otpbp_string},
-                              {{string, [equal, pad, replace, take], 4}, otpbp_string},
+                              {{string, next_codepoint, 1}, {unicode_util, cp}},
+                              {{string, next_grapheme, 1}, {unicode_util, gc}},
+                              {{string, [chomp, is_empty, length, reverse, to_graphemes], 1}, otpbp_string},
+                              {{string, [casefold, lowercase, titlecase, uppercase], 1}, otpbp_string},
+                              {{string, [jaro_similarity, lexemes, prefix], 2}, otpbp_string},
+                              {{string, nth_lexeme, 3}, otpbp_string},
+                              {{string, [find, slice, split], [2, 3]}, otpbp_string},
+                              {{string, [equal, replace], [3, 4]}, otpbp_string},
+                              {{string, [pad, take], [2, 3, 4]}, otpbp_string},
+                              {{string, trim, [1, 2, 3]}, otpbp_string},
                               {{supervisor, check_childspecs, 2}, otpbp_supervisor},
                               {{sys, get_log, 1}, otpbp_sys},
                               {{timer, [apply_after, apply_interval], [2, 3]}, otpbp_timer},
