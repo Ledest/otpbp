@@ -1,1355 +1,649 @@
-%%
-%% %CopyrightBegin%
-%% 
-%% Copyright Ericsson AB 1996-2019. All Rights Reserved.
-%% 
-%% Licensed under the Apache License, Version 2.0 (the "License");
-%% you may not use this file except in compliance with the License.
-%% You may obtain a copy of the License at
-%%
-%%     http://www.apache.org/licenses/LICENSE-2.0
-%%
-%% Unless required by applicable law or agreed to in writing, software
-%% distributed under the License is distributed on an "AS IS" BASIS,
-%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-%% See the License for the specific language governing permissions and
-%% limitations under the License.
-%% 
-%% %CopyrightEnd%
-%%
-%% A string library that works on grapheme clusters, with the exception
-%% of codepoints of class 'prepend' and non modern (or decomposed) Hangul.
-%% If these codepoints appear, functions like 'find/2' may return a string
-%% which starts inside a grapheme cluster.
-%% These exceptions are made because the codepoints classes are
-%% seldom used and require that we are able look at previous codepoints in
-%% the stream and is thus hard to implement effectively.
-%%
-%% GC (grapheme cluster) implies that the length of string 'ß↑e̊' is 3 though
-%% it is represented by the codepoints [223,8593,101,778] or the
-%% utf8 binary <<195,159,226,134,145,101,204,138>>
-%%
-%% And that searching for strings or graphemes finds the correct positions:
-%%
-%% find("eeeee̊eee", "e̊") -> "e̊ee".:
-%% find("1£4e̊abcdef", "e") -> "ef"
-%%
-%% Most functions expect all input to be normalized to one form,
-%% see unicode:characters_to_nfc and unicode:characters_to_nfd functions.
-%% When appending strings no checking is done to verify that the
-%% result is valid unicode strings.
-%%
-%% The functions may crash for invalid utf-8 input.
-%%
-%% Return value should be kept consistent when return type is
-%% unicode:chardata() i.e. binary input => binary output,
-%% list input => list output mixed input => mixed output
-%%
 -module(otpbp_string).
 
+-compile({parse_transform, otpbp_pt}).
+-compile({no_auto_import, [length/1]}).
+
+-ifndef(HAVE_string__casefold_1).
+% OTP 20.0
+-export([casefold/1]).
+-endif.
+-ifndef(HAVE_string__chomp_1).
+% OTP 20.0
+-export([chomp/1]).
+-endif.
+-ifndef(HAVE_string__equal_3).
+% OTP 20.0
+-export([equal/3]).
+-export([equal/2]).
+-endif.
+-ifndef(HAVE_string__equal_4).
+% OTP 20.0
+-export([equal/4]).
+-endif.
+-ifndef(HAVE_string__find_2).
+% OTP 20.0
+-export([find/2]).
+-endif.
+-ifndef(HAVE_string__find_3).
+% OTP 20.0
+-export([find/3]).
+-endif.
+-ifndef(HAVE_string__is_empty_1).
+% OTP 20.0
+-export([is_empty/1]).
+-endif.
 -ifndef(HAVE_string__length_1).
--compile([{parse_transform, otpbp_pt}]).
+% OTP 20.0
+-export([length/1]).
+-endif.
+-ifndef(HAVE_string__lexemes_2).
+% OTP 20.0
+-export([lexemes/2]).
+-endif.
+-ifndef(HAVE_string__lowercase_1).
+% OTP 20.0
+-export([lowercase/1]).
+-endif.
+-ifndef(HAVE_string__nth_lexeme_3).
+% OTP 20.0
+-export([nth_lexeme/3]).
+-endif.
+-ifndef(HAVE_string__pad_2).
+% OTP 20.0
+-export([pad/2]).
+-endif.
+-ifndef(HAVE_string__pad_3).
+% OTP 20.0
+-export([pad/3]).
+-endif.
+-ifndef(HAVE_string__pad_4).
+% OTP 20.0
+-export([pad/4]).
+-endif.
+-ifndef(HAVE_string__prefix_2).
+% OTP 20.0
+-export([prefix/2]).
+-endif.
+-ifndef(HAVE_string__replace_3).
+% OTP 20.0
+-export([replace/3]).
+-endif.
+-ifndef(HAVE_string__replace_4).
+% OTP 20.0
+-export([replace/4]).
+-endif.
+-ifndef(HAVE_string__reverse_1).
+% OTP 20.0
+-export([reverse/1]).
+-endif.
+-ifndef(HAVE_string__slice_2).
+% OTP 20.0
+-export([slice/2]).
+-endif.
+-ifndef(HAVE_string__slice_3).
+% OTP 20.0
+-export([slice/3]).
+-endif.
+-ifndef(HAVE_string__split_2).
+% OTP 20.0
+-export([split/2]).
+-endif.
+-ifndef(HAVE_string__split_3).
+% OTP 20.0
+-export([split/3]).
+-endif.
+-ifndef(HAVE_string__take_2).
+% OTP 20.0
+-export([take/2]).
+-endif.
+-ifndef(HAVE_string__take_3).
+% OTP 20.0
+-export([take/3]).
+-endif.
+-ifndef(HAVE_string__take_4).
+% OTP 20.0
+-export([take/4]).
+-endif.
+-ifndef(HAVE_string__titlecase_1).
+% OTP 20.0
+-export([titlecase/1]).
+-endif.
+-ifndef(HAVE_string__to_graphemes_1).
+% OTP 20.0
+-export([to_graphemes/1]).
+-endif.
+-ifndef(HAVE_string__list_to_float_1).
+% OTP 20.0
+-export([to_float/1]).
+-endif.
+-ifndef(HAVE_string__list_to_integer_1).
+% OTP 20.0
+-export([to_integer/1]).
+-endif.
+-ifndef(HAVE_string__trim_1).
+% OTP 20.0
+-export([trim/1]).
+-endif.
+-ifndef(HAVE_string__trim_2).
+% OTP 20.0
+-export([trim/2]).
+-endif.
+-ifndef(HAVE_string__trim_3).
+% OTP 20.0
+-export([trim/3]).
+-endif.
+-ifndef(HAVE_string__uppercase_1).
+% OTP 20.0
+-export([uppercase/1]).
+-endif.
+-ifndef(HAVE_string__jaro_similarity_2).
+% OTP 27.0
+-export([jaro_similarity/2]).
+-endif.
 
--export([is_empty/1, length/1, to_graphemes/1,
-         reverse/1,
-         equal/2, equal/3, equal/4,
-         slice/2, slice/3,
-         pad/2, pad/3, pad/4, trim/1, trim/2, trim/3, chomp/1,
-         take/2, take/3, take/4,
-         lexemes/2, nth_lexeme/3,
-         uppercase/1, lowercase/1, titlecase/1,casefold/1,
-         prefix/2,
-         split/2,split/3,replace/3,replace/4,
-         find/2,find/3,
-         next_codepoint/1, next_grapheme/1
-        ]).
+-ifndef(HAVE_string__chomp_1).
+-ifdef(HAVE_string__trim_3).
+-import(string, [trim/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__equal_3).
+-ifdef(HAVE_string__is_empty_1).
+-import(string, [is_empty/1]).
+-endif.
+-endif.
+-ifndef(HAVE_string__equal_4).
+-ifdef(HAVE_string__equal_3).
+-import(string, [equal/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__find_2).
+-ifdef(HAVE_string__find_3).
+-import(string, [find/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__pad_2).
+-ifdef(HAVE_string__pad_3).
+-import(string, [pad/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__pad_3).
+-ifdef(HAVE_string__pad_4).
+-import(string, [pad/4]).
+-endif.
+-endif.
+-ifndef(HAVE_string__pad_4).
+-ifdef(HAVE_string__length_1).
+-import(string, [length/1]).
+-endif.
+-endif.
+-ifndef(HAVE_string__replace_3).
+-ifdef(HAVE_string__split_2).
+-import(string, [split/2]).
+-endif.
+-endif.
+-ifndef(HAVE_string__replace_4).
+-ifdef(HAVE_string__split_3).
+-import(string, [split/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__split_2).
+-ifdef(HAVE_string__split_3).
+-import(string, [split/3]).
+-import(string, [is_empty/1]).
+-endif.
+-endif.
+-ifndef(HAVE_string__take_2).
+-ifdef(HAVE_string__take_3).
+-import(string, [take/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__take_3).
+-ifdef(HAVE_string__take_4).
+-import(string, [take/4]).
+-endif.
+-endif.
+-ifndef(HAVE_string__take_4).
+-ifdef(HAVE_string__is_empty_1).
+-import(string, [is_empty/1]).
+-endif.
+-endif.
+-ifndef(HAVE_string__trim_1).
+-ifdef(HAVE_string__trim_2).
+-import(string, [trim/2]).
+-endif.
+-endif.
+-ifndef(HAVE_string__trim_2).
+-ifdef(HAVE_string__trim_3).
+-import(string, [trim/3]).
+-endif.
+-endif.
+-ifndef(HAVE_string__trim_3).
+-ifdef(HAVE_string__is_empty_1).
+-import(string, [is_empty/1]).
+-endif.
+-endif.
 
--compile({no_auto_import,[length/1]}).
--compile({inline, [btoken/2, rev/1, append/2, stack/2, search_compile/1]}).
--define(ASCII_LIST(CP1,CP2),
-        is_integer(CP1), 0 =< CP1, CP1 < 256,
-        is_integer(CP2), 0 =< CP2, CP2 < 256, CP1 =/= $\r).
+-define(ASCII_LIST(CP1, CP2), is_integer(CP1), CP1 >= 0, CP1 < 256, is_integer(CP2), CP2 >= 0, CP2 < 256, CP1 =/= $\r).
 
--export_type([grapheme_cluster/0]).
-
--type grapheme_cluster() :: char() | [char()].
--type direction() :: 'leading' | 'trailing'.
-
--dialyzer({no_improper_lists, [stack/2, length_b/3]}).
-
-%% Check if string is the empty string
--spec is_empty(String::unicode:chardata()) -> boolean().
-is_empty([]) -> true;
-is_empty(<<>>) -> true;
-is_empty([L|R]) -> is_empty(L) andalso is_empty(R);
-is_empty(_) -> false.
-
-%% Count the number of grapheme clusters in chardata
--spec length(String::unicode:chardata()) -> non_neg_integer().
-length(<<CP1/utf8, Bin/binary>>) ->
-    length_b(Bin, CP1, 0);
-length(CD) ->
-    length_1(CD, 0).
-
-%% Convert a string to a list of grapheme clusters
--spec to_graphemes(String::unicode:chardata()) -> [grapheme_cluster()].
-to_graphemes(CD0) ->
-    case unicode_util:gc(CD0) of
-        [GC|CD] -> [GC|to_graphemes(CD)];
-        [] -> [];
-        {error, Err} -> error({badarg, Err})
-    end.
-
-%% Compare two strings return boolean, assumes that the input are
-%% normalized to same form, see unicode:characters_to_nfX_xxx(..)
--spec equal(A, B) -> boolean() when
-      A::unicode:chardata(),
-      B::unicode:chardata().
-equal(A,B) when is_binary(A), is_binary(B) ->
-    A =:= B;
-equal(A,B) ->
-    equal_1(A,B).
-
-%% Compare two strings return boolean, assumes that the input are
-%% normalized to same form, see unicode:characters_to_nfX_xxx(..)
-%% does casefold on the fly
--spec equal(A, B, IgnoreCase) -> boolean() when
-      A::unicode:chardata(),
-      B::unicode:chardata(),
-      IgnoreCase :: boolean().
-equal(A, B, false) ->
-    equal(A,B);
-equal(A, B, true) ->
-    equal_nocase(A,B).
-
-%% Compare two strings return boolean
-%% if specified does casefold and normalization on the fly
--spec equal(A, B, IgnoreCase, Norm) -> boolean() when
-      A :: unicode:chardata(),
-      B :: unicode:chardata(),
-      IgnoreCase :: boolean(),
-      Norm :: 'none' | 'nfc' | 'nfd' | 'nfkc' | 'nfkd'.
-equal(A, B, Case, none) ->
-    equal(A,B,Case);
-equal(A, B, false, Norm) ->
-    equal_norm(A, B, Norm);
-equal(A, B, true, Norm) ->
-    equal_norm_nocase(A, B, Norm).
-
-%% Reverse grapheme clusters
--spec reverse(String::unicode:chardata()) -> [grapheme_cluster()].
-reverse(<<CP1/utf8, Rest/binary>>) ->
-    reverse_b(Rest, CP1, []);
-reverse(CD) ->
-    reverse_1(CD, []).
-
-%% Slice a string and return rest of string
-%% Note: counts grapheme_clusters
--spec slice(String, Start) -> Slice when
-      String::unicode:chardata(),
-      Start :: non_neg_integer(),
-      Slice :: unicode:chardata().
-slice(CD, N) when is_integer(N), N >= 0 ->
-    case slice_l0(CD, N) of
-        [] when is_binary(CD) -> <<>>;
-        Res -> Res
-    end.
-
--spec slice(String, Start, Length) -> Slice when
-      String::unicode:chardata(),
-      Start :: non_neg_integer(),
-      Length :: 'infinity' | non_neg_integer(),
-      Slice :: unicode:chardata().
-slice(CD, N, Length)
-  when is_integer(N), N >= 0, is_integer(Length), Length > 0 ->
-    case slice_l0(CD, N) of
-        [] when is_binary(CD) -> <<>>;
-        L -> slice_trail(L, Length)
-    end;
-slice(CD, N, infinity) when is_integer(N), N >= 0 ->
-    case slice_l0(CD, N) of
-        [] when is_binary(CD) -> <<>>;
-        Res -> Res
-    end;
-slice(CD, _, 0) ->
-    case is_binary(CD) of
-        true  -> <<>>;
-        false -> []
-    end.
-
-%% Pad a string to desired length
--spec pad(String, Length) -> unicode:charlist() when
-      String ::unicode:chardata(),
-      Length :: integer().
-pad(CD, Length) ->
-    pad(CD, Length, trailing, $\s).
-
--spec pad(String, Length, Dir) -> unicode:charlist() when
-      String ::unicode:chardata(),
-      Length :: integer(),
-      Dir :: direction() | 'both'.
-pad(CD, Length, Dir) ->
-    pad(CD, Length, Dir, $\s).
-
--spec pad(String, Length, Dir, Char) -> unicode:charlist() when
-      String ::unicode:chardata(),
-      Length :: integer(),
-      Dir :: direction() | 'both',
-      Char :: grapheme_cluster().
-pad(CD, Length, leading, Char) when is_integer(Length) ->
-    Len = length(CD),
-    [lists:duplicate(max(0, Length-Len), Char), CD];
-pad(CD, Length, trailing, Char) when is_integer(Length) ->
-    Len = length(CD),
-    [CD|lists:duplicate(max(0, Length-Len), Char)];
-pad(CD, Length, both, Char) when is_integer(Length) ->
-    Len = length(CD),
-    Size = max(0, Length-Len),
-    Pre = lists:duplicate(Size div 2, Char),
-    Post = case Size rem 2 of
-               1 -> [Char];
-               _ -> []
-           end,
-    [Pre, CD, Pre|Post].
-
-%%  Strip characters from whitespace or Separator in Direction
--spec trim(String) -> unicode:chardata() when
-      String :: unicode:chardata().
-trim(Str) ->
-    trim(Str, both, unicode_util:whitespace()).
-
--spec trim(String, Dir) -> unicode:chardata() when
-      String :: unicode:chardata(),
-      Dir :: direction() | 'both'.
-trim(Str, Dir) ->
-    trim(Str, Dir, unicode_util:whitespace()).
-
--spec trim(String, Dir, Characters) -> unicode:chardata() when
-      String :: unicode:chardata(),
-      Dir :: direction() | 'both',
-      Characters :: [grapheme_cluster()].
-trim(Str, _, []) -> Str;
-trim(Str, leading, [Sep])
-  when is_list(Str), is_integer(Sep), 0 =< Sep, Sep < 256 ->
-    trim_ls(Str, Sep);
-trim(Str, leading, Sep) when is_list(Sep) ->
-    trim_l(Str, Sep);
-trim(Str, trailing, [Sep])
-  when is_list(Str), is_integer(Sep), 0 =< Sep, Sep < 256 ->
-    trim_ts(Str, Sep);
-trim(Str, trailing, Seps0) when is_list(Seps0) ->
-    Seps = search_pattern(Seps0),
-    trim_t(Str, 0, Seps);
-trim(Str, both, Sep) when is_list(Sep) ->
-    trim(trim(Str,leading,Sep), trailing, Sep).
-
-%% Delete trailing newlines or \r\n
--spec chomp(String::unicode:chardata()) -> unicode:chardata().
-chomp(Str) ->
-    trim(Str, trailing, [[$\r,$\n],$\n]).
-
-%% Split String into two parts where the leading part consists of Characters
--spec take(String, Characters) -> {Leading, Trailing} when
-      String::unicode:chardata(),
-      Characters::[grapheme_cluster()],
-      Leading::unicode:chardata(),
-      Trailing::unicode:chardata().
-take(Str, Sep) ->
-    take(Str, Sep, false, leading).
--spec take(String, Characters, Complement) -> {Leading, Trailing} when
-      String::unicode:chardata(),
-      Characters::[grapheme_cluster()],
-      Complement::boolean(),
-      Leading::unicode:chardata(),
-      Trailing::unicode:chardata().
-take(Str, Sep, Complement) ->
-    take(Str, Sep, Complement, leading).
--spec take(String, Characters, Complement, Dir) -> {Leading, Trailing} when
-      String::unicode:chardata(),
-      Characters::[grapheme_cluster()],
-      Complement::boolean(),
-      Dir::direction(),
-      Leading::unicode:chardata(),
-      Trailing::unicode:chardata().
-take(Str, [], Complement, Dir) ->
-    Empty = case is_binary(Str) of true -> <<>>; false -> [] end,
-    case {Complement,Dir} of
-        {false, leading} -> {Empty, Str};
-        {false, trailing} -> {Str, Empty};
-        {true,  leading} -> {Str, Empty};
-        {true,  trailing} -> {Empty, Str}
-    end;
-take(Str, Sep, false, leading) ->
-    take_l(Str, Sep, []);
-take(Str, Sep0, true, leading) ->
-    Sep = search_pattern(Sep0),
-    take_lc(Str, Sep, []);
-take(Str, Sep0, false, trailing) ->
-    Sep = search_pattern(Sep0),
-    take_t(Str, 0, Sep);
-take(Str, Sep0, true, trailing) ->
-    Sep = search_pattern(Sep0),
-    take_tc(Str, 0, Sep).
-
-%% Uppercase all chars in Str
--spec uppercase(String::unicode:chardata()) -> unicode:chardata().
-uppercase(CD) when is_list(CD) ->
-    try uppercase_list(CD, false)
-    catch unchanged -> CD
-    end;
-uppercase(<<CP1/utf8, Rest/binary>>=Orig) ->
-    try uppercase_bin(CP1, Rest, false) of
-        List -> unicode:characters_to_binary(List)
-    catch unchanged -> Orig
-    end;
-uppercase(<<>>) ->
-    <<>>;
-uppercase(Bin) ->
-    error({badarg, Bin}).
-
-
-%% Lowercase all chars in Str
--spec lowercase(String::unicode:chardata()) -> unicode:chardata().
-lowercase(CD) when is_list(CD) ->
-    try lowercase_list(CD, false)
-    catch unchanged -> CD
-    end;
-lowercase(<<CP1/utf8, Rest/binary>>=Orig) ->
-    try lowercase_bin(CP1, Rest, false) of
-        List -> unicode:characters_to_binary(List)
-    catch unchanged -> Orig
-    end;
-lowercase(<<>>) ->
-    <<>>;
-lowercase(Bin) ->
-    error({badarg, Bin}).
-
-
-%% Make a titlecase of the first char in Str
--spec titlecase(String::unicode:chardata()) -> unicode:chardata().
-titlecase(CD) when is_list(CD) ->
-    case unicode_util:titlecase(CD) of
-        [GC|Tail] -> append(GC,Tail);
-        Empty -> Empty
-    end;
-titlecase(CD) when is_binary(CD) ->
-    case unicode_util:titlecase(CD) of
-        [CP|Chars] when is_integer(CP) -> <<CP/utf8,Chars/binary>>;
-        [CPs|Chars] ->
-            << << <<CP/utf8>> || CP <- CPs>>/binary, Chars/binary>>;
-        [] -> <<>>
-    end.
-
-%% Make a comparable string of the Str should be used for equality tests only
--spec casefold(String::unicode:chardata()) -> unicode:chardata().
+-ifndef(HAVE_string__casefold_1).
 casefold(CD) when is_list(CD) ->
-    try casefold_list(CD, false)
-    catch unchanged -> CD
+    try
+        casefold_list(CD, false)
+    catch
+        throw:unchanged -> CD
     end;
-casefold(<<CP1/utf8, Rest/binary>>=Orig) ->
+casefold(<<CP1/utf8, Rest/binary>> = Orig) ->
     try casefold_bin(CP1, Rest, false) of
         List -> unicode:characters_to_binary(List)
-    catch unchanged -> Orig
+    catch
+        throw:unchanged -> Orig
     end;
-casefold(<<>>) ->
-    <<>>;
-casefold(Bin) ->
-    error({badarg, Bin}).
+casefold(<<>>) -> <<>>;
+casefold(Bin) -> error({badarg, Bin}).
 
-%% Return the remaining string with prefix removed or else nomatch
--spec prefix(String::unicode:chardata(), Prefix::unicode:chardata()) ->
-                    'nomatch' | unicode:chardata().
-prefix(Str, Prefix0) ->
-    Result = case unicode:characters_to_list(Prefix0) of
-                 [] -> Str;
-                 Prefix -> prefix_1(Str, Prefix)
-             end,
-    case Result of
-        [] when is_binary(Str) -> <<>>;
-        Res -> Res
-    end.
-
-%% split String with the first occurrence of SearchPattern, return list of splits
--spec split(String, SearchPattern) -> [unicode:chardata()] when
-      String :: unicode:chardata(),
-      SearchPattern :: unicode:chardata().
-split(String, SearchPattern) ->
-    split(String, SearchPattern, leading).
-
-%% split String with SearchPattern, return list of splits
--spec split(String, SearchPattern, Where) -> [unicode:chardata()] when
-      String :: unicode:chardata(),
-      SearchPattern :: unicode:chardata(),
-      Where :: direction() | 'all'.
-split(String, SearchPattern, Where) ->
-    case is_empty(SearchPattern) of
-        true -> [String];
-        false ->
-            SearchPatternCPs = unicode:characters_to_list(SearchPattern),
-            case split_1(String, SearchPatternCPs, 0, Where, [], []) of
-                {_Curr, []} -> [String];
-                {_Curr, Acc} when Where =:= trailing -> Acc;
-                {Curr, Acc} when Where =:= all -> lists:reverse([Curr|Acc]);
-                Acc when is_list(Acc) -> Acc
-            end
-    end.
-
-%% Replace the first SearchPattern in String with Replacement
--spec replace(String, SearchPattern, Replacement) ->
-                     [unicode:chardata()] when
-      String :: unicode:chardata(),
-      SearchPattern :: unicode:chardata(),
-      Replacement :: unicode:chardata().
-replace(String, SearchPattern, Replacement) ->
-    lists:join(Replacement, split(String, SearchPattern)).
-
-%% Replace Where SearchPattern in String with Replacement
--spec replace(String, SearchPattern, Replacement, Where) ->
-                     [unicode:chardata()] when
-      String :: unicode:chardata(),
-      SearchPattern :: unicode:chardata(),
-      Replacement :: unicode:chardata(),
-      Where :: direction() | 'all'.
-replace(String, SearchPattern, Replacement, Where) ->
-    lists:join(Replacement, split(String, SearchPattern, Where)).
-
-%% Split Str into a list of chardata separated by one of the grapheme
-%% clusters in Seps
--spec lexemes(String::unicode:chardata(),
-              SeparatorList::[grapheme_cluster()]) ->
-                     [unicode:chardata()].
-lexemes([], _) -> [];
-lexemes(Str, []) -> [Str];
-lexemes(Str, Seps0) when is_list(Seps0) ->
-    Seps = search_pattern(Seps0),
-    lexemes_m(Str, Seps, []).
-
--spec nth_lexeme(String, N, SeparatorList) -> unicode:chardata() when
-      String::unicode:chardata(),
-      N::non_neg_integer(),
-      SeparatorList::[grapheme_cluster()].
-
-nth_lexeme(Str, 1, []) -> Str;
-nth_lexeme(Str, N, Seps0) when is_list(Seps0), is_integer(N), N > 0 ->
-    Seps = search_pattern(Seps0),
-    nth_lexeme_m(Str, Seps, N).
-
-%% find first SearchPattern in String return rest of string
--spec find(String, SearchPattern) -> unicode:chardata() | 'nomatch' when
-      String::unicode:chardata(),
-      SearchPattern::unicode:chardata().
-find(String, SearchPattern) ->
-    find(String, SearchPattern, leading).
-
-%% find SearchPattern in String (search in Dir direction) return rest of string
--spec find(String, SearchPattern, Dir) -> unicode:chardata() | 'nomatch' when
-      String::unicode:chardata(),
-      SearchPattern::unicode:chardata(),
-      Dir::direction().
-find(String, "", _) -> String;
-find(String, <<>>, _) -> String;
-find(String, SearchPattern, leading) ->
-    find_l(String, unicode:characters_to_list(SearchPattern));
-find(String, SearchPattern, trailing) ->
-    find_r(String, unicode:characters_to_list(SearchPattern), nomatch).
-
-%% Fetch first grapheme cluster and return rest in tail
--spec next_grapheme(String::unicode:chardata()) ->
-                           maybe_improper_list(grapheme_cluster(),unicode:chardata()) |
-                           {error,unicode:chardata()}.
-next_grapheme(CD) -> unicode_util:gc(CD).
-
-%% Fetch first codepoint and return rest in tail
--spec next_codepoint(String::unicode:chardata()) ->
-                            maybe_improper_list(char(),unicode:chardata()) |
-                            {error,unicode:chardata()}.
-next_codepoint(CD) -> unicode_util:cp(CD).
-
-%% Internals
-
-length_1([CP1|[CP2|_]=Cont], N) when ?ASCII_LIST(CP1,CP2) ->
-    length_1(Cont, N+1);
-length_1(Str, N) ->
-    case unicode_util:gc(Str) of
-        [] -> N;
-        [_|Rest] -> length_1(Rest, N+1);
-        {error, Err} -> error({badarg, Err})
-    end.
-
-length_b(<<CP2/utf8, Rest/binary>>, CP1, N)
-  when ?ASCII_LIST(CP1,CP2) ->
-    length_b(Rest, CP2, N+1);
-length_b(Bin0, CP1, N) ->
-    [_|Bin1] = unicode_util:gc([CP1|Bin0]),
-    case unicode_util:cp(Bin1) of
-        [] -> N+1;
-        [CP3|Bin] -> length_b(Bin, CP3, N+1);
-        {error, Err} -> error({badarg, Err})
-    end.
-
-equal_1([A|AR], [B|BR]) when is_integer(A), is_integer(B) ->
-    A =:= B andalso equal_1(AR, BR);
-equal_1([], BR) -> is_empty(BR);
-equal_1(A0,B0) ->
-    case {unicode_util:cp(A0), unicode_util:cp(B0)} of
-        {[CP|A],[CP|B]} -> equal_1(A,B);
-        {[], []} -> true;
-        {L1,L2} when is_list(L1), is_list(L2) -> false
-    end.
-
-equal_nocase(A, A) -> true;
-equal_nocase(A0, B0) ->
-    case {unicode_util:cp(unicode_util:casefold(A0)),
-          unicode_util:cp(unicode_util:casefold(B0))} of
-        {[CP|A],[CP|B]} -> equal_nocase(A,B);
-        {[], []} -> true;
-        {L1,L2} when is_list(L1), is_list(L2) -> false
-    end.
-
-equal_norm(A, A, _Norm) -> true;
-equal_norm(A0, B0, Norm) ->
-    case {unicode_util:cp(unicode_util:Norm(A0)),
-          unicode_util:cp(unicode_util:Norm(B0))} of
-        {[CP|A],[CP|B]} -> equal_norm(A,B, Norm);
-        {[], []} -> true;
-        {L1,L2} when is_list(L1), is_list(L2) -> false
-    end.
-
-equal_norm_nocase(A, A, _Norm) -> true;
-equal_norm_nocase(A0, B0, Norm) ->
-    case {unicode_util:cp(unicode_util:casefold(unicode_util:Norm(A0))),
-          unicode_util:cp(unicode_util:casefold(unicode_util:Norm(B0)))} of
-        {[CP|A],[CP|B]} -> equal_norm_nocase(A,B, Norm);
-        {[], []} -> true;
-        {L1,L2} when is_list(L1), is_list(L2) -> false
-    end.
-
-reverse_1([CP1|[CP2|_]=Cont], Acc) when ?ASCII_LIST(CP1,CP2) ->
-    reverse_1(Cont, [CP1|Acc]);
-reverse_1(CD, Acc) ->
-    case unicode_util:gc(CD) of
-        [GC|Rest] -> reverse_1(Rest, [GC|Acc]);
-        [] -> Acc;
-        {error, Err} -> error({badarg, Err})
-    end.
-
-reverse_b(<<CP2/utf8, Rest/binary>>, CP1, Acc)
-  when ?ASCII_LIST(CP1,CP2) ->
-    reverse_b(Rest, CP2,  [CP1|Acc]);
-reverse_b(Bin0, CP1, Acc) ->
-    [GC|Bin1] = unicode_util:gc([CP1|Bin0]),
-    case unicode_util:cp(Bin1) of
-        [] -> [GC|Acc];
-        [CP3|Bin] -> reverse_b(Bin, CP3, [GC|Acc]);
-        {error, Err} -> error({badarg, Err})
-    end.
-
-slice_l0(<<CP1/utf8, Bin/binary>>, N) when N > 0 ->
-    slice_lb(Bin, CP1, N);
-slice_l0(L, N) ->
-    slice_l(L, N).
-
-slice_l([CP1|[CP2|_]=Cont], N)
-  when ?ASCII_LIST(CP1,CP2), is_integer(N), N > 0 ->
-    slice_l(Cont, N-1);
-slice_l(CD, N) when is_integer(N), N > 0 ->
-    case unicode_util:gc(CD) of
-        [_|Cont] -> slice_l(Cont, N-1);
-        [] -> [];
-        {error, Err} -> error({badarg, Err})
-    end;
-slice_l(Cont, 0) ->
-    Cont.
-
-slice_lb(<<CP2/utf8, Bin/binary>>, CP1, N)
-  when ?ASCII_LIST(CP1,CP2), is_integer(N), N > 1 ->
-    slice_lb(Bin, CP2, N-1);
-slice_lb(Bin, CP1, N) ->
-    [_|Rest] = unicode_util:gc([CP1|Bin]),
-    if N > 1 ->
-            case unicode_util:cp(Rest) of
-                [CP2|Cont] -> slice_lb(Cont, CP2, N-1);
-                [] -> <<>>;
-                {error, Err} -> error({badarg, Err})
-            end;
-       N =:= 1 ->
-            Rest
-    end.
-
-slice_trail(Orig, N) when is_binary(Orig) ->
-    case Orig of
-        <<CP1/utf8, Bin/binary>> when N > 0 ->
-            Length = slice_bin(Bin, CP1, N),
-            Sz = byte_size(Orig) - Length,
-            <<Keep:Sz/binary, _/binary>> = Orig,
-            Keep;
-        <<_, _/binary>> when N > 0 ->
-            error({badarg, Orig});
-        _ ->
-            <<>>
-    end;
-slice_trail(CD, N) when is_list(CD) ->
-    slice_list(CD, N).
-
-slice_list([CP1|[CP2|_]=Cont], N) when ?ASCII_LIST(CP1,CP2),N > 0 ->
-    [CP1|slice_list(Cont, N-1)];
-slice_list(CD, N) when N > 0 ->
-    case unicode_util:gc(CD) of
-        [GC|Cont] -> append(GC, slice_list(Cont, N-1));
-        [] -> [];
-        {error, Err} -> error({badarg, Err})
-    end;
-slice_list(_, 0) ->
-    [].
-
-slice_bin(<<CP2/utf8, Bin/binary>>, CP1, N) when ?ASCII_LIST(CP1,CP2), N > 0 ->
-    slice_bin(Bin, CP2, N-1);
-slice_bin(CD, CP1, N) when N > 0 ->
-    [_|Bin] = unicode_util:gc([CP1|CD]),
-    case unicode_util:cp(Bin) of
-        [CP2|Cont] -> slice_bin(Cont, CP2, N-1);
-        [] -> 0;
-        {error, Err} -> error({badarg, Err})
-    end;
-slice_bin(CD, CP1, 0) ->
-    byte_size(CD)+byte_size(<<CP1/utf8>>).
-
-uppercase_list([CP1|[CP2|_]=Cont], _Changed)
-  when is_integer(CP1), $a =< CP1, CP1 =< $z,
-       is_integer(CP2), 0 =< CP2, CP2 < 256 ->
-    [CP1-32|uppercase_list(Cont, true)];
-uppercase_list([CP1|[CP2|_]=Cont], Changed)
-  when is_integer(CP1), 0 =< CP1, CP1 < 128,
-       is_integer(CP2), 0 =< CP2, CP2 < 256 ->
-    [CP1|uppercase_list(Cont, Changed)];
-uppercase_list([], true) ->
-    [];
-uppercase_list([], false) ->
-    throw(unchanged);
-uppercase_list(CPs0, Changed) ->
-    case unicode_util:uppercase(CPs0) of
-        [Char|CPs] when Char =:= hd(CPs0) -> [Char|uppercase_list(CPs, Changed)];
-        [Char|CPs] -> append(Char,uppercase_list(CPs, true));
-        [] -> uppercase_list([], Changed)
-    end.
-
-uppercase_bin(CP1, <<CP2/utf8, Bin/binary>>, _Changed)
-  when is_integer(CP1), $a =< CP1, CP1 =< $z, CP2 < 256 ->
-    [CP1-32|uppercase_bin(CP2, Bin, true)];
-uppercase_bin(CP1, <<CP2/utf8, Bin/binary>>, Changed)
-  when is_integer(CP1), 0 =< CP1, CP1 < 128, CP2 < 256 ->
-    [CP1|uppercase_bin(CP2, Bin, Changed)];
-uppercase_bin(CP1, Bin, Changed) ->
-    case unicode_util:uppercase([CP1|Bin]) of
-        [CP1|CPs] ->
-            case unicode_util:cp(CPs) of
-                [Next|Rest] when is_integer(Next), Next >= 0 ->
-                    [CP1|uppercase_bin(Next, Rest, Changed)];
-                [] when Changed ->
-                    [CP1];
-                [] ->
-                    throw(unchanged);
-                {error, Err} ->
-                    error({badarg, Err})
-            end;
-        [Char|CPs] ->
-            case unicode_util:cp(CPs) of
-                [Next|Rest] when is_integer(Next), Next >= 0 ->
-                    [Char|uppercase_bin(Next, Rest, true)];
-                [] ->
-                    [Char];
-                {error, Err} ->
-                    error({badarg, Err})
-            end
-    end.
-
-lowercase_list([CP1|[CP2|_]=Cont], _Changed)
-  when is_integer(CP1), $A =< CP1, CP1 =< $Z,
-       is_integer(CP2), 0 =< CP2, CP2 < 256 ->
-    [CP1+32|lowercase_list(Cont, true)];
-lowercase_list([CP1|[CP2|_]=Cont], Changed)
-  when is_integer(CP1), 0 =< CP1, CP1 < 128,
-       is_integer(CP2), 0 =< CP2, CP2 < 256 ->
-    [CP1|lowercase_list(Cont, Changed)];
-lowercase_list([], true) ->
-    [];
-lowercase_list([], false) ->
-    throw(unchanged);
-lowercase_list(CPs0, Changed) ->
-    case unicode_util:lowercase(CPs0) of
-        [Char|CPs] when Char =:= hd(CPs0) -> [Char|lowercase_list(CPs, Changed)];
-        [Char|CPs] -> append(Char,lowercase_list(CPs, true));
-        [] -> lowercase_list([], Changed)
-    end.
-
-lowercase_bin(CP1, <<CP2/utf8, Bin/binary>>, _Changed)
-  when is_integer(CP1), $A =< CP1, CP1 =< $Z, CP2 < 256 ->
-    [CP1+32|lowercase_bin(CP2, Bin, true)];
-lowercase_bin(CP1, <<CP2/utf8, Bin/binary>>, Changed)
-  when is_integer(CP1), 0 =< CP1, CP1 < 128, CP2 < 256 ->
-    [CP1|lowercase_bin(CP2, Bin, Changed)];
-lowercase_bin(CP1, Bin, Changed) ->
-    case unicode_util:lowercase([CP1|Bin]) of
-        [CP1|CPs] ->
-            case unicode_util:cp(CPs) of
-                [Next|Rest] when is_integer(Next), Next >= 0 ->
-                    [CP1|lowercase_bin(Next, Rest, Changed)];
-                [] when Changed ->
-                    [CP1];
-                [] ->
-                    throw(unchanged);
-                {error, Err} ->
-                    error({badarg, Err})
-            end;
-        [Char|CPs] ->
-            case unicode_util:cp(CPs) of
-                [Next|Rest] when is_integer(Next), Next >= 0 ->
-                    [Char|lowercase_bin(Next, Rest, true)];
-                [] ->
-                    [Char];
-                {error, Err} ->
-                    error({badarg, Err})
-            end
-    end.
-
-casefold_list([CP1|[CP2|_]=Cont], _Changed)
-  when is_integer(CP1), $A =< CP1, CP1 =< $Z,
-       is_integer(CP2), 0 =< CP2, CP2 < 256 ->
-    [CP1+32|casefold_list(Cont, true)];
-casefold_list([CP1|[CP2|_]=Cont], Changed)
-  when is_integer(CP1), 0 =< CP1, CP1 < 128,
-       is_integer(CP2), 0 =< CP2, CP2 < 256 ->
+casefold_list([CP1|[CP2|_] = Cont], _Changed)
+  when is_integer(CP1), CP1 >= $A, CP1 =< $Z, is_integer(CP2), CP2 >= 0, CP2 < 256 ->
+    [CP1 + $\s|casefold_list(Cont, true)];
+casefold_list([CP1|[CP2|_] = Cont], Changed)
+  when is_integer(CP1), CP1 >= 0, CP1 < 128, is_integer(CP2), CP2 >= 0, CP2 < 256 ->
     [CP1|casefold_list(Cont, Changed)];
-casefold_list([], true) ->
-    [];
-casefold_list([], false) ->
-    throw(unchanged);
+casefold_list([], true) -> [];
+casefold_list([], false) -> throw(unchanged);
 casefold_list(CPs0, Changed) ->
     case unicode_util:casefold(CPs0) of
         [Char|CPs] when Char =:= hd(CPs0) -> [Char|casefold_list(CPs, Changed)];
-        [Char|CPs] -> append(Char,casefold_list(CPs, true));
+        [Char|CPs] -> append(Char, casefold_list(CPs, true));
         [] -> casefold_list([], Changed)
     end.
 
-casefold_bin(CP1, <<CP2/utf8, Bin/binary>>, _Changed)
-  when is_integer(CP1), $A =< CP1, CP1 =< $Z, CP2 < 256 ->
-    [CP1+32|casefold_bin(CP2, Bin, true)];
-casefold_bin(CP1, <<CP2/utf8, Bin/binary>>, Changed)
-  when is_integer(CP1), 0 =< CP1, CP1 < 128, CP2 < 256 ->
+casefold_bin(CP1, <<CP2/utf8, Bin/binary>>, _Changed) when is_integer(CP1), CP1 >= $A, CP1 =< $Z, CP2 < 256 ->
+    [CP1 + $\s|casefold_bin(CP2, Bin, true)];
+casefold_bin(CP1, <<CP2/utf8, Bin/binary>>, Changed) when is_integer(CP1), CP1 >= 0, CP1 < 128, CP2 < 256 ->
     [CP1|casefold_bin(CP2, Bin, Changed)];
 casefold_bin(CP1, Bin, Changed) ->
     case unicode_util:casefold([CP1|Bin]) of
         [CP1|CPs] ->
             case unicode_util:cp(CPs) of
-                [Next|Rest] when is_integer(Next), Next >= 0 ->
-                    [CP1|casefold_bin(Next, Rest, Changed)];
-                [] when Changed ->
-                    [CP1];
-                [] ->
-                    throw(unchanged);
-                {error, Err} ->
-                    error({badarg, Err})
+                [Next|Rest] when is_integer(Next), Next >= 0 -> [CP1|casefold_bin(Next, Rest, Changed)];
+                [] when Changed -> [CP1];
+                [] -> throw(unchanged);
+                {error, Err} -> error({badarg, Err})
             end;
         [Char|CPs] ->
             case unicode_util:cp(CPs) of
-                [Next|Rest] when is_integer(Next), Next >= 0 ->
-                    [Char|casefold_bin(Next, Rest, true)];
-                [] ->
-                    [Char];
-                {error, Err} ->
-                    error({badarg, Err})
+                [Next|Rest] when is_integer(Next), Next >= 0 -> [Char|casefold_bin(Next, Rest, true)];
+                [] -> [Char];
+                {error, Err} -> error({badarg, Err})
             end
     end.
 
-%% Fast path for ascii searching for one character in lists
-trim_ls([CP1|[CP2|_]=Cont]=Str, Sep)
-  when ?ASCII_LIST(CP1,CP2) ->
-    case Sep of
-        CP1 -> trim_ls(Cont, Sep);
-        _ -> Str
-    end;
-trim_ls(Str, Sep) ->
-    trim_l(Str, [Sep]).
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-endif.
 
-trim_l([CP1|[CP2|_]=Cont]=Str, Sep)
-  when ?ASCII_LIST(CP1,CP2) ->
-    case lists:member(CP1, Sep) of
-        true -> trim_l(Cont, Sep);
-        false -> Str
-    end;
-trim_l([Bin|Cont0], Sep) when is_binary(Bin) ->
-    case bin_search_inv(Bin, Cont0, Sep) of
-        {nomatch, Cont} -> trim_l(Cont, Sep);
-        Keep -> Keep
-    end;
-trim_l(Str, Sep) when is_list(Str) ->
-    case unicode_util:gc(Str) of
-        [C|Cs] ->
-            case lists:member(C, Sep) of
-                true -> trim_l(Cs, Sep);
-                false -> Str
-            end;
-        [] -> []
-    end;
-trim_l(Bin, Sep) when is_binary(Bin) ->
-    case bin_search_inv(Bin, [], Sep) of
-        {nomatch,_} -> <<>>;
-        [Keep] -> Keep
+-ifndef(HAVE_string__chomp_1).
+chomp(Str) -> trim(Str, trailing, ["\r\n", $\n]).
+-endif.
+
+-ifndef(HAVE_string__equal_3).
+equal(A, B) -> is_binary(A) andalso A =:= B orelse equal_(A, B).
+
+equal(A, B, false) -> equal(A, B);
+equal(A, B, true) -> equal_nocase(A, B).
+
+equal_([A|AR], [B|BR]) when is_integer(A), is_integer(B) -> A =:= B andalso equal_(AR, BR);
+equal_([], BR) -> is_empty(BR);
+equal_(A0, B0) ->
+    case {unicode_util:cp(A0), unicode_util:cp(B0)} of
+        {[CP|A], [CP|B]} -> equal_(A, B);
+        {[], []} -> true;
+        {L1, L2} when is_list(L1), is_list(L2) -> false
     end.
 
-%% Fast path for ascii searching for one character in lists
-trim_ts([Sep|Cs1]=Str, Sep) ->
-    case Cs1 of
-        [] -> [];
-        [CP2|_] when ?ASCII_LIST(Sep,CP2) ->
-            Tail = trim_ts(Cs1, Sep),
-            case is_empty(Tail) of
-                true -> [];
-                false -> [Sep|Tail]
-            end;
-        _ ->
-            trim_t(Str, 0, search_pattern([Sep]))
-    end;
-trim_ts([CP|Cont],Sep) when is_integer(CP) ->
-    [CP|trim_ts(Cont, Sep)];
-trim_ts(Str, Sep) ->
-    trim_t(Str, 0, search_pattern([Sep])).
-
-trim_t([CP1|Cont]=Cs0, _, {GCs,CPs,_}=Seps) when is_integer(CP1) ->
-    case lists:member(CP1, CPs) of
-        true ->
-            [GC|Cs1] = unicode_util:gc(Cs0),
-            case lists:member(GC, GCs) of
-                true ->
-                    Tail = trim_t(Cs1, 0, Seps),
-                    case is_empty(Tail) of
-                        true -> [];
-                        false -> append(GC,Tail)
-                    end;
-                false ->
-                    append(GC,trim_t(Cs1, 0, Seps))
-            end;
-        false ->
-            [CP1|trim_t(Cont, 0, Seps)]
-    end;
-trim_t([Bin|Cont0], N, {GCs,_,_}=Seps0) when is_binary(Bin) ->
-    <<_:N/binary, Rest/binary>> = Bin,
-    Seps = search_compile(Seps0),
-    case bin_search(Rest, Cont0, Seps) of
-        {nomatch,_} ->
-            stack(Bin, trim_t(Cont0, 0, Seps));
-        [SepStart|Cont1] ->
-            case bin_search_inv(SepStart, Cont1, GCs) of
-                {nomatch, Cont} ->
-                    Tail = trim_t(Cont, 0, Seps),
-                    case is_empty(Tail) of
-                        true ->
-                            KeepSz = byte_size(Bin) - byte_size(SepStart),
-                            <<Keep:KeepSz/binary, _/binary>> = Bin,
-                            Keep;
-                        false ->
-                            Used = cp_prefix(Cont0, Cont),
-                            stack(Bin, stack(Used, Tail))
-                    end;
-                [NonSep|Cont] when is_binary(NonSep) ->
-                    KeepSz = byte_size(Bin) - byte_size(NonSep),
-                    trim_t([Bin|Cont], KeepSz, Seps)
-            end
-    end;
-trim_t(Str, 0, {GCs,_,_}=Seps) when is_list(Str) ->
-    case unicode_util:gc(Str) of
-        [GC|Cs1] ->
-            case lists:member(GC, GCs) of
-                true ->
-                    Tail = trim_t(Cs1, 0, Seps),
-                    case is_empty(Tail) of
-                        true -> [];
-                        false -> append(GC,Tail)
-                    end;
-                false ->
-                    append(GC,trim_t(Cs1, 0, Seps))
-            end;
-        [] -> []
-    end;
-trim_t(Bin, N, {GCs,_,_}=Seps0) when is_binary(Bin) ->
-    <<_:N/binary, Rest/binary>> = Bin,
-    Seps = search_compile(Seps0),
-    case bin_search(Rest, [], Seps) of
-        {nomatch,_} -> Bin;
-        [SepStart] ->
-            case bin_search_inv(SepStart, [], GCs) of
-                {nomatch,_} ->
-                    KeepSz = byte_size(Bin) - byte_size(SepStart),
-                    <<Keep:KeepSz/binary, _/binary>> = Bin,
-                    Keep;
-                [NonSep] ->
-                    KeepSz = byte_size(Bin) - byte_size(NonSep),
-                    trim_t(Bin, KeepSz, Seps)
-            end
+equal_nocase(A, A) -> true;
+equal_nocase(A0, B0) ->
+    case {unicode_util:cp(unicode_util:casefold(A0)), unicode_util:cp(unicode_util:casefold(B0))} of
+        {[CP|A], [CP|B]} -> equal_nocase(A, B);
+        {[], []} -> true;
+        {L1, L2} when is_list(L1), is_list(L2) -> false
     end.
+-endif.
 
+-ifndef(HAVE_string__equal_4).
+equal(A, B, Case, none) -> equal(A, B, Case);
+equal(A, B, false, Norm) -> equal_norm(A, B, Norm);
+equal(A, B, true, Norm) -> equal_norm_nocase(A, B, Norm).
 
-take_l([CP1|[CP2|_]=Cont]=Str, Seps, Acc)
-  when ?ASCII_LIST(CP1,CP2) ->
-    case lists:member(CP1, Seps) of
-        true -> take_l(Cont, Seps, [CP1|Acc]);
-        false -> {rev(Acc), Str}
-    end;
-take_l([Bin|Cont0], Seps, Acc) when is_binary(Bin) ->
-    case bin_search_inv(Bin, Cont0, Seps) of
-        {nomatch, Cont} ->
-            Used = cp_prefix(Cont0, Cont),
-            take_l(Cont, Seps, [unicode:characters_to_binary([Bin|Used])|Acc]);
-        [Bin1|_]=After when is_binary(Bin1) ->
-            First = byte_size(Bin) - byte_size(Bin1),
-            <<Keep:First/binary, _/binary>> = Bin,
-            {btoken(Keep,Acc), After}
-    end;
-take_l(Str, Seps, Acc) when is_list(Str) ->
-    case unicode_util:gc(Str) of
-        [C|Cs] ->
-            case lists:member(C, Seps) of
-                true -> take_l(Cs, Seps, append(rev(C),Acc));
-                false -> {rev(Acc), Str}
-            end;
-        [] -> {rev(Acc), []}
-    end;
-take_l(Bin, Seps, Acc) when is_binary(Bin) ->
-    case bin_search_inv(Bin, [], Seps) of
-        {nomatch,_} ->
-            {btoken(Bin, Acc), <<>>};
-        [After] ->
-            First = byte_size(Bin) - byte_size(After),
-            <<Keep:First/binary, _/binary>> = Bin,
-            {btoken(Keep, Acc), After}
-    end.
+equal_norm(A0, B0, Norm) ->
+    A0 =:= B0 orelse
+        case {unicode_util:cp(unicode_util:Norm(A0)), unicode_util:cp(unicode_util:Norm(B0))} of
+            {[CP|A], [CP|B]} -> equal_norm(A, B, Norm);
+            {[], []} -> true;
+            {L1, L2} when is_list(L1), is_list(L2) -> false
+        end.
 
+equal_norm_nocase(A0, B0, Norm) ->
+    A0 =:= B0 orelse
+        case {unicode_util:cp(unicode_util:casefold(unicode_util:Norm(A0))),
+              unicode_util:cp(unicode_util:casefold(unicode_util:Norm(B0)))} of
+            {[CP|A], [CP|B]} -> equal_norm_nocase(A, B, Norm);
+            {[], []} -> true;
+            {L1, L2} when is_list(L1), is_list(L2) -> false
+        end.
+-endif.
 
-take_lc([CP1|Cont]=Str0, {GCs,CPs,_}=Seps, Acc) when is_integer(CP1) ->
-    case lists:member(CP1, CPs) of
-        true ->
-            [GC|Str] = unicode_util:gc(Str0),
-            case lists:member(GC, GCs) of
-                false -> take_lc(Str, Seps, append(rev(GC),Acc));
-                true  -> {rev(Acc), Str0}
-            end;
-        false ->
-            take_lc(Cont, Seps, append(CP1,Acc))
-    end;
-take_lc([Bin|Cont0], Seps0, Acc) when is_binary(Bin) ->
-    Seps = search_compile(Seps0),
-    case bin_search(Bin, Cont0, Seps) of
-        {nomatch, Cont} ->
-            Used = cp_prefix(Cont0, Cont),
-            take_lc(Cont, Seps, [unicode:characters_to_binary([Bin|Used])|Acc]);
-        [Bin1|_]=After when is_binary(Bin1) ->
-            First = byte_size(Bin) - byte_size(Bin1),
-            <<Keep:First/binary, _/binary>> = Bin,
-            {btoken(Keep,Acc), After}
-    end;
-take_lc(Str, {GCs,_,_}=Seps, Acc) when is_list(Str) ->
-    case unicode_util:gc(Str) of
-        [C|Cs] ->
-            case lists:member(C, GCs) of
-                false -> take_lc(Cs, Seps, append(rev(C),Acc));
-                true  -> {rev(Acc), Str}
-            end;
-        [] -> {rev(Acc), []}
-    end;
-take_lc(Bin, Seps0, Acc) when is_binary(Bin) ->
-    Seps = search_compile(Seps0),
-    case bin_search(Bin, [], Seps) of
-        {nomatch,_} ->
-            {btoken(Bin, Acc), <<>>};
-        [After] ->
-            First = byte_size(Bin) - byte_size(After),
-            <<Keep:First/binary, _/binary>> = Bin,
-            {btoken(Keep, Acc), After}
-    end.
+-ifndef(HAVE_string__find_2).
+find(String, SearchPattern) -> find(String, SearchPattern, leading).
+-endif.
 
+-ifndef(HAVE_string__find_3).
+find(String, SearchPattern, _) when SearchPattern =:= ""; SearchPattern =:= <<>> -> String;
+find(String, SearchPattern, leading) -> find_l(String, unicode:characters_to_list(SearchPattern));
+find(String, SearchPattern, trailing) -> find_r(String, SearchPattern).
 
-take_t([CP1|Cont]=Str0, _, {GCs,CPs,_}=Seps) when is_integer(CP1) ->
-    case lists:member(CP1, CPs) of
-        true ->
-            [GC|Str] = unicode_util:gc(Str0),
-            case lists:member(GC, GCs) of
-                true ->
-                    {Head, Tail} = take_t(Str, 0, Seps),
-                    case is_empty(Head) of
-                        true ->  {Head, append(GC,Tail)};
-                        false -> {append(GC,Head), Tail}
-                    end;
-                false ->
-                    {Head, Tail} = take_t(Str, 0, Seps),
-                    {append(GC,Head), Tail}
-            end;
-        false ->
-            {Head, Tail} = take_t(Cont, 0, Seps),
-            {[CP1|Head], Tail}
+find_l([C1|Cs] = Cs0, [C|_] = Needle) when is_integer(C1) ->
+    case C1 =/= C orelse prefix_(Cs0, Needle) =:= nomatch of
+        true -> find_l(Cs, Needle);
+        _false -> Cs0
     end;
-take_t([Bin|Cont0], N, {GCs,_,_}=Seps0) when is_binary(Bin) ->
-    <<_:N/binary, Rest/binary>> = Bin,
-    Seps = search_compile(Seps0),
-    case bin_search(Rest, Cont0, Seps) of
-        {nomatch,Cont} ->
-            Used = cp_prefix(Cont0, Cont),
-            {Head, Tail} = take_t(Cont, 0, Seps),
-            {stack(unicode:characters_to_binary([Bin|Used]), Head), Tail};
-        [SepStart|Cont1] ->
-            case bin_search_inv(SepStart, Cont1, GCs) of
-                {nomatch, Cont} ->
-                    {Head, Tail} = take_t(Cont, 0, Seps),
-                    Used = cp_prefix(Cont0, Cont),
-                    case is_empty(Head) of
-                        true ->
-                            KeepSz = byte_size(Bin) - byte_size(SepStart),
-                            <<Keep:KeepSz/binary, End/binary>> = Bin,
-                            {Keep, stack(stack(End,Used),Tail)};
-                        false ->
-                            {stack(unicode:characters_to_binary([Bin|Used]),Head), Tail}
-                    end;
-                [NonSep|Cont] when is_binary(NonSep) ->
-                    KeepSz = byte_size(Bin) - byte_size(NonSep),
-                    take_t([Bin|Cont], KeepSz, Seps)
-            end
+find_l([Bin|Cont0], Needle) when is_binary(Bin) ->
+    case bin_search_str(Bin, 0, Cont0, Needle) of
+        {nomatch, _, Cont} -> find_l(Cont, Needle);
+        {_Before, Cs, _After} -> Cs
     end;
-take_t(Str, 0, {GCs,_,_}=Seps) when is_list(Str) ->
-    case unicode_util:gc(Str) of
-        [GC|Cs1] ->
-            case lists:member(GC, GCs) of
-                true ->
-                    {Head, Tail} = take_t(Cs1, 0, Seps),
-                    case is_empty(Head) of
-                        true ->  {Head, append(GC,Tail)};
-                        false -> {append(GC,Head), Tail}
-                    end;
-                false ->
-                    {Head, Tail} = take_t(Cs1, 0, Seps),
-                    {append(GC,Head), Tail}
-            end;
-        [] -> {[],[]}
-    end;
-take_t(Bin, N, {GCs,_,_}=Seps0) when is_binary(Bin) ->
-    <<_:N/binary, Rest/binary>> = Bin,
-    Seps = search_compile(Seps0),
-    case bin_search(Rest, [], Seps) of
-        {nomatch,_} -> {Bin, <<>>};
-        [SepStart] ->
-            case bin_search_inv(SepStart, [], GCs) of
-                {nomatch,_} ->
-                    KeepSz = byte_size(Bin) - byte_size(SepStart),
-                    <<Before:KeepSz/binary, End/binary>> = Bin,
-                    {Before, End};
-                [NonSep] ->
-                    KeepSz = byte_size(Bin) - byte_size(NonSep),
-                    take_t(Bin, KeepSz, Seps)
-            end
-    end.
-
-take_tc([CP1|[CP2|_]=Cont], _, {GCs,_,_}=Seps) when ?ASCII_LIST(CP1,CP2) ->
-    case lists:member(CP1, GCs) of
-        false ->
-            {Head, Tail} = take_tc(Cont, 0, Seps),
-            case is_empty(Head) of
-                true -> {Head, append(CP1,Tail)};
-                false -> {append(CP1,Head), Tail}
-            end;
-        true ->
-            {Head, Tail} = take_tc(Cont, 0, Seps),
-            {append(CP1,Head), Tail}
-    end;
-take_tc([Bin|Cont0], N, {GCs,_,_}=Seps0) when is_binary(Bin) ->
-    <<_:N/binary, Rest/binary>> = Bin,
-    case bin_search_inv(Rest, Cont0, GCs) of
-        {nomatch,Cont} ->
-            Used = cp_prefix(Cont0, Cont),
-            {Head, Tail} = take_tc(Cont, 0, Seps0),
-            {stack(unicode:characters_to_binary([Bin|Used]), Head), Tail};
-        [SepStart|Cont1] ->
-            Seps = search_compile(Seps0),
-            case bin_search(SepStart, Cont1, Seps) of
-                {nomatch, Cont} ->
-                    {Head, Tail} = take_tc(Cont, 0, Seps),
-                    Used = cp_prefix(Cont0, Cont),
-                    case is_empty(Head) of
-                        true ->
-                            KeepSz = byte_size(Bin) - byte_size(SepStart),
-                            <<Keep:KeepSz/binary, End/binary>> = Bin,
-                            {Keep, stack(stack(End,Used),Tail)};
-                        false ->
-                            {stack(unicode:characters_to_binary([Bin|Used]),Head), Tail}
-                    end;
-                [NonSep|Cont] when is_binary(NonSep) ->
-                    KeepSz = byte_size(Bin) - byte_size(NonSep),
-                    take_tc([Bin|Cont], KeepSz, Seps)
-            end
-    end;
-take_tc(Str, 0, {GCs,_,_}=Seps) when is_list(Str) ->
-    case unicode_util:gc(Str) of
-        [GC|Cs1] ->
-            case lists:member(GC, GCs) of
-                false ->
-                    {Head, Tail} = take_tc(Cs1, 0, Seps),
-                    case is_empty(Head) of
-                        true -> {Head, append(GC,Tail)};
-                        false -> {append(GC,Head), Tail}
-                    end;
-                true ->
-                    {Head, Tail} = take_tc(Cs1, 0, Seps),
-                    {append(GC,Head), Tail}
-            end;
-        [] -> {[],[]}
-    end;
-take_tc(Bin, N, {GCs,_,_}=Seps0) when is_binary(Bin) ->
-    <<_:N/binary, Rest/binary>> = Bin,
-    case bin_search_inv(Rest, [], GCs) of
-        {nomatch,_} -> {Bin, <<>>};
-        [SepStart] ->
-            Seps = search_compile(Seps0),
-            case bin_search(SepStart, [], Seps) of
-                {nomatch,_} ->
-                    KeepSz = byte_size(Bin) - byte_size(SepStart),
-                    <<Before:KeepSz/binary, End/binary>> = Bin,
-                    {Before, End};
-                [NonSep] ->
-                    KeepSz = byte_size(Bin) - byte_size(NonSep),
-                    take_tc(Bin, KeepSz, Seps)
-            end
-    end.
-
-prefix_1(Cs0, [GC]) ->
-    case unicode_util:gc(Cs0) of
-        [GC|Cs] -> Cs;
-        _ -> nomatch
-    end;
-prefix_1([CP|Cs], [Pre|PreR]) when is_integer(CP) ->
-    case CP =:= Pre of
-        true -> prefix_1(Cs,PreR);
-        false -> nomatch
-    end;
-prefix_1(<<CP/utf8, Cs/binary>>, [Pre|PreR]) ->
-    case CP =:= Pre of
-        true -> prefix_1(Cs,PreR);
-        false -> nomatch
-    end;
-prefix_1(Cs0, [Pre|PreR]) ->
-    case unicode_util:cp(Cs0) of
-        [Pre|Cs] ->  prefix_1(Cs,PreR);
-        _ -> nomatch
-    end.
-
-split_1([CP1|Cs]=Cs0, [C|_]=Needle, _, Where, Curr, Acc) when is_integer(CP1) ->
-    case CP1=:=C of
-        true ->
-            case prefix_1(Cs0, Needle) of
-                nomatch -> split_1(Cs, Needle, 0, Where, append(C,Curr), Acc);
-                Rest when Where =:= leading ->
-                    [rev(Curr), Rest];
-                Rest when Where =:= trailing ->
-                    split_1(Cs, Needle, 0, Where, [C|Curr], [rev(Curr), Rest]);
-                Rest when Where =:= all ->
-                    split_1(Rest, Needle, 0, Where, [], [rev(Curr)|Acc])
-            end;
-        false ->
-            split_1(Cs, Needle, 0, Where, append(CP1,Curr), Acc)
-    end;
-split_1([Bin|Cont0], Needle, Start, Where, Curr0, Acc)
-  when is_binary(Bin) ->
-    case bin_search_str(Bin, Start, Cont0, Needle) of
-        {nomatch,Sz,Cont} ->
-            <<Keep:Sz/binary, _/binary>> = Bin,
-            split_1(Cont, Needle, 0, Where, [Keep|Curr0], Acc);
-        {Before, [Cs0|Cont], After} ->
-            Curr = add_non_empty(Before,Curr0),
-            case Where of
-                leading ->
-                    [rev(Curr),After];
-                trailing ->
-                    <<_/utf8, Cs/binary>> = Cs0,
-                    Next = byte_size(Bin) - byte_size(Cs),
-                    split_1([Bin|Cont], Needle, Next, Where,
-                            Curr0, [rev(Curr),After]);
-                all ->
-                    split_1(After, Needle, 0, Where, [], [rev(Curr)|Acc])
-            end
-    end;
-split_1(Cs0, [C|_]=Needle, _, Where, Curr, Acc) when is_list(Cs0) ->
+find_l(Cs0, [C|_] = Needle) when is_list(Cs0) ->
     case unicode_util:cp(Cs0) of
         [C|Cs] ->
-            case prefix_1(Cs0, Needle) of
-                nomatch -> split_1(Cs, Needle, 0, Where, append(C,Curr), Acc);
-                Rest when Where =:= leading ->
-                    [rev(Curr), Rest];
-                Rest when Where =:= trailing ->
-                    split_1(Cs, Needle, 0, Where, [C|Curr], [rev(Curr), Rest]);
-                Rest when Where =:= all ->
-                    split_1(Rest, Needle, 0, Where, [], [rev(Curr)|Acc])
+            case prefix_(Cs0, Needle) of
+                nomatch -> find_l(Cs, Needle);
+                _ -> Cs0
             end;
-        [Other|Cs] ->
-            split_1(Cs, Needle, 0, Where, append(Other,Curr), Acc);
-        [] ->
-            {rev(Curr), Acc}
+        [_C|Cs] -> find_l(Cs, Needle);
+        [] -> nomatch
     end;
-split_1(Bin, [_C|_]=Needle, Start, Where, Curr0, Acc) ->
-    case bin_search_str(Bin, Start, [], Needle) of
-        {nomatch,_,_} ->
-            <<_:Start/binary, Keep/binary>> = Bin,
-            {rev([Keep|Curr0]), Acc};
-        {Before, [Cs0], After} ->
-            case Where of
-                leading ->
-                    [rev([Before|Curr0]),After];
-                trailing ->
-                    <<_/utf8, Cs/binary>> = Cs0,
-                    Next = byte_size(Bin) - byte_size(Cs),
-                    split_1(Bin, Needle, Next, Where, Curr0,
-                            [btoken(Before,Curr0),After]);
-                all ->
-                    Next = byte_size(Bin) - byte_size(After),
-                    <<_:Start/binary, Keep/binary>> = Before,
-                    Curr = [Keep|Curr0],
-                    split_1(Bin, Needle, Next, Where, [], [rev(Curr)|Acc])
+find_l(Bin, Needle) ->
+    case bin_search_str(Bin, 0, [], Needle) of
+        {nomatch, _, _} -> nomatch;
+        {_Before, [Cs], _After} -> Cs
+    end.
+
+-compile({inline, find_r/2}).
+find_r(String, SearchPattern) -> find_r(String, unicode:characters_to_list(SearchPattern), nomatch).
+
+find_r([Cp|Cs] = Cs0, [C|_] = Needle, Res) when is_integer(Cp) ->
+    find_r(Cs, Needle,
+           case Cp =/= C orelse prefix_(Cs0, Needle) =:= nomatch of
+               true -> Res;
+                   _false -> Cs0
+           end);
+find_r([Bin|Cont0], Needle, Res) when is_binary(Bin) ->
+    case bin_search_str(Bin, 0, Cont0, Needle) of
+        {nomatch, _, Cont} -> find_r(Cont, Needle, Res);
+        {_, Cs, _} -> find_r(tl(unicode_util:gc(Cs)), Needle, Cs)
+    end;
+find_r(Cs0, [C|_] = Needle, Res) when is_list(Cs0) ->
+    case unicode_util:cp(Cs0) of
+        [C|Cs] ->
+            find_r(Cs, Needle,
+                   case prefix_(Cs0, Needle) of
+                       nomatch -> Res;
+                       _ -> Cs0
+                   end);
+        [_C|Cs] -> find_r(Cs, Needle, Res);
+        [] -> Res
+    end;
+find_r(Bin, Needle, Res) ->
+    case bin_search_str(Bin, 0, [], Needle) of
+        {nomatch, _, _} -> Res;
+        {_Before, [Cs0], _After} ->
+            <<_/utf8, Cs/binary>> = Cs0,
+            find_r(Cs, Needle, Cs0)
+    end.
+
+-ifndef(NEED_prefix__2).
+-define(NEED_prefix__2, true).
+-endif.
+-ifndef(NEED_bin_search_str_4).
+-define(NEED_bin_search_str_4, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__is_empty_1).
+is_empty([L|R]) -> is_empty(L) andalso is_empty(R);
+is_empty(S) -> S =:= [] orelse S =:= <<>>.
+-endif.
+
+-ifndef(HAVE_string__jaro_similarity_2).
+jaro_similarity(A0, B0) ->
+    case {str_to_gcl_and_length(A0), str_to_indexmap(B0)} of
+        {{_, 0}, [_|0]} -> 1.0;
+        {{_, ALen}, [_|BLen]} when ALen =:= 0; BLen =:= 0 -> 0.0;
+        {{A, ALen}, [B|BLen]} ->
+            case jaro_match(A, B, max(ALen, BLen) div 2) of
+                {[], _} -> 0.0;
+                {AM, BM} ->
+                    {M, T} = jaro_calc_mt(AM, BM, 0, 0),
+                    (M / ALen + M / BLen + (M - T / 2) / M) / 3
             end
     end.
 
-lexemes_m([CP|_]=Cs0, {GCs,CPs,_}=Seps0, Ts) when is_integer(CP) ->
+-compile({inline, jaro_match/3}).
+jaro_match(A, B, Dist) -> jaro_match(A, B, -Dist, Dist, [], []).
+
+jaro_match([A|As], B, Min, Max, AM, BM) ->
+    Min1 = Min + 1,
+    Max1 = Max + 1,
+    case jaro_detect(maps:get(A, B, []), Min, Max) of
+        false -> jaro_match(As, B, Min1, Max1, AM, BM);
+        {J, Remain} -> jaro_match(As, B#{A => Remain}, Min1, Max1, [A|AM], add_rsorted({J, A}, BM))
+    end;
+jaro_match(_A, _B, _Min, _Max, AM, BM) -> {AM, BM}.
+
+jaro_detect([Idx|Rest], Min, Max) when Idx < Max ->
+    if
+        Min < Idx -> {Idx, Rest};
+        true -> jaro_detect(Rest, Min, Max)
+    end;
+jaro_detect(_, _, _) -> false.
+
+jaro_calc_mt([Char|AM], [{_, Char}|BM], M, T) -> jaro_calc_mt(AM, BM, M + 1, T);
+jaro_calc_mt([_|AM], [_|BM], M, T) -> jaro_calc_mt(AM, BM, M + 1, T + 1);
+jaro_calc_mt([], [], M, T) -> {M, T}.
+
+add_rsorted(A, [H|_] = BM) when A > H -> [A|BM];
+add_rsorted(A, [H|BM]) -> [H|add_rsorted(A, BM)];
+add_rsorted(A, []) -> [A].
+
+-compile({inline, str_to_gcl_and_length/1}).
+str_to_gcl_and_length(S0) -> gcl_and_length(unicode_util:gc(S0), [], 0).
+
+gcl_and_length([C|Str], Acc, N) -> gcl_and_length(unicode_util:gc(Str), [C|Acc], N + 1);
+gcl_and_length([], Acc, N) -> {lists:reverse(Acc), N};
+gcl_and_length({error, Err}, _, _) -> error({badarg, Err}).
+
+-compile({inline, str_to_indexmap/1}).
+str_to_indexmap(S) -> str_to_map(unicode_util:gc(S), 0).
+
+str_to_map([G|Gs], I) ->
+    [M|L] = str_to_map(unicode_util:gc(Gs), I + 1),
+    [M#{G => [I|maps:get(G, M, [])]}|L];
+str_to_map([], L) -> [#{}|L];
+str_to_map({error,Error}, _) -> error({badarg, Error}).
+-endif.
+
+-ifndef(HAVE_string__length_1).
+length(<<CP1/utf8, Bin/binary>>) -> length(Bin, CP1, 0);
+length(CD) -> length(CD, 0).
+
+length([CP1|[CP2|_] = Cont], N) when ?ASCII_LIST(CP1, CP2) -> length(Cont, N + 1);
+length(Str, N) ->
+    case unicode_util:gc(Str) of
+        [] -> N;
+        [_|Rest] -> length(Rest, N + 1);
+        {error, Err} -> error({badarg, Err})
+    end.
+
+length(<<CP2/utf8, Rest/binary>>, CP1, N) when ?ASCII_LIST(CP1, CP2) -> length(Rest, CP2, N + 1);
+length(Bin0, CP1, N) ->
+    case unicode_util:cp(tl(unicode_util:gc([CP1|Bin0]))) of
+        [] -> N + 1;
+        [CP3|Bin] -> length(Bin, CP3, N + 1);
+        {error, Err} -> error({badarg, Err})
+    end.
+-endif.
+
+-ifndef(HAVE_string__lexemes_2).
+lexemes([], _) -> [];
+lexemes(Str, []) -> [Str];
+lexemes(Str, Seps) when is_list(Seps) -> lexemes(Str, search_pattern(Seps), []).
+
+lexemes([CP|_] = Cs0, {GCs, CPs, _} = Seps0, Ts) when is_integer(CP) ->
     case lists:member(CP, CPs) of
         true ->
             [GC|Cs2] = unicode_util:gc(Cs0),
             case lists:member(GC, GCs) of
-                true ->
-                    lexemes_m(Cs2, Seps0, Ts);
-                false ->
-                    Seps = search_compile(Seps0),
-                    {Lexeme,Rest} = lexeme_pick(Cs0, Seps, []),
-                    lexemes_m(Rest, Seps, [Lexeme|Ts])
+                true -> lexemes(Cs2, Seps0, Ts);
+                false -> lexemes_(Cs0, Seps0, Ts)
             end;
-        false ->
-            Seps = search_compile(Seps0),
-            {Lexeme,Rest} = lexeme_pick(Cs0, Seps, []),
-            lexemes_m(Rest, Seps, [Lexeme|Ts])
+        false -> lexemes_(Cs0, Seps0, Ts)
     end;
-lexemes_m([Bin|Cont0], {GCs,_,_}=Seps0, Ts) when is_binary(Bin) ->
+lexemes([Bin|Cont0], {GCs, _, _} = Seps0, Ts) when is_binary(Bin) ->
     case bin_search_inv(Bin, Cont0, GCs) of
-        {nomatch,Cont} ->
-            lexemes_m(Cont, Seps0, Ts);
-        Cs ->
-            Seps = search_compile(Seps0),
-            {Lexeme,Rest} = lexeme_pick(Cs, Seps, []),
-            lexemes_m(Rest, Seps, [Lexeme|Ts])
+        {nomatch, Cont} -> lexemes(Cont, Seps0, Ts);
+        Cs -> lexemes_(Cs, Seps0, Ts)
     end;
-lexemes_m(Cs0, {GCs, _, _}=Seps0, Ts) when is_list(Cs0) ->
+lexemes(Cs0, {GCs, _, _} = Seps0, Ts) when is_list(Cs0) ->
     case unicode_util:gc(Cs0) of
         [C|Cs] ->
             case lists:member(C, GCs) of
-                true  ->
-                    lexemes_m(Cs, Seps0, Ts);
-                false ->
-                    Seps = search_compile(Seps0),
-                    {Lexeme,Rest} = lexeme_pick(Cs0, Seps, []),
-                    lexemes_m(Rest, Seps, [Lexeme|Ts])
+                true -> lexemes(Cs, Seps0, Ts);
+                false -> lexemes_(Cs0, Seps0, Ts)
             end;
-        [] ->
-            lists:reverse(Ts)
+        [] -> lists:reverse(Ts)
     end;
-lexemes_m(Bin, {GCs,_,_}=Seps0, Ts) when is_binary(Bin) ->
+lexemes(Bin, {GCs, _, _} = Seps0, Ts) when is_binary(Bin) ->
     case bin_search_inv(Bin, [], GCs) of
-        {nomatch,_} ->
-            lists:reverse(Ts);
+        {nomatch, _} -> lists:reverse(Ts);
         [Cs] ->
             Seps = search_compile(Seps0),
-            {Lexeme,Rest} = lexeme_pick(Cs, Seps, []),
-            lexemes_m(Rest, Seps, add_non_empty(Lexeme,Ts))
+            {Lexeme, Rest} = lexeme_pick(Cs, Seps, []),
+            lexemes(Rest, Seps,
+                    if
+                        Lexeme =:= <<>> -> Rest;
+                        true -> [Lexeme|Ts]
+                    end)
     end.
 
-lexeme_pick([CP|Cs1]=Cs0, {GCs,CPs,_}=Seps, Tkn) when is_integer(CP) ->
-    case lists:member(CP, CPs) of
-        true  ->
-            [GC|Cs2] = unicode_util:gc(Cs0),
-            case lists:member(GC, GCs) of
-                true -> {rev(Tkn), Cs2};
-                false -> lexeme_pick(Cs2, Seps, append(rev(GC),Tkn))
-            end;
-        false -> lexeme_pick(Cs1, Seps, [CP|Tkn])
+lexemes_(Cs, Seps0, Ts) ->
+    Seps = search_compile(Seps0),
+    {Lexeme, Rest} = lexeme_pick(Cs, Seps, []),
+    lexemes(Rest, Seps, [Lexeme|Ts]).
+
+
+-ifndef(NEED_search_pattern_1).
+-define(NEED_search_pattern_1, true).
+-endif.
+-ifndef(NEED_search_compile_1).
+-define(NEED_search_compile_1, true).
+-endif.
+-ifndef(NEED_bin_search_inv_3).
+-define(NEED_bin_search_inv_3, true).
+-endif.
+-ifndef(NEED_lexeme_pick_3).
+-define(NEED_lexeme_pick_3, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__lowercase_1).
+lowercase(CD) when is_list(CD) ->
+    try
+        lowercase_list(CD, false)
+    catch
+        throw:unchanged -> CD
     end;
-lexeme_pick([Bin|Cont0], Seps, Tkn) when is_binary(Bin) ->
-    case bin_search(Bin, Cont0, Seps) of
-        {nomatch,_} ->
-            lexeme_pick(Cont0, Seps, [Bin|Tkn]);
-        [Left|_Cont] = Cs ->
-            Bytes = byte_size(Bin) - byte_size(Left),
-            <<Lexeme:Bytes/binary, _/binary>> = Bin,
-            {btoken(Lexeme, Tkn), Cs}
+lowercase(<<CP1/utf8, Rest/binary>> = Orig) ->
+    try lowercase_bin(CP1, Rest, false) of
+        List -> unicode:characters_to_binary(List)
+    catch
+        throw:unchanged -> Orig
     end;
-lexeme_pick(Cs0, {GCs, CPs, _} = Seps, Tkn) when is_list(Cs0) ->
-    case unicode_util:cp(Cs0) of
-        [CP|Cs] ->
-            case lists:member(CP, CPs) of
-                true ->
-                    [GC|Cs2] = unicode_util:gc(Cs0),
-                    case lists:member(GC, GCs) of
-                        true -> {rev(Tkn), Cs2};
-                        false -> lexeme_pick(Cs2, Seps, append(rev(GC),Tkn))
-                    end;
-                false ->
-                    lexeme_pick(Cs, Seps, append(CP,Tkn))
-            end;
-        [] ->
-            {rev(Tkn), []}
-    end;
-lexeme_pick(Bin, Seps, Tkn) when is_binary(Bin) ->
-    case bin_search(Bin, [], Seps) of
-        {nomatch,_} ->
-            {btoken(Bin,Tkn), []};
-        [Left] ->
-            Bytes = byte_size(Bin) - byte_size(Left),
-            <<Lexeme:Bytes/binary, _/binary>> = Bin,
-            {btoken(Lexeme, Tkn), Left}
+lowercase(<<>>) -> <<>>;
+lowercase(Bin) -> error({badarg, Bin}).
+
+lowercase_list([CP1|[CP2|_] = Cont], _Changed)
+  when is_integer(CP1), CP1 >= $A, CP1 =< $Z, is_integer(CP2), CP2 >= 0, CP2 < 256 ->
+    [CP1 + $\s|lowercase_list(Cont, true)];
+lowercase_list([CP1|[CP2|_]=Cont], Changed)
+  when is_integer(CP1), CP1 >= 0, CP1 < 128, is_integer(CP2), CP2 >= 0, CP2 < 256 ->
+    [CP1|lowercase_list(Cont, Changed)];
+lowercase_list([], true) -> [];
+lowercase_list([], false) -> throw(unchanged);
+lowercase_list(CPs0, Changed) ->
+    case unicode_util:lowercase(CPs0) of
+        [Char|CPs] when Char =:= hd(CPs0) -> [Char|lowercase_list(CPs, Changed)];
+        [Char|CPs] -> append(Char, lowercase_list(CPs, true));
+        [] -> lowercase_list([], Changed)
     end.
 
-nth_lexeme_m([Bin|Cont0], {GCs,_,_}=Seps0, N) when is_binary(Bin) ->
+lowercase_bin(CP1, <<CP2/utf8, Bin/binary>>, _Changed) when is_integer(CP1), CP1 >= $A, CP1 =< $Z, CP2 < 256 ->
+    [CP1 + $\s|lowercase_bin(CP2, Bin, true)];
+lowercase_bin(CP1, <<CP2/utf8, Bin/binary>>, Changed) when is_integer(CP1), CP1 >= 0, CP1 < 128, CP2 < 256 ->
+    [CP1|lowercase_bin(CP2, Bin, Changed)];
+lowercase_bin(CP1, Bin, Changed) ->
+    case unicode_util:lowercase([CP1|Bin]) of
+        [CP1|CPs] ->
+            case unicode_util:cp(CPs) of
+                [Next|Rest] when is_integer(Next), Next >= 0 -> [CP1|lowercase_bin(Next, Rest, Changed)];
+                [] when Changed -> [CP1];
+                [] -> throw(unchanged);
+                {error, Err} -> error({badarg, Err})
+            end;
+        [Char|CPs] ->
+            case unicode_util:cp(CPs) of
+                [Next|Rest] when is_integer(Next), Next >= 0 -> [Char|lowercase_bin(Next, Rest, true)];
+                [] -> [Char];
+                {error, Err} -> error({badarg, Err})
+            end
+    end.
+-endif.
+
+-ifndef(HAVE_string__nth_lexeme_3).
+nth_lexeme(Str, 1, []) -> Str;
+nth_lexeme(Str, N, Seps) when is_list(Seps), is_integer(N), N > 0 -> nth_lexeme_(Str, search_pattern(Seps), N).
+
+nth_lexeme_([Bin|Cont0], {GCs, _, _} = Seps, N) when is_binary(Bin) ->
     case bin_search_inv(Bin, Cont0, GCs) of
-        {nomatch,Cont} ->
-            nth_lexeme_m(Cont, Seps0, N);
-        Cs when N > 1 ->
-            Rest = lexeme_skip(Cs, Seps0),
-            nth_lexeme_m(Rest, Seps0, N-1);
+        {nomatch, Cont} -> nth_lexeme_(Cont, Seps, N);
+        Cs when N > 1 -> nth_lexeme_(lexeme_skip(Cs, Seps), Seps, N - 1);
         Cs ->
-            Seps = search_compile(Seps0),
-            {Lexeme,_} = lexeme_pick(Cs, Seps, []),
+            {Lexeme, _} = lexeme_pick(Cs, search_compile(Seps), []),
             Lexeme
     end;
-nth_lexeme_m(Cs0, {GCs, _, _}=Seps0, N) when is_list(Cs0) ->
+nth_lexeme_(Cs0, {GCs, _, _} = Seps, N) when is_list(Cs0) ->
     case unicode_util:gc(Cs0) of
         [C|Cs] ->
             case lists:member(C, GCs) of
-                true ->
-                    nth_lexeme_m(Cs, Seps0, N);
-                false when N > 1 ->
-                    Cs1 = lexeme_skip(Cs, Seps0),
-                    nth_lexeme_m(Cs1, Seps0, N-1);
+                true -> nth_lexeme_(Cs, Seps, N);
+                false when N > 1 -> nth_lexeme_(lexeme_skip(Cs, Seps), Seps, N - 1);
                 false ->
-                    Seps = search_compile(Seps0),
-                    {Lexeme,_} = lexeme_pick(Cs0, Seps, []),
+                    {Lexeme, _} = lexeme_pick(Cs0, search_compile(Seps), []),
                     Lexeme
             end;
-        [] ->
-            []
+        [] -> []
     end;
-nth_lexeme_m(Bin, {GCs,_,_}=Seps0, N) when is_binary(Bin) ->
-    Seps = search_compile(Seps0),
+nth_lexeme_(Bin, {GCs, _, _} = Seps0, N) when is_binary(Bin) ->
     case bin_search_inv(Bin, [], GCs) of
         [Cs] when N > 1 ->
-            Cs1 = lexeme_skip(Cs, Seps),
-            nth_lexeme_m(Cs1, Seps, N-1);
+            Seps = search_compile(Seps0),
+            nth_lexeme_(lexeme_skip(Cs, Seps), Seps, N - 1);
         [Cs] ->
-            {Lexeme,_} = lexeme_pick(Cs, Seps, []),
+            {Lexeme, _} = lexeme_pick(Cs, search_compile(Seps0), []),
             Lexeme;
-        {nomatch,_} ->
-            <<>>
+        {nomatch, _} -> <<>>
     end.
 
-lexeme_skip([CP|Cs1]=Cs0, {GCs,CPs,_}=Seps) when is_integer(CP) ->
+lexeme_skip([CP|Cs1] = Cs0, {GCs, CPs, _} = Seps) when is_integer(CP) ->
     case lists:member(CP, CPs) of
         true  ->
             [GC|Cs2] = unicode_util:gc(Cs0),
@@ -1357,13 +651,12 @@ lexeme_skip([CP|Cs1]=Cs0, {GCs,CPs,_}=Seps) when is_integer(CP) ->
                 true -> Cs2;
                 false -> lexeme_skip(Cs2, Seps)
             end;
-        false ->
-            lexeme_skip(Cs1, Seps)
+        false -> lexeme_skip(Cs1, Seps)
     end;
 lexeme_skip([Bin|Cont0], Seps0) when is_binary(Bin) ->
     Seps = search_compile(Seps0),
     case bin_search(Bin, Cont0, Seps) of
-        {nomatch,_} -> lexeme_skip(Cont0, Seps);
+        {nomatch, _} -> lexeme_skip(Cont0, Seps);
         Cs -> tl(unicode_util:gc(Cs))
     end;
 lexeme_skip(Cs0, {GCs, CPs, _} = Seps) when is_list(Cs0) ->
@@ -1376,179 +669,863 @@ lexeme_skip(Cs0, {GCs, CPs, _} = Seps) when is_list(Cs0) ->
                         true -> Cs2;
                         false -> lexeme_skip(Cs2, Seps)
                     end;
-                false ->
-                    lexeme_skip(Cs, Seps)
+                false -> lexeme_skip(Cs, Seps)
             end;
-        [] ->
-            []
+        [] -> []
     end;
-lexeme_skip(Bin, Seps0) when is_binary(Bin) ->
-    Seps = search_compile(Seps0),
-    case bin_search(Bin, [], Seps) of
-        {nomatch,_} -> <<>>;
+lexeme_skip(Bin, Seps) when is_binary(Bin) ->
+    case bin_search(Bin, [], search_compile(Seps)) of
+        {nomatch, _} -> <<>>;
         [Left] -> tl(unicode_util:gc(Left))
     end.
 
-find_l([C1|Cs]=Cs0, [C|_]=Needle) when is_integer(C1) ->
-    case C1 of
-        C ->
-            case prefix_1(Cs0, Needle) of
-                nomatch -> find_l(Cs, Needle);
-                _ -> Cs0
-            end;
-        _ ->
-            find_l(Cs, Needle)
+-ifndef(NEED_search_pattern_1).
+-define(NEED_search_pattern_1, true).
+-endif.
+-ifndef(NEED_search_compile_1).
+-define(NEED_search_compile_1, true).
+-endif.
+-ifndef(NEED_bin_search_inv_3).
+-define(NEED_bin_search_inv_3, true).
+-endif.
+-ifndef(NEED_bin_search_3).
+-define(NEED_bin_search_3, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__pad_2).
+pad(CD, Length) -> pad(CD, Length, trailing).
+-endif.
+
+-ifndef(HAVE_string__pad_3).
+pad(CD, Length, Dir) -> pad(CD, Length, Dir, $\s).
+-endif.
+
+-ifndef(HAVE_string__pad_4).
+pad(CD, Length, Dir, Char) when is_integer(Length) -> pad_(CD, max(0, Length - length(CD)), Dir, Char).
+
+pad_(CD, Size, both, Char) ->
+    Pad = lists:duplicate(Size div 2, Char),
+    case Size rem 2 of
+        0 -> [Pad, CD, Pad];
+        _ -> [Pad, CD, Pad, Char]
     end;
-find_l([Bin|Cont0], Needle) when is_binary(Bin) ->
-    case bin_search_str(Bin, 0, Cont0, Needle) of
-        {nomatch, _, Cont} ->
-            find_l(Cont, Needle);
-        {_Before, Cs, _After} ->
-            Cs
-    end;
-find_l(Cs0, [C|_]=Needle) when is_list(Cs0) ->
-    case unicode_util:cp(Cs0) of
-        [C|Cs] ->
-            case prefix_1(Cs0, Needle) of
-                nomatch -> find_l(Cs, Needle);
-                _ -> Cs0
-            end;
-        [_C|Cs] ->
-            find_l(Cs, Needle);
-        [] -> nomatch
-    end;
-find_l(Bin, Needle) ->
-    case bin_search_str(Bin, 0, [], Needle) of
-        {nomatch,_,_} -> nomatch;
-        {_Before, [Cs], _After} -> Cs
+pad_(CD, Size, Dir, Char) ->
+    Pad = lists:duplicate(Size, Char),
+    if
+        Dir =:= leading -> [Pad, CD];
+        Dir =:= trailing -> [CD|Pad]
+    end.
+-endif.
+
+-ifndef(HAVE_string__prefix_2).
+prefix(Str, Prefix0) ->
+    case unicode:characters_to_list(Prefix0) of
+        [] -> [];
+        Prefix ->
+            case prefix_(Str, Prefix) of
+                [] when is_binary(Str) -> <<>>;
+                Res -> Res
+            end
     end.
 
-find_r([Cp|Cs]=Cs0, [C|_]=Needle, Res) when is_integer(Cp) ->
-    case Cp of
-        C ->
-            case prefix_1(Cs0, Needle) of
-                nomatch -> find_r(Cs, Needle, Res);
-                _ -> find_r(Cs, Needle, Cs0)
-            end;
-        _ ->
-            find_r(Cs, Needle, Res)
-    end;
-find_r([Bin|Cont0], Needle, Res) when is_binary(Bin) ->
-    case bin_search_str(Bin, 0, Cont0, Needle) of
-        {nomatch,_,Cont} ->
-            find_r(Cont, Needle, Res);
-        {_, Cs0, _} ->
-            [_|Cs] = unicode_util:gc(Cs0),
-            find_r(Cs, Needle, Cs0)
-    end;
-find_r(Cs0, [C|_]=Needle, Res) when is_list(Cs0) ->
-    case unicode_util:cp(Cs0) of
-        [C|Cs] ->
-            case prefix_1(Cs0, Needle) of
-                nomatch -> find_r(Cs, Needle, Res);
-                _ -> find_r(Cs, Needle, Cs0)
-            end;
-        [_C|Cs] ->
-            find_r(Cs, Needle, Res);
-        [] -> Res
-    end;
-find_r(Bin, Needle, Res) ->
-    case bin_search_str(Bin, 0, [], Needle) of
-        {nomatch,_,_} -> Res;
-        {_Before, [Cs0], _After} ->
-            <<_/utf8, Cs/binary>> = Cs0,
-            find_r(Cs, Needle, Cs0)
+-ifndef(NEED_prefix__2).
+-define(NEED_prefix__2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__replace_3).
+replace(String, SearchPattern, Replacement) -> lists:join(Replacement, split(String, SearchPattern)).
+-endif.
+
+-ifndef(HAVE_string__replace_4).
+replace(String, SearchPattern, Replacement, Where) -> lists:join(Replacement, split(String, SearchPattern, Where)).
+-endif.
+
+-ifndef(HAVE_string__reverse_1).
+reverse(<<CP1/utf8, Rest/binary>>) -> reverse(Rest, CP1, []);
+reverse(CD) -> reverse(CD, []).
+
+reverse([CP1|[CP2|_] = Cont], Acc) when ?ASCII_LIST(CP1, CP2) -> reverse(Cont, [CP1|Acc]);
+reverse(CD, Acc) ->
+    case unicode_util:gc(CD) of
+        [GC|Rest] -> reverse(Rest, [GC|Acc]);
+        [] -> Acc;
+        {error, Err} -> error({badarg, Err})
     end.
 
-%% These are used to avoid creating lists around binaries
-%% might be unnecessary, is there a better solution?
-btoken(Token, []) -> Token;
-btoken(BinPart, [C]) when is_integer(C) -> <<C/utf8, BinPart/binary>>;
-btoken(<<>>, Tkn) -> lists:reverse(Tkn);
-btoken(BinPart, Cs) -> [lists:reverse(Cs),BinPart].
+reverse(<<CP2/utf8, Rest/binary>>, CP1, Acc) when ?ASCII_LIST(CP1, CP2) -> reverse(Rest, CP2,  [CP1|Acc]);
+reverse(Bin0, CP1, Acc) ->
+    [GC|Bin1] = unicode_util:gc([CP1|Bin0]),
+    case unicode_util:cp(Bin1) of
+        [] -> [GC|Acc];
+        [CP3|Bin] -> reverse(Bin, CP3, [GC|Acc]);
+        {error, Err} -> error({badarg, Err})
+    end.
+-endif.
 
-rev([B]) when is_binary(B) -> B;
-rev(L) when is_list(L) -> lists:reverse(L);
-rev(C) when is_integer(C) -> C.
+-ifndef(HAVE_string__slice_2).
+slice(CD, 0) -> CD;
+slice(CD, N) when is_integer(N), N >= 0 ->
+    case slice_l0(CD, N) of
+        [] when is_binary(CD) -> <<>>;
+        Res -> Res
+    end.
 
-append(Char, <<>>) when is_integer(Char) -> [Char];
-append(Char, <<>>) when is_list(Char) -> Char;
-append(Char, Bin) when is_binary(Bin) -> [Char,Bin];
-append(Char, Str) when is_integer(Char) -> [Char|Str];
-append(GC, Str) when is_list(GC) -> GC ++ Str.
+-ifndef(NEED_slice_l0_2).
+-define(NEED_slice_l0_2, true).
+-endif.
+-endif.
 
-stack(Bin, []) -> Bin;
-stack(<<>>, St) -> St;
-stack([], St) -> St;
-stack(Bin, St) -> [Bin|St].
+-ifndef(HAVE_string__slice_3).
+slice(CD, _, 0) ->
+    if
+        is_binary(CD) -> <<>>;
+        true -> []
+    end;
+slice(CD, N, Length) when is_integer(N), N >= 0 ->
+    slice_(Length,
+           case slice_l0(CD, N) of
+               [] when is_binary(CD) -> <<>>;
+               Res -> Res
+           end).
 
+-compile({inline, slice_/2}).
+slice_(infinity, Res) -> Res;
+slice_(Length, Res) when is_integer(Length), Length > 0 -> slice_trail(Res, Length).
+
+-compile({inline, slice_trail/2}).
+slice_trail(<<CP1/utf8, Bin/binary>> = Orig, N) when N > 0 ->
+    binary:part(Orig, 0, byte_size(Orig) - slice_bin(Bin, CP1, N));
+slice_trail(<<_, _/binary>> = Orig, N) when N > 0 -> error({badarg, Orig});
+slice_trail(Orig, _) when is_binary(Orig) -> <<>>;
+slice_trail(CD, N) when is_list(CD) -> slice_list(CD, N).
+
+slice_list(_, 0) -> [];
+slice_list(CD, N) when N > 0 ->
+    case CD of
+        [CP1|[CP2|_] = Cont] when ?ASCII_LIST(CP1, CP2) -> [CP1|slice_list(Cont, N - 1)];
+        _ ->
+            case unicode_util:gc(CD) of
+                [GC|Cont] -> append(GC, slice_list(Cont, N - 1));
+                [] -> [];
+                {error, Err} -> error({badarg, Err})
+            end
+    end.
+
+slice_bin(CD, CP1, 0) -> byte_size(CD) + byte_size(<<CP1/utf8>>);
+slice_bin(CD, CP1, N) when N > 0 ->
+    case CD of
+        <<CP2/utf8, Bin/binary>> when ?ASCII_LIST(CP1, CP2) -> slice_bin(Bin, CP2, N - 1);
+        _ ->
+            case unicode_util:cp(tl(unicode_util:gc([CP1|CD]))) of
+                [CP2|Cont] -> slice_bin(Cont, CP2, N - 1);
+                [] -> 0;
+                {error, Err} -> error({badarg, Err})
+            end
+    end.
+
+-ifndef(NEED_slice_l0_2).
+-define(NEED_slice_l0_2, true).
+-endif.
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__split_2).
+split(String, SearchPattern) -> split(String, SearchPattern, leading).
+-endif.
+
+-ifndef(HAVE_string__split_3).
+split(String, SearchPattern, Where) ->
+    case is_empty(SearchPattern) of
+        true -> [String];
+        _false ->
+            case split(String, unicode:characters_to_list(SearchPattern), 0, Where, [], []) of
+                {_Curr, []} -> [String];
+                {_Curr, Acc} when Where =:= trailing -> Acc;
+                {Curr, Acc} when Where =:= all -> lists:reverse(Acc, [Curr]);
+                Acc when is_list(Acc) -> Acc
+            end
+    end.
+
+split([C|Cs] = Cs0, [C|_] = Needle, _, Where, Curr, Acc) when is_integer(C) ->
+    case prefix_(Cs0, Needle) of
+        nomatch -> split(Cs, Needle, 0, Where, append(C, Curr), Acc);
+        Rest when Where =:= leading -> [rev(Curr), Rest];
+        Rest when Where =:= trailing -> split(Cs, Needle, 0, Where, [C|Curr], [rev(Curr), Rest]);
+        Rest when Where =:= all -> split(Rest, Needle, 0, Where, [], [rev(Curr)|Acc])
+    end;
+split([CP1|Cs], [_|_] = Needle, _, Where, Curr, Acc) when is_integer(CP1) ->
+    split(Cs, Needle, 0, Where, append(CP1, Curr), Acc);
+split([Bin|Cont0], Needle, Start, Where, Curr0, Acc) when is_binary(Bin) ->
+    case bin_search_str(Bin, Start, Cont0, Needle) of
+        {nomatch, Sz, Cont} -> split(Cont, Needle, 0, Where, [binary:part(Bin, 0, Sz)|Curr0], Acc);
+        {Before, [Cs0|Cont], After} ->
+            Curr = rev(add_non_empty(Before, Curr0)),
+            if
+                Where =:= leading -> [Curr, After];
+                Where =:= trailing ->
+                    <<_/utf8, Cs/binary>> = Cs0,
+                    split([Bin|Cont], Needle, byte_size(Bin) - byte_size(Cs), Where, Curr0, [Curr, After]);
+                Where =:= all -> split(After, Needle, 0, Where, [], [Curr|Acc])
+            end
+    end;
+split(Cs0, [C|_] = Needle, _, Where, Curr, Acc) when is_list(Cs0) ->
+    case unicode_util:cp(Cs0) of
+        [C|Cs] ->
+            case prefix_(Cs0, Needle) of
+                nomatch -> split(Cs, Needle, 0, Where, append(C, Curr), Acc);
+                Rest when Where =:= leading -> [rev(Curr), Rest];
+                Rest when Where =:= trailing -> split(Cs, Needle, 0, Where, [C|Curr], [rev(Curr), Rest]);
+                Rest when Where =:= all -> split(Rest, Needle, 0, Where, [], [rev(Curr)|Acc])
+            end;
+        [Other|Cs] -> split(Cs, Needle, 0, Where, append(Other, Curr), Acc);
+        [] -> {rev(Curr), Acc}
+    end;
+split(Bin, [_C|_] = Needle, Start, Where, Curr0, Acc) ->
+    case bin_search_str(Bin, Start, [], Needle) of
+        {nomatch, _, _} ->
+            <<_:Start/binary, Keep/binary>> = Bin,
+            {rev([Keep|Curr0]), Acc};
+        {Before, [_], After} when Where =:= leading -> [rev([Before|Curr0]), After];
+        {Before, [<<_/utf8, Cs/binary>>], After} when Where =:= trailing ->
+            split(Bin, Needle, byte_size(Bin) - byte_size(Cs), Where, Curr0, [btoken(Before, Curr0), After]);
+        {<<_:Start/binary, Keep/binary>>, [_], After} when Where =:= all ->
+            split(Bin, Needle, byte_size(Bin) - byte_size(After), Where, [], [rev([Keep|Curr0])|Acc])
+    end.
+
+-compile({inline, add_non_empty/2}).
 add_non_empty(<<>>, L) -> L;
 add_non_empty(Token, L) -> [Token|L].
 
-cp_prefix(Orig, Cont) ->
-    case unicode_util:cp(Cont) of
-        [] -> Orig;
-        [Cp|Rest] -> cp_prefix_1(Orig, Cp, Rest)
-    end.
+-ifndef(NEED_prefix__2).
+-define(NEED_prefix__2, true).
+-endif.
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-ifndef(NEED_rev_1).
+-define(NEED_rev_1, true).
+-endif.
+-ifndef(NEED_bin_search_str_4).
+-define(NEED_bin_search_str_4, true).
+-endif.
+-ifndef(NEED_btoken_2).
+-define(NEED_btoken_2, true).
+-endif.
+-endif.
 
-cp_prefix_1(Orig, Until, Cont) ->
-    case unicode_util:cp(Orig) of
-        [Until|Rest] ->
-            case equal(Rest, Cont) of
-                true -> [];
-                false-> [Until|cp_prefix_1(Rest, Until, Cont)]
+-ifndef(HAVE_string__take_2).
+take(Str, Sep) -> take(Str, Sep, false).
+-endif.
+
+-ifndef(HAVE_string__take_3).
+take(Str, Sep, Complement) -> take(Str, Sep, Complement, leading).
+-endif.
+
+-ifndef(HAVE_string__take_4).
+take(Str, [], Complement, Dir) ->
+    take_(Str,
+          if
+              is_binary(Str) -> <<>>;
+              true -> []
+          end,
+          Complement, Dir);
+take(Str, Sep, false, leading) -> take_l(Str, Sep, []);
+take(Str, Sep, true, leading) -> take_lc(Str, search_pattern(Sep), []);
+take(Str, Sep, false, trailing) -> take_t(Str, 0, search_pattern(Sep));
+take(Str, Sep, true, trailing) -> take_tc(Str, 0, search_pattern(Sep)).
+
+take_(Str, Empty, false, leading) -> {Empty, Str};
+take_(Str, Empty, false, trailing) -> {Str, Empty};
+take_(Str, Empty, true, leading) -> {Str, Empty};
+take_(Str, Empty, true, trailing) -> {Empty, Str}.
+
+take_l([CP1|[CP2|_] = Cont] = Str, Seps, Acc) when ?ASCII_LIST(CP1, CP2) ->
+    case lists:member(CP1, Seps) of
+        true -> take_l(Cont, Seps, [CP1|Acc]);
+        _false -> {rev(Acc), Str}
+    end;
+take_l([Bin|Cont0], Seps, Acc) when is_binary(Bin) ->
+    case bin_search_inv(Bin, Cont0, Seps) of
+        {nomatch, Cont} -> take_l(Cont, Seps, [unicode:characters_to_binary([Bin|cp_prefix(Cont0, Cont)])|Acc]);
+        [Bin1|_] = After when is_binary(Bin1) ->
+            {btoken(binary:part(Bin, 0, byte_size(Bin) - byte_size(Bin1)), Acc), After}
+    end;
+take_l(Str, Seps, Acc) when is_list(Str) ->
+    case unicode_util:gc(Str) of
+        [C|Cs] ->
+            case lists:member(C, Seps) of
+                true -> take_l(Cs, Seps, append(rev(C), Acc));
+                _false -> {rev(Acc), Str}
             end;
-        [CP|Rest] -> [CP|cp_prefix_1(Rest, Until, Cont)]
+        [] -> {rev(Acc), []}
+    end;
+take_l(Bin, Seps, Acc) when is_binary(Bin) ->
+    case bin_search_inv(Bin, [], Seps) of
+        {nomatch, _} -> {btoken(Bin, Acc), <<>>};
+        [After] -> {btoken(binary:part(Bin, 0, byte_size(Bin) - byte_size(After)), Acc), After}
     end.
 
+take_lc([CP1|Cont] = Str0, {GCs, CPs, _} = Seps, Acc) when is_integer(CP1) ->
+    case lists:member(CP1, CPs) of
+        true ->
+            [GC|Str] = unicode_util:gc(Str0),
+            case lists:member(GC, GCs) of
+                true -> {rev(Acc), Str0};
+                _false -> take_lc(Str, Seps, append(rev(GC), Acc))
+            end;
+        _false -> take_lc(Cont, Seps, append(CP1, Acc))
+    end;
+take_lc([Bin|Cont0], Seps0, Acc) when is_binary(Bin) ->
+    Seps = search_compile(Seps0),
+    case bin_search(Bin, Cont0, Seps) of
+        {nomatch, Cont} -> take_lc(Cont, Seps, [unicode:characters_to_binary([Bin|cp_prefix(Cont0, Cont)])|Acc]);
+        [Bin1|_] = After when is_binary(Bin1) ->
+            {btoken(binary:part(Bin, 0, byte_size(Bin) - byte_size(Bin1)), Acc), After}
+    end;
+take_lc(Str, {GCs, _, _} = Seps, Acc) when is_list(Str) ->
+    case unicode_util:gc(Str) of
+        [C|Cs] ->
+            case lists:member(C, GCs) of
+                true -> {rev(Acc), Str};
+                _false -> take_lc(Cs, Seps, append(rev(C), Acc))
+            end;
+        [] -> {rev(Acc), []}
+    end;
+take_lc(Bin, Seps, Acc) when is_binary(Bin) ->
+    case bin_search(Bin, [], search_compile(Seps)) of
+        {nomatch, _} -> {btoken(Bin, Acc), <<>>};
+        [After] -> {btoken(binary:part(Bin, 0, byte_size(Bin) - byte_size(After)), Acc), After}
+    end.
 
-%% Binary special
-bin_search(Bin, Cont, {Seps,_,BP}) ->
-    bin_search_loop(Bin, 0, BP, Cont, Seps).
+take_t([CP1|Cont] = Str0, _, {GCs, CPs, _} = Seps) when is_integer(CP1) ->
+    case lists:member(CP1, CPs) of
+        true ->
+            [GC|Str] = unicode_util:gc(Str0),
+            {Head, Tail} = take_t(Str, 0, Seps),
+            case lists:member(GC, GCs) andalso is_empty(Head) of
+                true -> {Head, append(GC, Tail)};
+                _false -> {append(GC, Head), Tail}
+            end;
+        _false ->
+            {Head, Tail} = take_t(Cont, 0, Seps),
+            {[CP1|Head], Tail}
+    end;
+take_t([Bin|Cont0], N, {GCs, _, _} = Seps0) when is_binary(Bin) ->
+    <<_:N/binary, Rest/binary>> = Bin,
+    Seps = search_compile(Seps0),
+    case bin_search(Rest, Cont0, Seps) of
+        {nomatch, Cont} ->
+            {Head, Tail} = take_t(Cont, 0, Seps),
+            {stack(unicode:characters_to_binary([Bin|cp_prefix(Cont0, Cont)]), Head), Tail};
+        [SepStart|Cont1] ->
+            case bin_search_inv(SepStart, Cont1, GCs) of
+                {nomatch, Cont} ->
+                    {Head, Tail} = take_t(Cont, 0, Seps),
+                    Used = cp_prefix(Cont0, Cont),
+                    case is_empty(Head) of
+                        true ->
+                            {Keep, End} = split_binary(Bin, byte_size(Bin) - byte_size(SepStart)),
+                            {Keep, stack(stack(End, Used), Tail)};
+                        _false -> {stack(unicode:characters_to_binary([Bin|Used]), Head), Tail}
+                    end;
+                [NonSep|Cont] when is_binary(NonSep) -> take_t([Bin|Cont], byte_size(Bin) - byte_size(NonSep), Seps)
+            end
+    end;
+take_t(Str, 0, {GCs, _, _} = Seps) when is_list(Str) ->
+    case unicode_util:gc(Str) of
+        [GC|Cs1] ->
+            {Head, Tail} = take_t(Cs1, 0, Seps),
+            case lists:member(GC, GCs) andalso is_empty(Head) of
+                true -> {Head, append(GC, Tail)};
+                _false -> {append(GC, Head), Tail}
+            end;
+        [] -> {[], []}
+    end;
+take_t(Bin, N, {GCs, _, _} = Seps0) when is_binary(Bin) ->
+    <<_:N/binary, Rest/binary>> = Bin,
+    Seps = search_compile(Seps0),
+    case bin_search(Rest, [], Seps) of
+        {nomatch, _} -> {Bin, <<>>};
+        [SepStart] ->
+            BinSize = byte_size(Bin),
+            case bin_search_inv(SepStart, [], GCs) of
+                {nomatch, _} -> split_binary(Bin, BinSize - byte_size(SepStart));
+                [NonSep] -> take_t(Bin, BinSize - byte_size(NonSep), Seps)
+            end
+    end.
 
-%% Need to work with [<<$a>>, <<778/utf8>>],
-%% i.e. å in nfd form  $a "COMBINING RING ABOVE"
-%% and PREPEND characters like "ARABIC NUMBER SIGN" 1536 <<216,128>>
-%% combined with other characters are currently ignored.
-search_pattern({_,_,_}=P) -> P;
-search_pattern(Seps) ->
-    CPs = search_cp(Seps),
-    {Seps, CPs, undefined}.
+take_tc([CP1|[CP2|_] = Cont], _, {GCs, _, _} = Seps) when ?ASCII_LIST(CP1,CP2) ->
+    {Head, Tail} = take_tc(Cont, 0, Seps),
+    case lists:member(CP1, GCs) andalso is_empty(Head) of
+        true -> {Head, append(CP1, Tail)};
+        _false -> {append(CP1, Head), Tail}
+    end;
+take_tc([Bin|Cont0], N, {GCs, _, _} = Seps0) when is_binary(Bin) ->
+    <<_:N/binary, Rest/binary>> = Bin,
+    case bin_search_inv(Rest, Cont0, GCs) of
+        {nomatch, Cont} ->
+            {Head, Tail} = take_tc(Cont, 0, Seps0),
+            {stack(unicode:characters_to_binary([Bin|cp_prefix(Cont0, Cont)]), Head), Tail};
+        [SepStart|Cont1] ->
+            Seps = search_compile(Seps0),
+            case bin_search(SepStart, Cont1, Seps) of
+                {nomatch, Cont} ->
+                    {Head, Tail} = take_tc(Cont, 0, Seps),
+                    Used = cp_prefix(Cont0, Cont),
+                    case is_empty(Head) of
+                        true ->
+                            {Keep, End} = split_binary(Bin, byte_size(Bin) - byte_size(SepStart)),
+                            {Keep, stack(stack(End, Used), Tail)};
+                        false -> {stack(unicode:characters_to_binary([Bin|Used]), Head), Tail}
+                    end;
+                [NonSep|Cont] when is_binary(NonSep) -> take_tc([Bin|Cont], byte_size(Bin) - byte_size(NonSep), Seps)
+            end
+    end;
+take_tc(Str, 0, {GCs, _, _} = Seps) when is_list(Str) ->
+    case unicode_util:gc(Str) of
+        [GC|Cs1] ->
+            {Head, Tail} = take_tc(Cs1, 0, Seps),
+            case not lists:member(GC, GCs) andalso is_empty(Head) of
+                true -> {Head, append(GC, Tail)};
+                _false -> {append(GC, Head), Tail}
+            end;
+        [] -> {[], []}
+    end;
+take_tc(Bin, N, {GCs, _, _} = Seps0) when is_binary(Bin) ->
+    <<_:N/binary, Rest/binary>> = Bin,
+    case bin_search_inv(Rest, [], GCs) of
+        {nomatch, _} -> {Bin, <<>>};
+        [SepStart] ->
+            Seps = search_compile(Seps0),
+            BinSize = byte_size(Bin),
+            case bin_search(SepStart, [], Seps) of
+                {nomatch, _} -> split_binary(Bin, BinSize - byte_size(SepStart));
+                [NonSep] -> take_tc(Bin, BinSize - byte_size(NonSep), Seps)
+            end
+    end.
 
-search_compile({Sep, CPs, undefined}) ->
-    {Sep, CPs, binary:compile_pattern(bin_pattern(CPs))};
-search_compile({_,_,_}=Compiled) -> Compiled.
+-ifndef(NEED_search_pattern_1).
+-define(NEED_search_pattern_1, true).
+-endif.
+-ifndef(NEED_rev_1).
+-define(NEED_rev_1, true).
+-endif.
+-ifndef(NEED_bin_search_inv_3).
+-define(NEED_bin_search_inv_3, true).
+-endif.
+-ifndef(NEED_cp_prefix_2).
+-define(NEED_cp_prefix_2, true).
+-endif.
+-ifndef(NEED_btoken_2).
+-define(NEED_btoken_2, true).
+-endif.
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-ifndef(NEED_search_compile_1).
+-define(NEED_search_compile_1, true).
+-endif.
+-ifndef(NEED_bin_search_3).
+-define(NEED_bin_search_3, true).
+-endif.
+-ifndef(NEED_stack_2).
+-define(NEED_stack_2, true).
+-endif.
+-endif.
 
-search_cp([CP|Seps]) when is_integer(CP) ->
-    [CP|search_cp(Seps)];
-search_cp([Pattern|Seps]) ->
-    [CP|_] = unicode_util:cp(Pattern),
-    [CP|search_cp(Seps)];
+-ifndef(HAVE_string__titlecase_1).
+titlecase(CD) when is_list(CD) ->
+    case unicode_util:titlecase(CD) of
+        [GC|Tail] -> append(GC, Tail);
+        Empty -> Empty
+    end;
+titlecase(CD) when is_binary(CD) ->
+    case unicode_util:titlecase(CD) of
+        [CPs|Chars] ->
+            <<(if
+                   is_integer(CPs) -> <<CPs/utf8>>;
+                   true -> <<<<CP/utf8>> || CP <- CPs>>
+               end)/binary,
+              Chars/binary>>;
+        [] -> <<>>
+    end.
+
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__to_graphemes_1).
+to_graphemes(CD0) ->
+    case unicode_util:gc(CD0) of
+        [GC|CD] -> [GC|to_graphemes(CD)];
+        [] -> [];
+        {error, Err} -> error({badarg, Err})
+    end.
+-endif.
+
+-ifndef(HAVE_string__trim_1).
+trim(Str) -> trim(Str, both).
+-endif.
+
+-ifndef(HAVE_string__trim_2).
+trim(Str, Dir) -> trim(Str, Dir, unicode_util:whitespace()).
+-endif.
+
+-ifndef(HAVE_string__trim_3).
+trim(Str, _, []) -> Str;
+trim(Str, Dir, [Sep]) when is_list(Str), is_integer(Sep), Sep >= 0, Sep < 256 ->
+    if
+        Dir =:= leading -> trim_ls(Str, Sep);
+        Dir =:= trailing -> trim_ts(Str, Sep)
+    end;
+trim(Str, Dir, Seps) when is_list(Seps) ->
+    if
+        Dir =:= leading -> trim_l(Str, Seps);
+        Dir =:= trailing -> trim_t(Str, 0, search_pattern(Seps));
+        Dir =:= both -> trim(trim(Str, leading, Seps), trailing, Seps)
+    end.
+
+trim_ls([CP1|[CP2|_] = Cont] = Str, Sep) when ?ASCII_LIST(CP1, CP2) ->
+    if
+        CP1 =:= Sep -> trim_ls(Cont, Sep);
+        true -> Str
+    end;
+trim_ls(Str, Sep) -> trim_l(Str, [Sep]).
+
+trim_l([CP1|[CP2|_] = Cont] = Str, Sep) when ?ASCII_LIST(CP1, CP2) ->
+    case lists:member(CP1, Sep) of
+        true -> trim_l(Cont, Sep);
+        _false -> Str
+    end;
+trim_l([Bin|Cont0], Sep) when is_binary(Bin) ->
+    case bin_search_inv(Bin, Cont0, Sep) of
+        {nomatch, Cont} -> trim_l(Cont, Sep);
+        Keep -> Keep
+    end;
+trim_l(Str, Sep) when is_list(Str) ->
+    case unicode_util:gc(Str) of
+        [C|Cs] ->
+            case lists:member(C, Sep) of
+                true -> trim_l(Cs, Sep);
+                _false -> Str
+            end;
+        [] -> []
+    end;
+trim_l(Bin, Sep) when is_binary(Bin) ->
+    case bin_search_inv(Bin, [], Sep) of
+        {nomatch, _} -> <<>>;
+        [Keep] -> Keep
+    end.
+
+trim_ts([Sep], Sep) -> [];
+trim_ts([Sep|[CP2|_] = Cs1], Sep) when ?ASCII_LIST(Sep, CP2) ->
+    Tail = trim_ts(Cs1, Sep),
+    case is_empty(Tail) of
+        true -> [];
+        _false -> [Sep|Tail]
+    end;
+trim_ts([CP|Cont], Sep) when is_integer(CP), CP =/= Sep -> [CP|trim_ts(Cont, Sep)];
+trim_ts(Str, Sep) -> trim_t(Str, 0, search_pattern([Sep])).
+
+trim_t([CP1|Cont] = Cs0, _, {GCs, CPs, _} = Seps) when is_integer(CP1) ->
+    case lists:member(CP1, CPs) of
+        true ->
+            [GC|Cs1] = unicode_util:gc(Cs0),
+            case lists:member(GC, GCs) of
+                true ->
+                    Tail = trim_t(Cs1, 0, Seps),
+                    case is_empty(Tail) of
+                        true -> [];
+                        _false -> append(GC, Tail)
+                    end;
+                _false -> append(GC, trim_t(Cs1, 0, Seps))
+            end;
+        _false -> [CP1|trim_t(Cont, 0, Seps)]
+    end;
+trim_t([Bin|Cont0], N, {GCs, _, _} = Seps0) when is_binary(Bin) ->
+    <<_:N/binary, Rest/binary>> = Bin,
+    Seps = search_compile(Seps0),
+    case bin_search(Rest, Cont0, Seps) of
+        {nomatch, _} -> stack(Bin, trim_t(Cont0, 0, Seps));
+        [SepStart|Cont1] ->
+            case bin_search_inv(SepStart, Cont1, GCs) of
+                {nomatch, Cont} ->
+                    Tail = trim_t(Cont, 0, Seps),
+                    case is_empty(Tail) of
+                        true -> binary:part(Bin, 0, byte_size(Bin) - byte_size(SepStart));
+                        _false -> stack(Bin, stack(cp_prefix(Cont0, Cont), Tail))
+                    end;
+                [NonSep|Cont] when is_binary(NonSep) -> trim_t([Bin|Cont], byte_size(Bin) - byte_size(NonSep), Seps)
+            end
+    end;
+trim_t(Str, 0, {GCs, _, _} = Seps) when is_list(Str) ->
+    case unicode_util:gc(Str) of
+        [GC|Cs1] ->
+            case lists:member(GC, GCs) of
+                true ->
+                    Tail = trim_t(Cs1, 0, Seps),
+                    case is_empty(Tail) of
+                        true -> [];
+                        _false -> append(GC, Tail)
+                    end;
+                _false -> append(GC, trim_t(Cs1, 0, Seps))
+            end;
+        [] -> []
+    end;
+trim_t(Bin, N, {GCs, _, _} = Seps0) when is_binary(Bin) ->
+    <<_:N/binary, Rest/binary>> = Bin,
+    Seps = search_compile(Seps0),
+    case bin_search(Rest, [], Seps) of
+        {nomatch, _} -> Bin;
+        [SepStart] ->
+            BinSize = byte_size(Bin),
+            case bin_search_inv(SepStart, [], GCs) of
+                {nomatch, _} -> binary:part(Bin, 0, BinSize - byte_size(SepStart));
+                [NonSep] -> trim_t(Bin, BinSize - byte_size(NonSep), Seps)
+            end
+    end.
+
+-ifndef(NEED_search_compile_1).
+-define(NEED_search_compile_1, true).
+-endif.
+-ifndef(NEED_search_pattern_1).
+-define(NEED_search_pattern_1, true).
+-endif.
+-ifndef(NEED_bin_search_3).
+-define(NEED_bin_search_3, true).
+-endif.
+-ifndef(NEED_bin_search_inv_3).
+-define(NEED_bin_search_inv_3, true).
+-endif.
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-ifndef(NEED_stack_2).
+-define(NEED_stack_2, true).
+-endif.
+-ifndef(NEED_cp_prefix_2).
+-define(NEED_cp_prefix_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__uppercase_1).
+uppercase(CD) when is_list(CD) ->
+    try
+        uppercase_list(CD, false)
+    catch
+        throw:unchanged -> CD
+    end;
+uppercase(<<CP1/utf8, Rest/binary>> = Orig) ->
+    try uppercase_bin(CP1, Rest, false) of
+        List -> unicode:characters_to_binary(List)
+    catch
+        throw:unchanged -> Orig
+    end;
+uppercase(<<>>) -> <<>>;
+uppercase(Bin) -> error({badarg, Bin}).
+
+uppercase_list([CP1|[CP2|_] = Cont], _Changed)
+  when is_integer(CP1), CP1 >= $a, CP1 =< $z, is_integer(CP2), CP2 >= 0, CP2 < 256 ->
+    [CP1 - $\s|uppercase_list(Cont, true)];
+uppercase_list([CP1|[CP2|_] = Cont], Changed)
+  when is_integer(CP1), CP1 >= 0, CP1 < 128, is_integer(CP2), CP2 >= 0, CP2 < 256 ->
+    [CP1|uppercase_list(Cont, Changed)];
+uppercase_list([], true) -> [];
+uppercase_list([], false) -> throw(unchanged);
+uppercase_list(CPs0, Changed) ->
+    case unicode_util:uppercase(CPs0) of
+        [Char|CPs] when Char =:= hd(CPs0) -> [Char|uppercase_list(CPs, Changed)];
+        [Char|CPs] -> append(Char, uppercase_list(CPs, true));
+        [] -> uppercase_list([], Changed)
+    end.
+
+uppercase_bin(CP1, <<CP2/utf8, Bin/binary>>, _Changed) when is_integer(CP1), CP1 >= $a, CP1 =< $z, CP2 < 256 ->
+    [CP1 - $\s|uppercase_bin(CP2, Bin, true)];
+uppercase_bin(CP1, <<CP2/utf8, Bin/binary>>, Changed) when is_integer(CP1), CP1 >= 0, CP1 < 128, CP2 < 256 ->
+    [CP1|uppercase_bin(CP2, Bin, Changed)];
+uppercase_bin(CP1, Bin, Changed) ->
+    case unicode_util:uppercase([CP1|Bin]) of
+        [CP1|CPs] ->
+            case unicode_util:cp(CPs) of
+                [Next|Rest] when is_integer(Next), Next >= 0 -> [CP1|uppercase_bin(Next, Rest, Changed)];
+                [] when Changed -> [CP1];
+                [] -> throw(unchanged);
+                {error, Err} -> error({badarg, Err})
+            end;
+        [Char|CPs] ->
+            case unicode_util:cp(CPs) of
+                [Next|Rest] when is_integer(Next), Next >= 0 -> [Char|uppercase_bin(Next, Rest, true)];
+                [] -> [Char];
+                {error, Err} -> error({badarg, Err})
+            end
+    end.
+
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-endif.
+
+-ifdef(NEED_search_pattern_1).
+search_pattern(P) when tuple_size(P) =:= 3 -> P;
+search_pattern(Seps) -> {Seps, search_cp(Seps), undefined}.
+
+search_cp([P|Seps]) ->
+    [if
+         is_integer(P) -> P;
+         true -> hd(unicode_util:cp(P))
+     end|search_cp(Seps)];
 search_cp([]) -> [].
+-endif.
 
-bin_pattern([CP|Seps]) ->
-    [<<CP/utf8>>|bin_pattern(Seps)];
+-ifdef(NEED_search_compile_1).
+-compile({inline, search_compile/1}).
+search_compile({Sep, CPs, undefined}) -> {Sep, CPs, binary:compile_pattern(bin_pattern(CPs))};
+search_compile(Compiled) when tuple_size(Compiled) =:= 3 -> Compiled.
+
+bin_pattern([CP|Seps]) -> [<<CP/utf8>>|bin_pattern(Seps)];
 bin_pattern([]) -> [].
+-endif.
 
-bin_search_loop(Bin0, Start, _, Cont, _Seps)
-  when byte_size(Bin0) =< Start; Start < 0 ->
-    {nomatch, Cont};
+-ifdef(NEED_bin_search_inv_3).
+bin_search_inv(<<>>, Cont, _) -> {nomatch, Cont};
+bin_search_inv(Bin, Cont, [Sep]) -> bin_search_inv_1(Bin, Cont, Sep);
+bin_search_inv(Bin, Cont, Seps) -> bin_search_inv_n(Bin, Cont, Seps).
+
+bin_search_inv_1(<<Sep/utf8, CP2/utf8, BinRest/binary>>, Cont, Sep) when ?ASCII_LIST(Sep, CP2) ->
+    bin_search_inv_1(BinRest, Cont, Sep);
+bin_search_inv_1(<<CP1/utf8, CP2/utf8, _/binary>> = Bin0, Cont, _Sep) when ?ASCII_LIST(CP1, CP2) -> [Bin0|Cont];
+bin_search_inv_1(<<_/utf8, _/binary>> = Bin0, [], Sep) ->
+    case unicode_util:gc(Bin0) of
+        [Sep|Bin] -> bin_search_inv_1(Bin, [], Sep);
+        _ -> [Bin0]
+    end;
+bin_search_inv_1(<<_/utf8, _/binary>> = Bin0, Cont, Sep) ->
+    case unicode_util:gc([Bin0|Cont]) of
+        [Sep|[Bin|Cont]] when is_binary(Bin) -> bin_search_inv_1(Bin, Cont, Sep);
+        [Sep|Cs] -> {nomatch, Cs};
+        _ -> [Bin0|Cont]
+    end;
+bin_search_inv_1(S, Cont, _Sep) when S =:= <<>>; S =:= [] -> {nomatch, Cont};
+bin_search_inv_1(Bin, _, _) -> error({badarg, Bin}).
+
+bin_search_inv_n(<<CP1/utf8, CP2/utf8, BinRest/binary>> = Bin0, Cont, Seps) when ?ASCII_LIST(CP1, CP2) ->
+    case lists:member(CP1, Seps) of
+        true -> bin_search_inv_n(BinRest, Cont, Seps);
+        false -> [Bin0|Cont]
+    end;
+bin_search_inv_n(<<_/utf8, _/binary>> = Bin0, [], Seps) ->
+    [GC|Bin] = unicode_util:gc(Bin0),
+    case lists:member(GC, Seps) of
+        true -> bin_search_inv_n(Bin, [], Seps);
+        false -> [Bin0]
+    end;
+bin_search_inv_n(<<_/utf8, _/binary>> = Bin0, Cont, Seps) ->
+    [GC|Cs0] = unicode_util:gc([Bin0|Cont]),
+    case lists:member(GC, Seps) of
+        false -> [Bin0|Cont];
+        true ->
+            case Cs0 of
+                [Bin|Cont] when is_binary(Bin) -> bin_search_inv_n(Bin, Cont, Seps);
+                _ -> {nomatch, Cs0}
+            end
+    end;
+bin_search_inv_n(S, Cont, _Sep) when S =:= <<>>; S =:= [] -> {nomatch, Cont};
+bin_search_inv_n(Bin, _, _) -> error({badarg, Bin}).
+-endif.
+
+-ifdef(NEED_lexeme_pick_3).
+lexeme_pick([CP|Cs1] = Cs0, {GCs, CPs, _} = Seps, Tkn) when is_integer(CP) ->
+    case lists:member(CP, CPs) of
+        true  ->
+            [GC|Cs2] = unicode_util:gc(Cs0),
+            case lists:member(GC, GCs) of
+                true -> {rev(Tkn), Cs2};
+                false -> lexeme_pick(Cs2, Seps, append(rev(GC), Tkn))
+            end;
+        false -> lexeme_pick(Cs1, Seps, [CP|Tkn])
+    end;
+lexeme_pick([Bin|Cont0], Seps, Tkn) when is_binary(Bin) ->
+    case bin_search(Bin, Cont0, Seps) of
+        {nomatch, _} -> lexeme_pick(Cont0, Seps, [Bin|Tkn]);
+        [Left|_Cont] = Cs -> {btoken(binary:part(Bin, 0, byte_size(Bin) - byte_size(Left)), Tkn), Cs}
+    end;
+lexeme_pick(Cs0, {GCs, CPs, _} = Seps, Tkn) when is_list(Cs0) ->
+    case unicode_util:cp(Cs0) of
+        [CP|Cs] ->
+            case lists:member(CP, CPs) of
+                true ->
+                    [GC|Cs2] = unicode_util:gc(Cs0),
+                    case lists:member(GC, GCs) of
+                        true -> {rev(Tkn), Cs2};
+                        false -> lexeme_pick(Cs2, Seps, append(rev(GC), Tkn))
+                    end;
+                false -> lexeme_pick(Cs, Seps, append(CP,Tkn))
+            end;
+        [] -> {rev(Tkn), []}
+    end;
+lexeme_pick(Bin, Seps, Tkn) when is_binary(Bin) ->
+    case bin_search(Bin, [], Seps) of
+        {nomatch, _} -> {btoken(Bin, Tkn), []};
+        [Left] -> {btoken(binary:part(Bin, 0, byte_size(Bin) - byte_size(Left)), Tkn), Left}
+    end.
+-ifndef(NEED_rev_1).
+-define(NEED_rev_1, true).
+-endif.
+-ifndef(NEED_append_2).
+-define(NEED_append_2, true).
+-endif.
+-ifndef(NEED_btoken_2).
+-define(NEED_btoken_2, true).
+-endif.
+-ifndef(NEED_bin_search_3).
+-define(NEED_bin_search_3, true).
+-endif.
+-endif.
+
+-ifdef(NEED_btoken_2).
+-compile({inline, btoken/2}).
+btoken(Token, []) -> Token;
+btoken(BinPart, [C]) when is_integer(C) -> <<C/utf8, BinPart/binary>>;
+btoken(<<>>, Tkn) -> lists:reverse(Tkn);
+btoken(BinPart, Cs) -> [lists:reverse(Cs), BinPart].
+-endif.
+
+-ifdef(NEED_rev_1).
+-compile({inline, rev/1}).
+rev([B]) when is_binary(B) -> B;
+rev(L) when is_list(L) -> lists:reverse(L);
+rev(C) when is_integer(C) -> C.
+-endif.
+
+-ifdef(NEED_append_2).
+-compile({inline, append/2}).
+append(Char, <<>>) when is_integer(Char) -> [Char];
+append(Char, <<>>) when is_list(Char) -> Char;
+append(Char, Bin) when is_binary(Bin) -> [Char, Bin];
+append(Char, Str) when is_integer(Char) -> [Char|Str];
+append(GC, Str) when is_list(GC) -> GC ++ Str.
+-endif.
+
+-ifdef(NEED_bin_search_3).
+bin_search(Bin, Cont, {Seps, _, BP}) -> bin_search_loop(Bin, 0, BP, Cont, Seps).
+
+bin_search_loop(Bin0, Start, _, Cont, _Seps) when byte_size(Bin0) =< Start; Start < 0 -> {nomatch, Cont};
 bin_search_loop(Bin0, Start, BinSeps, Cont, Seps) ->
     <<_:Start/binary, Bin/binary>> = Bin0,
     case binary:match(Bin, BinSeps) of
-        nomatch ->
-            {nomatch,Cont};
+        nomatch -> {nomatch, Cont};
         {Where, _CL} when Cont =:= [] ->
             <<_:Where/binary, Cont1/binary>> = Bin,
             [GC|Cont2] = unicode_util:gc(Cont1),
             case lists:member(GC, Seps) of
-                false when Cont2 =:= [] ->
-                    {nomatch, []};
-                false ->
-                    Next = byte_size(Bin0) - byte_size(Cont2),
-                    bin_search_loop(Bin0, Next, BinSeps, Cont, Seps);
-                true ->
-                    [Cont1]
+                false when Cont2 =:= [] -> {nomatch, []};
+                false -> bin_search_loop(Bin0, byte_size(Bin0) - byte_size(Cont2), BinSeps, Cont, Seps);
+                true -> [Cont1]
             end;
         {Where, _CL} ->
             <<_:Where/binary, Cont0/binary>> = Bin,
@@ -1558,129 +1535,165 @@ bin_search_loop(Bin0, Start, BinSeps, Cont, Seps) ->
                 false ->
                     case Cont2 of
                         [BinR|Cont] when is_binary(BinR) ->
-                            Next = byte_size(Bin0) - byte_size(BinR),
-                            bin_search_loop(Bin0, Next, BinSeps, Cont, Seps);
-                        _ ->
-                            {nomatch, Cont2}
+                            bin_search_loop(Bin0, byte_size(Bin0) - byte_size(BinR), BinSeps, Cont, Seps);
+                        _ -> {nomatch, Cont2}
                     end;
-                true ->
-                    Cont1
+                true -> Cont1
+            end
+    end.
+-endif.
+
+-ifdef(NEED_cp_prefix_2).
+cp_prefix(Orig, Cont) ->
+    case unicode_util:cp(Cont) of
+        [] -> Orig;
+        [Cp|Rest] -> cp_prefix(Orig, Cp, Rest)
+    end.
+
+cp_prefix(Orig, Until, Cont) ->
+    [CP|Rest] = unicode_util:cp(Orig),
+    case CP =:= Until andalso equal(Rest, Cont) of
+        true -> [];
+        _false -> [CP|cp_prefix(Rest, Until, Cont)]
+    end.
+-endif.
+
+-ifdef(NEED_slice_l0_2).
+slice_l0(<<CP1/utf8, Bin/binary>>, N) when N > 0 -> slice_lb(Bin, CP1, N);
+slice_l0(L, N) -> slice_l(L, N).
+
+slice_l(Cont, 0) -> Cont;
+slice_l(CD, N) when is_integer(N), N > 0 ->
+    case CD of
+        [CP1|[CP2|_] = Cont] when ?ASCII_LIST(CP1, CP2) -> slice_l(Cont, N - 1);
+        _ ->
+            case unicode_util:gc(CD) of
+                [_|Cont] -> slice_l(Cont, N - 1);
+                [] -> [];
+                {error, Err} -> error({badarg, Err})
             end
     end.
 
-bin_search_inv(<<>>, Cont, _) ->
-    {nomatch, Cont};
-bin_search_inv(Bin, Cont, [Sep]) ->
-    bin_search_inv_1(Bin, Cont, Sep);
-bin_search_inv(Bin, Cont, Seps) ->
-    bin_search_inv_n(Bin, Cont, Seps).
-
-bin_search_inv_1(<<CP1/utf8, BinRest/binary>>=Bin0, Cont, Sep) ->
-    case BinRest of
-        <<CP2/utf8, _/binary>> when ?ASCII_LIST(CP1, CP2) ->
-            case CP1 of
-                Sep -> bin_search_inv_1(BinRest, Cont, Sep);
-                _ -> [Bin0|Cont]
-            end;
-        _ when Cont =:= [] ->
-            case unicode_util:gc(Bin0) of
-                [Sep|Bin] -> bin_search_inv_1(Bin, Cont, Sep);
-                _ -> [Bin0|Cont]
-            end;
+slice_lb(Bin, CP1, 1) -> tl(unicode_util:gc([CP1|Bin]));
+slice_lb(Bin, CP1, N) when is_integer(N), N > 1 ->
+    case Bin of
+        <<CP2/utf8, Bin1/binary>> when ?ASCII_LIST(CP1, CP2) -> slice_lb(Bin1, CP2, N - 1);
         _ ->
-            case unicode_util:gc([Bin0|Cont]) of
-                [Sep|[Bin|Cont]] when is_binary(Bin) ->
-                    bin_search_inv_1(Bin, Cont, Sep);
-                [Sep|Cs] ->
-                    {nomatch, Cs};
-                _ -> [Bin0|Cont]
+            case unicode_util:cp(tl(unicode_util:gc([CP1|Bin]))) of
+                [CP2|Cont] -> slice_lb(Cont, CP2, N - 1);
+                [] -> <<>>;
+                {error, Err} -> error({badarg, Err})
             end
-    end;
-bin_search_inv_1(<<>>, Cont, _Sep) ->
-    {nomatch, Cont};
-bin_search_inv_1([], Cont, _Sep) ->
-    {nomatch, Cont};
-bin_search_inv_1(Bin, _, _) ->
-    error({badarg, Bin}).
+    end.
+-endif.
 
-
-bin_search_inv_n(<<CP1/utf8, BinRest/binary>>=Bin0, Cont, Seps) ->
-    case BinRest of
-        <<CP2/utf8, _/binary>> when ?ASCII_LIST(CP1, CP2) ->
-            case lists:member(CP1,Seps) of
-                true -> bin_search_inv_n(BinRest, Cont, Seps);
-                false -> [Bin0|Cont]
-            end;
-        _ when Cont =:= [] ->
-            [GC|Bin] = unicode_util:gc(Bin0),
-            case lists:member(GC, Seps) of
-                true -> bin_search_inv_n(Bin, Cont, Seps);
-                false -> [Bin0|Cont]
-            end;
-        _ ->
-            [GC|Cs0] = unicode_util:gc([Bin0|Cont]),
-            case lists:member(GC, Seps) of
-                false -> [Bin0|Cont];
-                true ->
-                    case Cs0 of
-                        [Bin|Cont] when is_binary(Bin) ->
-                            bin_search_inv_n(Bin, Cont, Seps);
-                        _ ->
-                            {nomatch, Cs0}
-                    end
-            end
-    end;
-bin_search_inv_n(<<>>, Cont, _Sep) ->
-    {nomatch, Cont};
-bin_search_inv_n([], Cont, _Sep) ->
-    {nomatch, Cont};
-bin_search_inv_n(Bin, _, _) ->
-    error({badarg, Bin}).
-
+-ifdef(NEED_bin_search_str_4).
 bin_search_str(Bin0, Start, [], SearchCPs) ->
-    Compiled = binary:compile_pattern(unicode:characters_to_binary(SearchCPs)),
-    bin_search_str_1(Bin0, Start, Compiled, SearchCPs);
-bin_search_str(Bin0, Start, Cont, [CP|_]=SearchCPs) ->
-    First = binary:compile_pattern(<<CP/utf8>>),
-    bin_search_str_2(Bin0, Start, Cont, First, SearchCPs).
+    bin_search_str_(Bin0, Start, binary:compile_pattern(unicode:characters_to_binary(SearchCPs)), SearchCPs);
+bin_search_str(Bin0, Start, Cont, [CP|_] = SearchCPs) ->
+    bin_search_str_(Bin0, Start, Cont, binary:compile_pattern(<<CP/utf8>>), SearchCPs).
 
-bin_search_str_1(Bin0, Start, First, SearchCPs) ->
+bin_search_str_(Bin0, Start, First, SearchCPs) ->
     <<_:Start/binary, Bin/binary>> = Bin0,
     case binary:match(Bin, First) of
         nomatch -> {nomatch, byte_size(Bin0), []};
-        {Where0, _} ->
-            Where = Start+Where0,
-            <<Keep:Where/binary, Cs0/binary>> = Bin0,
-            case prefix_1(Cs0, SearchCPs) of
+        {Where, _} ->
+            {Keep, Cs0} = split_binary(Bin0, Start + Where),
+            case prefix_(Cs0, SearchCPs) of
                 nomatch ->
                     <<_/utf8, Cs/binary>> = Cs0,
-                    KeepSz = byte_size(Bin0) - byte_size(Cs),
-                    bin_search_str_1(Bin0, KeepSz, First, SearchCPs);
-                [] ->
-                    {Keep, [Cs0], <<>>};
-                Rest ->
-                    {Keep, [Cs0], Rest}
+                    bin_search_str_(Bin0, byte_size(Bin0) - byte_size(Cs), First, SearchCPs);
+                [] -> {Keep, [Cs0], <<>>};
+                Rest -> {Keep, [Cs0], Rest}
             end
     end.
 
-bin_search_str_2(Bin0, Start, Cont, First, SearchCPs) ->
+bin_search_str_(Bin0, Start, Cont, First, SearchCPs) ->
     <<_:Start/binary, Bin/binary>> = Bin0,
     case binary:match(Bin, First) of
         nomatch -> {nomatch, byte_size(Bin0), Cont};
-        {Where0, _} when is_integer(Where0) ->
-            Where = Start+Where0,
-            <<Keep:Where/binary, Cs0/binary>> = Bin0,
-            [GC|Cs]=unicode_util:gc(Cs0),
-            case prefix_1(stack(Cs0,Cont), SearchCPs) of
-                nomatch when is_binary(Cs) ->
-                    KeepSz = byte_size(Bin0) - byte_size(Cs),
-                    bin_search_str_2(Bin0, KeepSz, Cont, First, SearchCPs);
+        {Where, _} when is_integer(Where) ->
+            {Keep, Cs0} = split_binary(Bin0, Start + Where),
+            case prefix_(stack(Cs0, Cont), SearchCPs) of
                 nomatch ->
-                    {nomatch, Where, stack([GC|Cs],Cont)};
-                [] ->
-                    {Keep, [Cs0|Cont], <<>>};
+                    case unicode_util:gc(Cs0) of
+                        [_|Cs] when is_binary(Cs) ->
+                            bin_search_str_(Bin0, byte_size(Bin0) - byte_size(Cs), Cont, First, SearchCPs);
+                        [_|_] = Cs -> {nomatch, Where, stack(Cs, Cont)}
+                    end;
                 Rest ->
-                    {Keep, [Cs0|Cont], Rest}
+                    {Keep, [Cs0|Cont],
+                     if
+                         Rest =:= [] -> <<>>;
+                         true -> Rest
+                     end}
             end
+    end.
+
+-ifndef(NEED_prefix__2).
+-define(NEED_prefix__2, true).
+-endif.
+-ifndef(NEED_stack_2).
+-define(NEED_stack_2, true).
+-endif.
+-endif.
+
+-ifdef(NEED_prefix__2).
+prefix_(Cs0, [GC]) ->
+    case unicode_util:gc(Cs0) of
+        [GC|Cs] -> Cs;
+        _ -> nomatch
+    end;
+prefix_([CP|Cs], [Pre|PreR]) when is_integer(CP) ->
+    if
+        CP =:= Pre -> prefix_(Cs, PreR);
+        true -> nomatch
+    end;
+prefix_(<<CP/utf8, Cs/binary>>, [CP|PreR]) -> prefix_(Cs, PreR);
+prefix_(<<_/utf8, _/binary>>, [_|_]) -> nomatch;
+prefix_(Cs0, [Pre|PreR]) ->
+    case unicode_util:cp(Cs0) of
+        [Pre|Cs] ->  prefix_(Cs, PreR);
+        _ -> nomatch
+    end.
+-endif.
+
+-ifdef(NEED_stack_2).
+-compile({inline, stack/2}).
+stack(S, St) when S =:= <<>>; S =:= [] -> St;
+stack(Bin, St) -> [Bin|St].
+-endif.
+
+-ifndef(HAVE_string__list_to_integer_1).
+to_integer(S) when is_binary(S) -> to_integer(S, fun binary_to_integer/1, binary);
+to_integer(S) when is_list(S) -> to_integer(S, fun list_to_integer/1, list);
+to_integer(S) -> error(badarg, [S]).
+
+to_integer(S, F, C) -> to_number(S, <<"^(?<N>[-+]?\\d*)(?<T>.*)">>, C, F, no_integer).
+
+-ifndef(NEED_to_number_5).
+-define(NEED_to_number_5, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_string__list_to_float_1).
+to_float(S) when is_binary(S) -> to_float(S, fun binary_to_float/1, binary);
+to_float(S) when is_list(S) -> to_float(S, fun list_to_float/1, list);
+to_float(S) -> error(badarg, [S]).
+
+to_float(S, F, C) -> to_number(S, <<"^(?<N>[-+]?\\d+\.\\d+([Ee][-+]?\\d+))?(?<T>.*)">>, C, F, no_float).
+
+-ifndef(NEED_to_number_5).
+-define(NEED_to_number_5, true).
+-endif.
+-endif.
+
+-ifdef(NEED_to_number_5).
+to_number(S, P, C, F, E) ->
+    try re:run(S, P, [{capture, all_names, C}]) of
+        {match, [N, T]} -> {F(N), T};
+        nomatch -> {error, E}
+    catch
+        error:badarg -> {error, badarg}
     end.
 -endif.
