@@ -194,6 +194,7 @@
                               {{peer, [random_name, start_link], [0, 1]}, otpbp_peer},
                               {{peer, send,  3}, otpbp_peer},
                               {{pg2, [start, start_link, which_groups], 0}, otpbp_pg2},
+                              {{pg2, init, 1}, otpbp_pg2},
                               {{pg2, [create, delete, get_closest_pid, get_local_members, get_members], 1}, otpbp_pg2},
                               {{pg2, [join, leave], 2}, otpbp_pg2},
                               {{prim_socket, enc_sockaddr, 1}, otpbp_prim_socket},
