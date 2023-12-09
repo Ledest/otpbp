@@ -4,10 +4,13 @@
 % OTP 23.0
 -export([del_dir_r/1]).
 -endif.
-
 -ifndef(HAVE_file__delete_2).
 % OTP 24.0
 -export([delete/2]).
+-endif.
+-ifndef(HAVE_file__read_file_2).
+% OTP 27.0
+-export([read_file/2]).
 -endif.
 
 -ifndef(HAVE_file__del_dir_r_1).
@@ -35,12 +38,38 @@ delete(Name, Opts) when is_list(Opts) ->
         Error -> Error
     end.
 
+-ifndef(NEED_check_args_2).
+-define(NEED_check_args_2, true).
+-endif.
+-ifndef(NEED_file_name_1).
+-define(NEED_file_name_1, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_file__read_file_2).
+read_file(Name, Opts) when is_list(Opts) ->
+    case check_args(Opts, ok) of
+        ok -> file:read_file(Name);
+        raw -> prim_file:read_file(file_name(Name));
+        Error -> Error
+    end.
+
+-ifndef(NEED_check_args_2).
+-define(NEED_check_args_2, true).
+-endif.
+-ifndef(NEED_file_name_1).
+-define(NEED_file_name_1, true).
+-endif.
+-endif.
+
+-ifdef(NEED_check_args_2).
 check_args([{error, _} = Error|_Rest], _) -> Error;
 check_args([raw|Rest], _) -> check_args(Rest, raw);
 check_args([_Name|Rest], R) -> check_args(Rest, R);
 check_args([], R) -> R.
+-endif.
 
--compile({inline, [file_name/1]}).
+-ifdef(NEED_file_name_1).
 file_name(N) when is_binary(N) -> N;
 file_name(N) ->
     try
