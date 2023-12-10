@@ -181,7 +181,8 @@ foreach(Fun, MapOrIter) when is_function(Fun, 2) ->
     maps:fold(fun(K, V, _) ->
                   Fun(K, V),
                   ok
-              end, ok, MapOrIter);
+              end,
+              ok, MapOrIter);
 foreach(Fun, MapOrIter) -> error(badarg, [Fun, MapOrIter]).
 -endif.
 
