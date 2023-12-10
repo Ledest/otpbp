@@ -232,14 +232,17 @@ where_is_file(T, File, D, Files) ->
 module_changed_on_disk(Module, Path) ->
     Arch = erlang:system_info(hipe_architecture),
     case Arch =/= undefined andalso code:is_module_native(Module) of
-        true -> try beam_lib:chunks(Path, [hipe_unified_loader:chunk_name(Arch)]) of
-                    {ok, {_, [{_, NativeCode}]}} when is_binary(NativeCode) -> erlang:md5(NativeCode)
-                catch
-                    _:_ -> undefined
-                end;
-        _false -> case beam_lib:md5(Path) of
-                      {ok, {_, MD5}} -> MD5;
-                      _ -> undefined
-                  end
+        true ->
+            try beam_lib:chunks(Path, [hipe_unified_loader:chunk_name(Arch)]) of
+                {ok, {_, [{_, NativeCode}]}} when is_binary(NativeCode) -> erlang:md5(NativeCode);
+                _ -> undefined
+            catch
+                _:_ -> undefined
+            end;
+        _false ->
+            case beam_lib:md5(Path) of
+                {ok, {_, MD5}} -> MD5;
+                _ -> undefined
+            end
     end =/= erlang:get_module_info(Module, md5).
 -endif.
