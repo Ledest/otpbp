@@ -66,6 +66,9 @@ is_equal(S1, S2) ->
 
 -ifndef(HAVE_sets__foreach_2).
 foreach(F, S) when is_function(F, 1) ->
-    sets:is_set(S) orelse error(function_clause, [F, S]),
-    lists:foreach(F, sets:to_list(S)).
+    sets:fold(fun(E, _) ->
+                  F(E),
+                  ok
+              end,
+              ok, S).
 -endif.
