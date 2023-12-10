@@ -8,5 +8,5 @@
 -ifndef(HAVE_disk_log_server__all_0).
 all() ->
     disk_log_server:start(),
-    lists:sort(lists:map(fun erlang:hd/1, ets:match(disk_log_names, {'$1', '_'}))).
+    lists:sort(ets:select(disk_log_names, [{{'$1', '_'}, [], ['$1']}])).
 -endif.
