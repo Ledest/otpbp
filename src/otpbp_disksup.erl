@@ -114,16 +114,19 @@ parse_df(Input0, Flavor) ->
     {KiBTotalStr, Input2} = parse_df_take_word(parse_df_skip_word(Input0)),
     {KiBAvailableStr, Input4} = parse_df_take_word(parse_df_skip_word(Input2)),
     {CapacityStr, Input5} = parse_df_take_word_percent(Input4),
-    {MountPath, Input7} = lists:splitwith(fun(C) -> C =/= $\r andalso C =/= $\n end,
-                                          if
-                                              Flavor =:= posix -> Input5;
-                                              Flavor =:= susv3 ->
-                                                  {_, Input5c} = parse_df_take_word_percent(parse_df_skip_word(parse_df_skip_word(Input5))),
-                                                  Input5c
-                                          end),
-    Remaining = lists:dropwhile(fun(X) -> parse_df_is_eol(X) end, Input7),
     try {list_to_integer(KiBTotalStr), list_to_integer(KiBAvailableStr), list_to_integer(CapacityStr)} of
-        {KiBTotal, KiBAvailable, Capacity} -> {ok, {KiBTotal, KiBAvailable, Capacity, MountPath}, Remaining}
+        {KiBTotal, KiBAvailable, Capacity} ->
+            {MountPath, Input7} = lists:splitwith(fun(C) -> C =/= $\r andalso C =/= $\n end,
+                                                      if
+                                                          Flavor =:= posix -> Input5;
+                                                          Flavor =:= susv3 ->
+                                                              Input5a = parse_df_skip_word(Input5),
+                                                              Input5b = parse_df_skip_word(Input5a),
+                                                              {_, Input5c} = parse_df_take_word_percent(Input5b),
+                                                              Input5c
+                                                      end),
+
+            {ok, {KiBTotal, KiBAvailable, Capacity, MountPath}, lists:dropwhile(fun parse_df_is_eol/1, Input7)}
     catch
         error:badarg -> {error, parse_df}
     end.
