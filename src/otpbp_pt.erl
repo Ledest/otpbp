@@ -136,6 +136,7 @@
                               {{httpd_util, [flatlength, integer_to_hexlist, strip, suffix], 1}, otpbp_httpd_util},
                               {{gb_sets, [filtermap, is_equal, map], 2}, otp_gb_sets},
                               {{gb_sets, foreach, 2}, otp_gb_sets},
+                              {{gb_trees, new, 0}, {gb_trees, empty}},
                               {{gb_trees, [take, take_any], 2}, otpbp_gb_trees},
                               {{gb_trees, foreach, 2}, otpbp_gb_trees},
                               {{gen, debug_options, 2}, otpbp_gen},
