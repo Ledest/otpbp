@@ -28,14 +28,17 @@ legalize_name(InvalidName, StringName, Used) ->
         #{} -> Used#{InvalidName => NewName}
     end.
 
-fold_vars(F, Acc0, Forms) when is_list(Forms) -> lists:foldl(fun(Elem, Acc) -> fold_vars(F, Acc, Elem) end, Acc0, Forms);
+fold_vars(F, Acc0, Forms) when is_list(Forms) -> fold_vars_(F, Acc0, Forms);
 fold_vars(F, Acc0, {var, _, _} = V) -> F(V, Acc0);
-fold_vars(F, Acc0, Form) when is_tuple(Form) ->
-    lists:foldl(fun(Elem, Acc) -> fold_vars(F, Acc, Elem) end, Acc0, tuple_to_list(Form));
+fold_vars(F, Acc0, Form) when is_tuple(Form) -> fold_vars_(F, Acc0, tuple_to_list(Form));
 fold_vars(_, Acc, _) -> Acc.
 
-map_vars(F, Forms) when is_list(Forms) -> [map_vars(F, Form) || Form <- Forms];
+fold_vars_(F, Acc0, Forms) -> lists:foldl(fun(Elem, Acc) -> fold_vars(F, Acc, Elem) end, Acc0, Forms).
+
+map_vars(F, Forms) when is_list(Forms) -> map_vars_(F, Forms);
 map_vars(F, {var, _, _} = V) -> F(V);
-map_vars(F, Form) when is_tuple(Form) -> list_to_tuple([map_vars(F, Elem) || Elem <- tuple_to_list(Form)]);
+map_vars(F, Form) when is_tuple(Form) -> list_to_tuple(map_vars_(F, tuple_to_list(Form)));
 map_vars(_, Form) -> Form.
+
+map_vars_(F, Forms) -> [map_vars(F, Form) || Form <- Forms].
 -endif.
