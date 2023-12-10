@@ -45,6 +45,17 @@
 -export([zipwith3/5]).
 -endif.
 
+-ifndef(HAVE_lists__enumerate_1).
+-ifdef(HAVE_lists__enumerate_2).
+-import(lists, [enumerate/2]).
+-endif.
+-endif.
+-ifndef(HAVE_lists__enumerate_2).
+-ifdef(HAVE_lists__enumerate_3).
+-import(lists, [enumerate/3]).
+-endif.
+-endif.
+
 -ifndef(HAVE_lists__join_2).
 join(_, []) -> [];
 join(Sep, [H|T]) -> [H|join_prepend(Sep, T)].
@@ -63,15 +74,11 @@ search(F, []) when is_function(F, 1) -> false.
 -endif.
 
 -ifndef(HAVE_lists__enumerate_1).
-enumerate(List) ->
-    {L, _} = lists:mapfoldl(fun(E, A) -> {{A, E}, A + 1} end, 1, List),
-    L.
+enumerate(List) -> enumerate(1, List).
 -endif.
 
 -ifndef(HAVE_lists__enumerate_2).
-enumerate(Index, List) when is_integer(Index) ->
-    {L, _} = lists:mapfoldl(fun(E, A) -> {{A, E}, A + 1} end, Index, List),
-    L.
+enumerate(Index, List) -> enumerate(Index, 1, List).
 -endif.
 
 -ifndef(HAVE_lists__enumerate_3).
