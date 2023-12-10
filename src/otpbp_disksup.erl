@@ -57,7 +57,7 @@ run_df(Path, OS) when OS =:= freebsd; OS =:= openbsd -> my_cmd("/bin/df -k -l " 
 my_cmd(Cmd) ->
     Port = open_port({spawn, Cmd}, [stream, {env, [{"LANG0", "C"}]}]),
     receive
-         {Port, {data, N}} -> N;
+        {Port, {data, N}} -> N;
         {'EXIT', Port, Reason} -> exit({port_died, Reason})
     end.
 
@@ -74,9 +74,7 @@ disk_info_win32([]) -> [];
 disk_info_win32([H|T]) ->
     case io_lib:fread("~s~s~d~d~d", H) of
         {ok, [Drive, "DRIVE_FIXED", BAvail, BTot, _TotFree], _RestStr} ->
-            [{Drive,
-              BTot div 1024,
-              BAvail div 1024,
+            [{Drive, BTot div 1024, BAvail div 1024,
               trunc(math:ceil(100 * ((BTot - BAvail) / BTot)))}|disk_info_win32(T)];
         {ok, _, _RestStr} -> disk_info_win32(T);
         _Other -> []
