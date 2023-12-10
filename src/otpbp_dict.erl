@@ -17,6 +17,11 @@ take(Key, Dict) ->
 -endif.
 
 -ifndef(HAVE_dict__foreach_2).
-foreach(F, D) when is_function(F, 2) -> lists:foreach(fun({K, V}) -> F(K, V) end, dict:to_list(D));
+foreach(F, D) when is_function(F, 2) ->
+    dict:fold(fun(K, V, _) ->
+                  F(K, V),
+                  ok
+              end,
+              ok, D);
 foreach(F, D) -> error(badarg, [F, D]).
 -endif.
