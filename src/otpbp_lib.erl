@@ -26,7 +26,7 @@
 -endif.
 
 -ifndef(HAVE_lib__nonl_1).
-nonl([$\n|T]) -> nonl(T);
+nonl([$\n]) -> [];
 nonl([H|T]) -> [H|nonl(T)];
 nonl([]) -> [].
 -endif.
