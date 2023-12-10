@@ -28,12 +28,11 @@
 
 -ifndef(HAVE_erl_epmd__listen_port_please_2).
 listen_port_please(_Name, _Host) ->
-    try
-        {ok, [[StringPort]]} = init:get_argument(erl_epmd_port),
-        {ok, list_to_integer(StringPort)}
-    catch
-        error:_ -> {ok, 0}
-    end.
+    {ok,
+     case init:get_argument(erl_epmd_port) of
+         {ok, [[StringPort]]} -> list_to_integer(StringPort);
+         _ -> 0
+     end}.
 -endif.
 
 -ifndef(HAVE_erl_epmd__port_please_2).
