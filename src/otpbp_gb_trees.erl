@@ -25,6 +25,5 @@ take_any(Key, Tree) ->
 -endif.
 
 -ifndef(HAVE_dict__foreach_2).
-foreach(F, T) when is_function(F, 2) -> lists:foreach(fun({K, V}) -> F(K, V) end, gb_trees:to_list(T));
-foreach(F, T) -> error(badarg, [F, T]).
+foreach(F, T) when is_function(F, 2) -> lists:foreach(fun({K, V}) -> F(K, V) end, gb_trees:to_list(T)).
 -endif.
