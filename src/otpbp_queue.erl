@@ -32,9 +32,14 @@
 % OTP 24.0
 -export([filtermap/2]).
 -endif.
-
 -ifndef(HAVE_queue__foreach_2).
 -export([foreach/2]).
+-endif.
+
+-ifndef(HAVE_queue__foreach_2).
+-ifdef(HAVE_queue__fold_3).
+-import(queue, [fold/3]).
+-endif.
 -endif.
 
 -ifndef(HAVE_queue__all_2).
@@ -187,16 +192,13 @@ filtermap_r(_, []) -> [].
 -endif.
 
 -ifndef(HAVE_queue__foreach_2).
-foreach(Fun, {R, F}) when is_function(Fun, 1), is_list(R), is_list(F) ->
-    lists:foreach(Fun, F),
-    foreach_rear(Fun, R),
-    ok;
-foreach(Fun, Q) -> error(badarg, [Fun, Q]).
-
-foreach_rear(Fun, [X|Rest]) ->
-    foreach_rear(Fun, Rest),
-    Fun(X);
-foreach_rear(_, []) -> ok.
+foreach(F, Q) when is_function(F, 1) ->
+    fold(fun(E, _) ->
+             F(E),
+             ok
+         end,
+         ok, Q);
+foreach(F, Q) -> error(badarg, [F, Q]).
 -endif.
 
 -ifdef(NEED__r2f_1).
