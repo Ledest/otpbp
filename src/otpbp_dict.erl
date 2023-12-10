@@ -22,6 +22,5 @@ foreach(F, D) when is_function(F, 2) ->
                   F(K, V),
                   ok
               end,
-              ok, D);
-foreach(F, D) -> error(badarg, [F, D]).
+              ok, D).
 -endif.
