@@ -79,14 +79,12 @@ module_status(Module) -> module_status(Module, code:get_path()).
 
 -ifndef(HAVE_code__modified_modules_0).
 modified_modules() ->
-    PathFiles = lists:foldr(fun(Path, A) ->
-                                case erl_prim_loader:list_dir(Path) of
-                                    {ok, Files} -> [{Path, Files}|A];
-                                    _ -> A
-                                end
-                            end, [], code:get_path()),
+    PathFiles = path_files(),
     [M || {M, _} <- code:all_loaded(), module_status(M, PathFiles) =:= modified].
 
+-ifndef(NEED_path_files_0).
+-define(NEED_path_files_0, true).
+-endif.
 -ifndef(NEED_module_status_2).
 -define(NEED_module_status_2, true).
 -endif.
@@ -132,15 +130,12 @@ get_doc(M) when is_atom(M) -> {error, missing}.
 
 -ifndef(HAVE_code__module_status_0).
 module_status() ->
-    PathFiles = lists:filtermap(fun(Path) ->
-                                    case erl_prim_loader:list_dir(Path) of
-                                        {ok, Files} -> {true, {Path, Files}};
-                                        _Error -> false
-                                    end
-                                end,
-                                code:get_path()),
+    PathFiles = path_files(),
     [{M, module_status(M, PathFiles)} || {M, _} <- code:all_loaded()].
 
+-ifndef(NEED_path_files_0).
+-define(NEED_path_files_0, true).
+-endif.
 -ifndef(NEED_module_status_2).
 -define(NEED_module_status_2, true).
 -endif.
@@ -197,6 +192,17 @@ replace_path(Name, Dir, Cache) when Cache =:= cache; Cache =:= nocache -> code:r
 
 -ifndef(HAVE_code__set_path_2).
 set_path(Path, Cache) when Cache =:= cache; Cache =:= nocache -> code:set_path(Path).
+-endif.
+
+-ifdef(NEED_path_files_0).
+path_files() ->
+    lists:filtermap(fun(Path) ->
+                        case erl_prim_loader:list_dir(Path) of
+                            {ok, Files} -> {true, {Path, Files}};
+                            _Error -> false
+                        end
+                    end,
+                    code:get_path()).
 -endif.
 
 -ifdef(NEED_module_status_2).
