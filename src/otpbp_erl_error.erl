@@ -15,21 +15,24 @@
 
 -ifndef(HAVE_erl_error__format_exception_3).
 -ifdef(HAVE_erl_error__format_exception_4).
-format_exception(Class, Reason, StackTrace) -> erl_error:format_exception(Class, Reason, StackTrace, #{}).
--else.
-format_exception(Class, Reason, StackTrace) ->
-    erl_error:format_exception(1, Class, Reason, StackTrace,
-                               fun(_, _, _) -> false end,
-                               fun(Term, I) -> io_lib:print(Term, I, 80, 30) end,
-                               unicode).
+-import(erl_error, [format_exception/4]).
 -endif.
+-endif.
+
+
+-ifndef(HAVE_erl_error__format_exception_3).
+format_exception(Class, Reason, StackTrace) -> format_exception(Class, Reason, StackTrace, #{}).
 -endif.
 
 -ifndef(HAVE_erl_error__format_exception_4).
 format_exception(Class, Reason, StackTrace, Options) ->
     erl_error:format_exception(maps:get(column, Options, 1),
                                Class, Reason, StackTrace,
-                               maps:get(stack_trim_fun, Options, fun(_, _, _) -> false end),
-                               maps:get(format_fun, Options, fun(Term, I) -> io_lib:print(Term, I, 80, 30) end),
+                               maps:get(stack_trim_fun, Options, fun default_stack_trim/3),
+                               maps:get(format_fun, Options, fun default_format/2),
                                unicode).
+
+default_stack_trim(_, _, _) -> false.
+
+default_format(Term, I) -> io_lib:print(Term, I, 80, 30).
 -endif.
