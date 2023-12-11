@@ -91,12 +91,24 @@
 -behaviour(gen_server).
 
 -define(GEN_SERVER_MODULE, ?MODULE).
+-ifndef(NEED_record__local_member).
+-define(NEED_record__local_member, true).
+-endif.
 -else.
 -define(GEN_SERVER_MODULE, pg2).
 -endif.
 
 -define(SERVICE, pg2).
+
+-ifndef(HAVE_pg2__get_local_members_1).
+-ifndef(NEED_record__local_member).
+-define(NEED_record__local_member, true).
+-endif.
+-endif.
+
+-ifdef(NEED_record__local_member).
 -record(local_member, {name, pid}).
+-endif.
 
 -ifndef(HAVE_pg2__create_1).
 create(Name) ->
