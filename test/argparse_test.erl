@@ -419,10 +419,12 @@ usage_test() ->
     Cmd = ubiq_cmd(),
     Float = "(float, 3.14)\n",
     Float1 = "(float), default: 3.14\n",
-    Usage = "Usage:\n  erl start {crawler|doze} [-lrfv] [-s <shard>...] [-z <z>] [-m <more>] [-b <bin>]\n"
-            "      [-g <g>] [-t <t>] ---maybe-req -y <y> --yyy <y> [-u <u>] [-c <choice>]\n"
-            "      [-q <fc>] [-w <ac>] [--unsafe <au>] [--safe <as>] [-foobar <long>] [--force]\n"
-            "      [-i <interval>] [--req <weird>] [--float <float>] <server> [<optpos>]\n\n"
+    Usage = "Usage:\n"
+            "  erl start {crawler|doze} [-rfvl] [--force] [-i <interval>] [--req <weird>]\n"
+            "      [--float <float>] [-s <shard>...] [-z <z>] [-m <more>] [-b <bin>] [-g <g>]\n"
+            "      [-t <t>] ---maybe-req -y <y> --yyy <y> [-u <u>] [-c <choice>] [-q <fc>]\n"
+            "      [-w <ac>] [--unsafe <au>] [--safe <as>] [-foobar <long>] <server> [<optpos>]\n"
+            "\n"
             "Subcommands:\n"
             "  crawler      controls crawler behaviour\n"
             "  doze         dozes a bit\n\n"
@@ -430,6 +432,12 @@ usage_test() ->
             "  server       server to start\n"
             "  optpos       optional positional (int)\n\n"
             "Optional arguments:\n"
+            "  -r           recursive\n"
+            "  -f, --force  force\n"
+            "  -v           verbosity level\n"
+            "  -i           interval set (int >= 1)\n"
+            "  --req        required optional, right?\n"
+            "  --float      floating-point long form argument (float), default: 3.14\n"
             "  -s           initial shards (int)\n"
             "  -z           between (1 <= int <= 10)\n"
             "  -l           maybe lower (int <= 10)\n"
@@ -445,15 +453,9 @@ usage_test() ->
             "  -w           atom choice (choice: one, two)\n"
             "  --unsafe     unsafe atom (atom)\n"
             "  --safe       safe atom (existing atom)\n"
-            "  -foobar      foobaring option\n"
-            "  -r           recursive\n"
-            "  -f, --force  force\n"
-            "  -v           verbosity level\n"
-            "  -i           interval set (int >= 1)\n"
-            "  --req        required optional, right?\n"
-            "  --float      floating-point long form argument ",
+            "  -foobar      foobaring option\n",
     ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl", command => ["start"]})),
-                         [Usage ++ Float, Usage ++ Float1])),
+                         [Usage, unicode:characters_to_list(string:replace(Usage, Float1, Float))])),
     FullCmd = "Usage:\n  erl"
               " <command> [-rfv] [--force] [-i <interval>] [--req <weird>] [--float <float>]\n\n"
               "Subcommands:\n"
@@ -466,19 +468,22 @@ usage_test() ->
               "  -v          verbosity level\n"
               "  -i          interval set (int >= 1)\n"
               "  --req       required optional, right?\n"
-              "  --float     floating-point long form argument ",
+              "  --float     floating-point long form argument (float), default: 3.14\n",
     ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => erl})),
-                         [FullCmd ++ Float, FullCmd ++ Float1])),
-    CrawlerStatus = "Usage:\n  erl status crawler [-rfv] [---extra <extra>] [--force] [-i <interval>]\n"
-                    "      [--req <weird>] [--float <float>]\n\nOptional arguments:\n"
-                    "  ---extra    extra option very deep\n  -r          recursive\n"
-                    "  -f, --force force\n  -v          verbosity level\n"
+                         [FullCmd, unicode:characters_to_list(string:replace(FullCmd, Float1, Float))])),
+    CrawlerStatus = "Usage:\n  erl status crawler [-rfv] [--force] [-i <interval>] [--req <weird>]\n"
+                    "      [--float <float>] [---extra <extra>]\n\n"
+                    "Optional arguments:\n"
+                    "  -r          recursive\n"
+                    "  -f, --force force\n"
+                    "  -v          verbosity level\n"
                     "  -i          interval set (int >= 1)\n"
                     "  --req       required optional, right?\n"
-                    "  --float     floating-point long form argument ",
+                    "  --float     floating-point long form argument (float), default: 3.14\n"
+                    "  ---extra    extra option very deep\n",
     ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl",
                                                                          command => ["status", "crawler"]})),
-                         [CrawlerStatus ++ Float, CrawlerStatus ++ Float1])).
+                         [CrawlerStatus, unicode:characters_to_list(string:replace(CrawlerStatus, Float1, Float))])).
 
 usage_required_args_test() ->
     ?assertEqual("Usage:\n  " ++ prog() ++ " test --req <required>\n\nOptional arguments:\n  --req required\n",
