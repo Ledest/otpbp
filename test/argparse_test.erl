@@ -415,6 +415,13 @@ proxy_arguments_test() ->
                  parse("node2.org status -a bcd", Cmd)),
     ?assertMatch({ok, #{args := ["-app", "key"], node := "node2.org"}, _, _}, parse("node2.org state -app key", Cmd)).
 
+-ifdef(OTP_RELEASE).
+-if(?OTP_RELEASE =:= 26).
+-define(OTP_RELEASE_26, true).
+-endif.
+-endif.
+
+-ifndef(OTP_RELEASE_26).
 usage_test() ->
     Cmd = ubiq_cmd(),
     Float = "(float, 3.14)\n",
@@ -484,6 +491,7 @@ usage_test() ->
     ?assert(lists:member(unicode:characters_to_list(argparse:help(Cmd, #{progname => "erl",
                                                                          command => ["status", "crawler"]})),
                          [CrawlerStatus, unicode:characters_to_list(string:replace(CrawlerStatus, Float1, Float))])).
+-endif.
 
 usage_required_args_test() ->
     ?assertEqual("Usage:\n  " ++ prog() ++ " test --req <required>\n\nOptional arguments:\n  --req required\n",
