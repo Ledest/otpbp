@@ -689,7 +689,6 @@ timer_apply_test() ->
     ?assertEqual({error, badarg}, timer:apply_interval(0, fun(_X) -> ok end, [foo, bar])),
     ?assertEqual({error, badarg}, timer:apply_interval(0, fun(_X) -> ok end, foo)),
     ok.
--endif.
 
 get_messes(Time, Mess, Indexes) -> get_messes(Time, Mess, Indexes, 1).
 
@@ -701,6 +700,7 @@ get_messes1(Time, Mess, Indexes) ->
         {Mess, Index} -> get_messes1(Time, Mess, lists:delete(Index, Indexes))
     after Time -> nor
     end.
+-endif.
 
 -ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 21).
