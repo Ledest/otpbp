@@ -14,7 +14,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(argparse_test).
+-module(argparse_tests).
 
 -compile({parse_transform, otpbp_pt}).
 
@@ -714,6 +714,7 @@ parse_opts(Args, Opts) -> parse(Args, #{arguments => Opts}).
 
 parse_cmd(Args, Command) -> parse(Args, #{commands => Command}).
 
+-ifndef(OTP_RELEASE_26).
 %% ubiquitous command, containing sub-commands, and all possible option types
 %% with all nargs. Not all combinations though.
 ubiq_cmd() ->
@@ -774,3 +775,4 @@ ubiq_cmd() ->
                     "restart" => #{help => hidden,
                                    arguments => [#{name => server, help => "server to restart"},
                                                  #{name => duo, short => $d, long => "-duo", help => "dual option"}]}}}.
+-endif.
