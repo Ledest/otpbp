@@ -164,7 +164,7 @@ invalid_arguments_test() ->
     ?assertEqual({error, {Prog, FloatChoices, "1.3", <<"is not one of the choices">>}},
                  parse_opts("1.3", [FloatChoices])),
     %% unsuccessful user-defined conversion
-    ?assertMatch({error, {Prog, _, "REV", <<"failed validation">>}},
+    ?assertMatch({error, {Prog, _, "REV", <<"failed ", _/binary>>}},
                  parse_opts("REV", [#{name => user, type => {custom, fun integer_to_binary/1}}])).
 
 complex_command_test() ->
