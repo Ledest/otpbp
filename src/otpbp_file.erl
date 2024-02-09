@@ -12,6 +12,10 @@
 % OTP 27.0
 -export([read_file/2]).
 -endif.
+-ifndef(HAVE_file__pid2name_1).
+% OTP < 27.0
+-export([pid2name/1]).
+-endif.
 
 -ifndef(HAVE_file__del_dir_r_1).
 -include_lib("kernel/include/file.hrl").
@@ -28,6 +32,10 @@ del_dir_r(File) -> % rm -rf File
         {ok, _FileInfo} -> file:delete(File);
         {error, _Reason} = Error -> Error
     end.
+-endif.
+
+-ifndef(HAVE_file__pid2name_1).
+pid2name(Pid) when is_pid(Pid) -> undefined.
 -endif.
 
 -ifndef(HAVE_file__delete_2).

@@ -120,7 +120,7 @@
                               {{ets, lookup_element, 4}, otpbp_ets},
                               {{ets, [next_lookup, prev_lookup], 2}, otpbp_ets},
                               {{ets, whereis, 1}, otpbp_ets},
-                              {{file, del_dir_r, 1}, otpbp_file},
+                              {{file, [del_dir_r, pid2name], 1}, otpbp_file},
                               {{file, [delete, read_file], 2}, otpbp_file},
                               {{filelib, ensure_path, 1}, otpbp_filelib},
                               {{filelib, find_file, [2, 3]}, otpbp_filelib},
