@@ -250,6 +250,8 @@
                               {{uri_string, transcode, 2}, otpbp_uri_string},
                               {{uri_string, resolve, [2, 3]}, otpbp_uri_string},
                               {{user, interfaces, 1}, otpbp_user},
+                              {{xmerl_xml_indent, '#root#', 4}, otpbp_xmerl_xml_indent},
+                              {{xmerl_xml_indent, '#element#', 5}, otpbp_xmerl_xml_indent},
                               {{zlib, [adler32, crc32], [2, 3]}, otpbp_zlib},
                               {{zlib, [adler32_combine, crc32_combine], 4}, otpbp_zlib},
                               {{zlib, inflate, 3}, otpbp_zlib},
