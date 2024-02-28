@@ -68,6 +68,10 @@
 % OTP 26.0
 -export([set_path/2]).
 -endif.
+-ifndef(HAVE_code__lib_dir_2).
+% OTP < 28.0
+-export([lib_dir/2]).
+-endif.
 
 -ifndef(HAVE_code__module_status_1).
 module_status(Module) -> module_status(Module, code:get_path()).
@@ -192,6 +196,14 @@ replace_path(Name, Dir, Cache) when Cache =:= cache; Cache =:= nocache -> code:r
 
 -ifndef(HAVE_code__set_path_2).
 set_path(Path, Cache) when Cache =:= cache; Cache =:= nocache -> code:set_path(Path).
+-endif.
+
+-ifndef(HAVE_code__lib_dir_2).
+lib_dir(Name, SubDir) ->
+    case code:lib_dir(Name) of
+        {error, _bad_name} = E -> E;
+        Path -> filename:join(Path, SubDir)
+    end.
 -endif.
 
 -ifdef(NEED_path_files_0).
