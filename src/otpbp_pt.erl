@@ -49,6 +49,7 @@
                               {{code, [del_paths, get_doc], 1}, otpbp_code},
                               {{code, [set_path, add_path, add_patha, add_pathz, add_paths, add_pathsa, add_pathsz], 2},
                                otpbp_code},
+                              {{code, lib_dir, 2}, otpbp_code},
                               {{code, replace_path, 3}, otpbp_code},
                               {{code, is_module_native, 1}, otpbp_code},
                               {{compile, iofile, 1}, otpbp_compile},
