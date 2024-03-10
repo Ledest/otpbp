@@ -8,7 +8,7 @@
 % OTP 27.0
 -export([decode/3]).
 -endif.
--ifndef(HAVE_json__continue_2).
+-ifndef(HAVE_json__decode_continue_2).
 % OTP 27.0
 -export([decode_continue/2]).
 -endif.
@@ -139,7 +139,7 @@ decode(Binary, Acc0, Decoders) when is_binary(Binary) ->
 -endif.
 -endif.
 
--ifndef(HAVE_json__continue_2).
+-ifndef(HAVE_json__decode_continue_2).
 decode_continue(end_of_input, {_, Acc, [], _Decode, {number, Val}}) -> {Val, Acc, <<>>};
 decode_continue(end_of_input, {_, _, _, _, {float_error, Token, _Skip}}) -> unexpected_sequence(Token);
 decode_continue(end_of_input, _State) -> error(unexpected_end);
