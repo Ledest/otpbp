@@ -85,6 +85,28 @@
 -endif.
 -endif.
 
+-ifndef(HAVE_json__decode_1).
+-ifndef(NEED_record__decode).
+-define(NEED_record__decode, true).
+-endif.
+-endif.
+-ifndef(HAVE_json__decode_3).
+-ifndef(NEED_record__decode).
+-define(NEED_record__decode, true).
+-endif.
+-endif.
+-ifndef(HAVE_json__decode_continue_2).
+-ifndef(NEED_record__decode).
+-define(NEED_record__decode, true).
+-endif.
+-endif.
+-ifndef(HAVE_json__decode_start_3).
+-ifndef(NEED_record__decode).
+-define(NEED_record__decode, true).
+-endif.
+-endif.
+
+-ifdef(NEED_record__decode).
 -type from_binary_fun() :: fun((binary()) -> any()).
 -type array_start_fun() :: fun((Acc :: any()) -> ArrayAcc :: any()).
 -type array_push_fun() :: fun((Value :: any(), Acc :: any()) -> NewAcc :: any()).
@@ -103,6 +125,7 @@
                  integer = fun erlang:binary_to_integer/1 :: from_binary_fun(),
                  string = fun(Binary) -> Binary end :: from_binary_fun(),
                  null = null :: term()}).
+-endif.
 
 -ifndef(HAVE_json__decode_1).
 decode(Binary) when is_binary(Binary) ->
