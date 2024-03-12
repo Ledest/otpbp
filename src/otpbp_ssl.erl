@@ -12,7 +12,6 @@
 % OTP 21.0
 -export([handshake/3]).
 -endif.
-
 -ifndef(HAVE_ssl__ssl_accept_1).
 % OTP < 24.0
 -export([ssl_accept/1]).
@@ -32,6 +31,10 @@
 -ifndef(HAVE_ssl__cipher_suites_1).
 % OTP < 24.0
 -export([cipher_suites/1]).
+-endif.
+-ifndef(HAVE_ssl__prf_5).
+% OTP < 28.0
+-export([prf/5]).
 -endif.
 
 -ifndef(HAVE_ssl__cipher_suites_0).
@@ -105,4 +108,25 @@ cipher_suites(all) ->
               ssl_cipher:filter_suites(ssl_cipher:all_suites(tls_record:highest_protocol_version([])))).
 
 available_suites_default() -> ssl_cipher:filter_suites(ssl_cipher:suites(tls_record:highest_protocol_version([]))).
+-endif.
+
+-ifndef(HAVE_ssl__prf_5).
+-record(sslsocket, {fd = nil, pid = nil}).
+
+prf(#sslsocket{pid = [Pid|_]} = Socket, master_secret, Label, [client_random, server_random], WantedLength)
+  when is_pid(Pid) ->
+    case ssl:export_key_materials(Socket, [Label], [no_context], [WantedLength], true) of
+        {ok, [KeyMaterial]} -> {ok, KeyMaterial};
+        Error -> Error
+    end;
+prf(#sslsocket{pid = [Pid|_]} = Socket, master_secret, Label, [client_random, server_random, Context], WantedLength)
+  when is_pid(Pid), is_binary(Context) ->
+    case ssl:export_key_materials(Socket, [Label], [Context], [WantedLength], true) of
+        {ok, [KeyMaterial]} -> {ok, KeyMaterial};
+        Error -> Error
+    end;
+prf(#sslsocket{pid = {_Listen, Config}}, _, _, _, _) when element(1, Config) =:= config -> {error, enotconn};
+prf(Socket, Secret, Label, Context, WantedLength) ->
+    {ok, [{selected_cipher_suite, #{prf := PRFAlg}}]} = ssl:connection_information(Socket, [selected_cipher_suite]),
+    {ok, tls_v1:prf(PRFAlg, Secret, Label, iolist_to_binary(Context), WantedLength)}.
 -endif.
