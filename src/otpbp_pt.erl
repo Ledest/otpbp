@@ -269,6 +269,7 @@
                               {{snmpm, sync_set, [3, 4, 5, 6]}, {snmpm, sync_set2}},
                               {{ssl, cipher_suites, [0, 1]}, otpbp_ssl},
                               {{ssl, [handshake, ssl_accept], [1, 2, 3]}, otpbp_ssl},
+                              {{ssl, prf, 5}, otpbp_ssl},
                               {{string, next_codepoint, 1}, {unicode_util, cp}},
                               {{string, next_grapheme, 1}, {unicode_util, gc}},
                               {{string, [chomp, is_empty, length, reverse, to_graphemes], 1}, otpbp_string},
