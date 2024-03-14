@@ -126,5 +126,5 @@ empty(URI) when is_binary(URI) -> <<>>.
 -endif.
 
 -ifndef(HAVE_http_uri__scheme_defaults_0).
-scheme_defaults() -> [{http,  80}, {https, 443}, {ftp,   21}, {ssh,   22}, {sftp,  22}, {tftp,  69}].
+scheme_defaults() -> [{http, 80}, {https, 443}, {ftp, 21}, {ssh, 22}, {sftp, 22}, {tftp, 69}].
 -endif.
