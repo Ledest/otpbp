@@ -82,6 +82,8 @@
                               {{crypto, [stream_decrypt, stream_encrypt], 2}, otpbp_crypto},
                               {{ct, get_progname, 0}, otpbp_ct},
                               {{dbg, stop_clear, 0}, {dbg, stop}}, % OTP < 27
+                              {{diameter, [which_connections, which_transports, which_watchdogs], [0, 1]},
+                               otpbp_diameter},
                               {{diameter_config, which_transports, [0, 1]}, otpbp_diameter_config},
                               {{diameter_service, [which_connections, which_watchdogs], [0, 1]}, otpbp_diameter_service},
                               {{dict, foreach, 2}, otpbp_dict},
