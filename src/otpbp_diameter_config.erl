@@ -22,12 +22,12 @@
 
 -ifdef(NEED_record_transport).
 -type match(T) :: T | '_' | '$1' | '$2' | '$3' | '$4'.
--endif.
 
 -record(transport, {service, %% name
                     ref = make_ref() :: match(reference()),
                     type :: match(connect|listen),
                     options :: match(list())}).
+-endif.
 
 -ifndef(HAVE_diameter_config__which_transports_0).
 which_transports() ->
