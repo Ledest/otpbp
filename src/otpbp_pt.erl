@@ -82,6 +82,7 @@
                               {{ct, get_progname, 0}, otpbp_ct},
                               {{dbg, stop_clear, 0}, {dbg, stop}}, % OTP < 27
                               {{diameter_config, which_transports, [0, 1]}, otpbp_diameter_config},
+                              {{diameter_service, [which_connections, which_watchdogs], [0, 1]}, otpbp_diameter_service},
                               {{dict, foreach, 2}, otpbp_dict},
                               {{dict, take, 2}, otpbp_dict},
                               {{disk_log, accessible_logs, 0}, otpbp_disk_log},
