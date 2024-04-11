@@ -830,9 +830,6 @@ test_quote_unquote(Unquoted) ->
 test_quote_with_safe_list(Unquoted, Quoted) ->
     Safe = "!$()*", %% characters not encoded by old http_uri:encode
     Result = uri_string:quote(Unquoted, Safe),
-    %% case below should be removed when function used are removed
-    list_to_integer(erlang:system_info(otp_release)) >= 20 andalso
-    head(Unquoted) =< 127 andalso ?assertEqual(Result, http_uri:encode(Unquoted)),
     case lists:member(head(Unquoted), Safe) of
         true -> ?assertEqual(Unquoted, Result);
         false -> ?assertEqual(Quoted, Result)
