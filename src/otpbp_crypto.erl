@@ -101,6 +101,10 @@
 -export([sha_init/0]).
 -endif.
 
+-ifndef(HAVE_crypto__cipher_info_1).
+% OTP 22.0
+-export([cipher_info/1]).
+-endif.
 -ifndef(HAVE_crypto__supports_1).
 % OTP 22.0
 -export([supports/1]).
@@ -320,6 +324,63 @@ sha(Data) -> crypto:hash(sha, Data).
 -endif.
 -ifndef(HAVE_crypto__sha_init_0).
 sha_init() -> crypto:hash_init(sha).
+-endif.
+
+-ifndef(HAVE_crypto__cipher_info_1).
+cipher_info(aes_ctr) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => ctr_mode, type => undefined};
+cipher_info(aes_128_cbc) -> #{block_size => 16, iv_length => 16, key_length => 16, mode => cbc_mode, type => 419};
+cipher_info(aes_128_ccm) -> #{block_size => 1, iv_length => 12, key_length => 16, mode => ccm_mode, type => 896};
+cipher_info(aes_128_cbc) -> #{block_size => 16, iv_length => 16, key_length => 16, mode => cbc_mode, type => 419};
+cipher_info(aes_128_ccm) -> #{block_size => 1, iv_length => 12, key_length => 16, mode => ccm_mode, type => 896};
+cipher_info(aes_128_cfb128) -> #{block_size => 1, iv_length => 16, key_length => 16, mode => cfb_mode,type => 421};
+cipher_info(aes_128_cfb8) -> #{block_size => 1, iv_length => 16, key_length => 16, mode => cfb_mode, type => 421};
+cipher_info(aes_128_ctr) -> #{block_size => 1, iv_length => 16, key_length => 16, mode => ctr_mode, type => undefined};
+cipher_info(aes_128_ecb) -> #{block_size => 16, iv_length => 0, key_length => 16, mode => ecb_mode, type => 418};
+cipher_info(aes_128_gcm) -> #{block_size => 1, iv_length => 12, key_length => 16, mode => gcm_mode, type => 895};
+cipher_info(aes_192_cbc) -> #{block_size => 16, iv_length => 16, key_length => 24, mode => cbc_mode, type => 423};
+cipher_info(aes_192_ccm) -> #{block_size => 1, iv_length => 12, key_length => 24, mode => ccm_mode, type => 899};
+cipher_info(aes_192_cfb128) -> #{block_size => 1, iv_length => 16, key_length => 24, mode => cfb_mode, type => 425};
+cipher_info(aes_192_cfb8) -> #{block_size => 1, iv_length => 16, key_length => 24, mode => cfb_mode, type => 425};
+cipher_info(aes_192_ctr) -> #{block_size => 1, iv_length => 16, key_length => 24, mode => ctr_mode, type => undefined};
+cipher_info(aes_192_ecb) -> #{block_size => 16, iv_length => 0, key_length => 24, mode => ecb_mode, type => 422};
+cipher_info(aes_192_gcm) -> #{block_size => 1, iv_length => 12, key_length => 24, mode => gcm_mode, type => 898};
+cipher_info(aes_256_cbc) -> #{block_size => 16, iv_length => 16, key_length => 32, mode => cbc_mode, type => 427};
+cipher_info(aes_256_ccm) -> #{block_size => 1, iv_length => 12, key_length => 32, mode => ccm_mode, type => 902};
+cipher_info(aes_256_cfb128) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => cfb_mode, type => 429};
+cipher_info(aes_256_cfb8) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => cfb_mode, type => 429}; 
+cipher_info(aes_256_ctr) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => ctr_mode, type => undefined};
+cipher_info(aes_256_ecb) -> #{block_size => 16, iv_length => 0, key_length => 32, mode => ecb_mode, type => 426};
+cipher_info(aes_256_gcm) -> #{block_size => 1, iv_length => 12, key_length => 32, mode => gcm_mode, type => 901};
+cipher_info(aes_ige256) -> #{block_size => 16, iv_length => 32, key_length => 16, mode => ige_mode, type => undefined};
+cipher_info(blowfish_cbc) -> #{block_size => 8, iv_length => 8, key_length => 16, mode => cbc_mode, type => 91};
+cipher_info(blowfish_cfb64) -> #{block_size => 1, iv_length => 8, key_length => 16, mode => cfb_mode, type => undefined};
+cipher_info(blowfish_ecb) -> #{block_size => 8, iv_length => 0, key_length => 16, mode => ecb_mode, type => undefined};
+cipher_info(blowfish_ofb64) -> #{block_size => 1, iv_length => 8, key_length => 16, mode => ofb_mode, type => undefined};
+cipher_info(chacha20) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => stream_cipher, type => undefined};
+cipher_info(chacha20_poly1305) ->
+    #{block_size => 1, iv_length => 12, key_length => 32, mode => stream_cipher, type => undefined};
+cipher_info(des_cbc) -> #{block_size => 8, iv_length => 8, key_length => 8, mode => cbc_mode, type => 31};
+cipher_info(des_cfb) -> #{block_size => 1, iv_length => 8, key_length => 8, mode => cfb_mode, type => 30};
+cipher_info(des_ecb) -> #{block_size => 8, iv_length => 0, key_length => 8, mode => ecb_mode, type => 29};
+cipher_info(des_ede3_cbc) -> #{block_size => 8, iv_length => 8, key_length => 24, mode => cbc_mode, type => 44};
+cipher_info(des_ede3_cfb) -> #{block_size => 1, iv_length => 8, key_length => 24, mode => cfb_mode, type => 30};
+cipher_info(rc2_cbc) -> #{block_size => 8, iv_length => 8, key_length => 16, mode => cbc_mode, type => 37};
+cipher_info(rc4) -> #{block_size => 1, iv_length => 0, key_length => 16, mode => stream_cipher, type => 5};
+%% These ciphers belong to the "old" interface:
+cipher_info(aes_cbc) -> #{block_size => 16, iv_length => 16, key_length => 24, mode => cbc_mode, type => 423};
+cipher_info(aes_cbc128) -> #{block_size => 16, iv_length => 16, key_length => 16, mode => cbc_mode, type => 419};
+cipher_info(aes_cbc256) -> #{block_size => 16, iv_length => 16, key_length => 32, mode => cbc_mode, type => 427};
+cipher_info(aes_ccm) -> #{block_size => 1, iv_length => 12, key_length => 24, mode => ccm_mode, type => 899};
+cipher_info(aes_cfb128) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => cfb_mode, type => 429};
+cipher_info(aes_cfb8) -> #{block_size => 1, iv_length => 16, key_length => 32, mode => cfb_mode, type => 429};
+cipher_info(aes_ecb) -> #{block_size => 16, iv_length => 0, key_length => 24, mode => ecb_mode, type => 422};
+cipher_info(aes_gcm) -> #{block_size => 1, iv_length => 12, key_length => 24, mode => gcm_mode, type => 898};
+cipher_info(des3_cbc) -> #{block_size => 8, iv_length => 8, key_length => 24, mode => cbc_mode, type => 44};
+cipher_info(des3_cbf) -> #{block_size => 1, iv_length => 8, key_length => 24, mode => cfb_mode, type => 30};
+cipher_info(des3_cfb) -> #{block_size => 1, iv_length => 8, key_length => 24, mode => cfb_mode, type => 30};
+cipher_info(des_ede3) -> #{block_size => 8, iv_length => 8, key_length => 24, mode => cbc_mode, type => 44};
+cipher_info(des_ede3_cbf) -> #{block_size => 1, iv_length => 8, key_length => 24, mode => cfb_mode, type => 30};
+cipher_info(_Type) -> error(badarg).
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
