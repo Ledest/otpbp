@@ -105,6 +105,10 @@
 % OTP 22.0
 -export([cipher_info/1]).
 -endif.
+-ifndef(HAVE_crypto__hash_info_1).
+% OTP 22.0
+-export([hash_info/1]).
+-endif.
 -ifndef(HAVE_crypto__supports_1).
 % OTP 22.0
 -export([supports/1]).
@@ -381,6 +385,24 @@ cipher_info(des3_cfb) -> #{block_size => 1, iv_length => 8, key_length => 24, mo
 cipher_info(des_ede3) -> #{block_size => 8, iv_length => 8, key_length => 24, mode => cbc_mode, type => 44};
 cipher_info(des_ede3_cbf) -> #{block_size => 1, iv_length => 8, key_length => 24, mode => cfb_mode, type => 30};
 cipher_info(_Type) -> error(badarg).
+-endif.
+
+-ifndef(HAVE_crypto__hash_info_1).
+hash_info(blake2b) -> #{block_size => 128, size => 64, type => 1056};
+hash_info(blake2s) -> #{block_size => 64, size => 32, type => 1057};
+hash_info(md4) -> #{block_size => 64, size => 16, type => 257};
+hash_info(md5) -> #{block_size => 64, size => 16, type => 4};
+hash_info(ripemd160) -> #{block_size => 64, size => 20, type => 117};
+hash_info(sha) -> #{block_size => 64, size => 20, type => 64};
+hash_info(sha224) -> #{block_size => 64, size => 28, type => 675};
+hash_info(sha256) -> #{block_size => 64, size => 32, type => 672};
+hash_info(sha384) -> #{block_size => 128, size => 48, type => 673};
+hash_info(sha3_224) -> #{block_size => 144, size => 28, type => 1096};
+hash_info(sha3_256) -> #{block_size => 136, size => 32, type => 1097};
+hash_info(sha3_384) -> #{block_size => 104, size => 48, type => 1098};
+hash_info(sha3_512) -> #{block_size => 72, size => 64, type => 1099};
+hash_info(sha512) -> #{block_size => 128, size => 64, type => 674};
+hash_info(_Type) -> error(badarg).
 -endif.
 
 -ifndef(HAVE_crypto__supports_1).
