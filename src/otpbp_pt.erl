@@ -55,6 +55,7 @@
                               {{compile, iofile, 1}, otpbp_compile},
                               {{crypto, [block_encrypt, block_decrypt], [3, 4]}, otpbp_crypto},
                               {{crypto, [cipher_info, hash_info], 1}, otpbp_crypto},
+                              {{crypto, crypto_one_time, [4, 5]}, otpbp_crypto},
                               {{crypto, hash_equals, 2}, otpbp_crypto},
                               {{crypto, [cmac, hmac], [3, 4]}, otpbp_crypto},
                               {{crypto, [hmac_init, hmac_update], 2}, otpbp_crypto},

@@ -105,6 +105,14 @@
 % OTP 22.0
 -export([cipher_info/1]).
 -endif.
+-ifndef(HAVE_crypto__crypto_one_time_4).
+% OTP 22.0
+-export([crypto_one_time/4]).
+-endif.
+-ifndef(HAVE_crypto__crypto_one_time_5).
+% OTP 22.0
+-export([crypto_one_time/5]).
+-endif.
 -ifndef(HAVE_crypto__hash_info_1).
 % OTP 22.0
 -export([hash_info/1]).
@@ -385,6 +393,18 @@ cipher_info(des3_cfb) -> #{block_size => 1, iv_length => 8, key_length => 24, mo
 cipher_info(des_ede3) -> #{block_size => 8, iv_length => 8, key_length => 24, mode => cbc_mode, type => 44};
 cipher_info(des_ede3_cbf) -> #{block_size => 1, iv_length => 8, key_length => 24, mode => cfb_mode, type => 30};
 cipher_info(_Type) -> error(badarg).
+-endif.
+
+-ifndef(HAVE_crypto__crypto_one_time_4).
+crypto_one_time(Cipher, Key, Data, false) -> crypto:block_decrypt(Cipher, Key, Data);
+crypto_one_time(Cipher, Key, Data, true) -> crypto:block_encrypt(Cipher, Key, Data);
+crypto_one_time(Cipher, Key, Data, Flag) -> error(badarg, [Cipher, Key, Data, Flag]).
+-endif.
+
+-ifndef(HAVE_crypto__crypto_one_time_5).
+crypto_one_time(Cipher, Key, IV, Data, false) -> crypto:block_decrypt(Cipher, Key, IV, Data);
+crypto_one_time(Cipher, Key, IV, Data, true) -> crypto:block_encrypt(Cipher, Key, IV, Data);
+crypto_one_time(Cipher, Key, IV, Data, Flag) -> error(badarg, [Cipher, Key, IV, Data, Flag]).
 -endif.
 
 -ifndef(HAVE_crypto__hash_info_1).
