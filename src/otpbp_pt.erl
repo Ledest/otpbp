@@ -18,8 +18,6 @@
 -module(otpbp_pt).
 -export([parse_transform/2]).
 
--dialyzer({no_opaque, application_guard/3}).
-
 -define(TRANSFORM_FUNCTIONS, [{{is_map_key, 2}, {maps, is_key}},
                               {{map_get, 2}, {maps, get}},
                               {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
@@ -408,32 +406,9 @@ function_transform(Node, #param{} = P) ->
     case type(Node) of
         application -> application_transform(Node, P);
         implicit_fun -> implicit_fun_transform(Node, P);
-        conjunction -> conjunction_transform(Node);
         try_expr -> try_expr_transform(Node);
         _ -> false
     end.
-
--compile({inline, [conjunction_transform/1]}).
-conjunction_transform(Node) ->
-    case erl_syntax_lib:mapfold(fun(E, F) ->
-                                    case type(E) =:= application andalso application_transform_guard(E) of
-                                        false -> {E, F};
-                                        N -> {N, true}
-                                    end
-                                end, false, Node) of
-        {T, true} -> T;
-        _ -> Node
-    end.
-
--compile({inline, [application_transform_guard/1]}).
-application_transform_guard(Node) ->
-    case erl_syntax_lib:analyze_application(Node) of
-        {M, {N, _}} -> application_guard(Node, M, N);
-        _ -> false
-    end.
-
--compile({inline, [application_guard/3]}).
-application_guard(_, _, _) -> false.
 
 application_transform(Node, #param{funs = FL} = P) ->
     A = erl_syntax_lib:analyze_application(Node),
