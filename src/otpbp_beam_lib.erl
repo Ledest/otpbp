@@ -112,9 +112,5 @@ error(Reason) -> throw({error, beam_lib, Reason}).
 -endif.
 
 -ifndef(HAVE_beam_lib__significant_chunks_0).
--ifdef(HAVE_UNICODE_ATOM).
 significant_chunks() -> ["Line", "Atom", "AtU8", "Code", "StrT", "ImpT", "ExpT", "FunT", "LitT"].
--else.
-significant_chunks() -> ["Line", "Atom", "Code", "StrT", "ImpT", "ExpT", "FunT", "LitT"].
--endif.
 -endif.

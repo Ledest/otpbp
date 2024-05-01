@@ -14,10 +14,6 @@
 -export([gzip/2]).
 -endif.
 
--ifndef(HAVE_zlib__inflateGetDictionary_1).
-% OTP 20.0
--export([inflateGetDictionary/1]).
--endif.
 -ifndef(HAVE_zlib__safeInflate_2).
 % OTP 20.1
 -export([safeInflate/2]).
@@ -111,10 +107,6 @@ z(Data, Level, WindowBits) ->
                      after
                          zlib:close(Z)
                      end).
--endif.
-
--ifndef(HAVE_zlib__inflateGetDictionary_1).
-inflateGetDictionary(_) -> error(enotsup).
 -endif.
 
 -ifndef(HAVE_zlib__safeInflate_2).

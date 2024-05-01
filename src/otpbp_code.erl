@@ -1,13 +1,5 @@
 -module(otpbp_code).
 
--ifndef(HAVE_code__module_status_1).
-% OTP 20.0
--export([module_status/1]).
--endif.
--ifndef(HAVE_code__modified_modules_0).
-% OTP 20.0
--export([modified_modules/0]).
--endif.
 -ifndef(HAVE_code__all_available_0).
 % OTP 23.0
 -export([all_available/0]).
@@ -73,27 +65,6 @@
 -export([lib_dir/2]).
 -endif.
 
--ifndef(HAVE_code__module_status_1).
-module_status(Module) -> module_status(Module, code:get_path()).
-
--ifndef(NEED_module_status_2).
--define(NEED_module_status_2, true).
--endif.
--endif.
-
--ifndef(HAVE_code__modified_modules_0).
-modified_modules() ->
-    PathFiles = path_files(),
-    [M || {M, _} <- code:all_loaded(), module_status(M, PathFiles) =:= modified].
-
--ifndef(NEED_path_files_0).
--define(NEED_path_files_0, true).
--endif.
--ifndef(NEED_module_status_2).
--define(NEED_module_status_2, true).
--endif.
--endif.
-
 -ifndef(HAVE_code__all_available_0).
 all_available() ->
     all_available(case code:get_mode() of
@@ -134,15 +105,60 @@ get_doc(M) when is_atom(M) -> {error, missing}.
 
 -ifndef(HAVE_code__module_status_0).
 module_status() ->
-    PathFiles = path_files(),
+    PathFiles = lists:filtermap(fun(Path) ->
+                                    case erl_prim_loader:list_dir(Path) of
+                                        {ok, Files} -> {true, {Path, Files}};
+                                        _Error -> false
+                                    end
+                                end,
+                                code:get_path()),
     [{M, module_status(M, PathFiles)} || {M, _} <- code:all_loaded()].
 
--ifndef(NEED_path_files_0).
--define(NEED_path_files_0, true).
--endif.
--ifndef(NEED_module_status_2).
--define(NEED_module_status_2, true).
--endif.
+module_status(Module, PathFiles) ->
+    case code:is_loaded(Module) of
+        false -> not_loaded;
+        {file, Loaded} when Loaded =:= preloaded; Loaded =:= [] -> loaded;
+        {file, Loaded} when Loaded =:= cover_compiled; is_list(Loaded) ->
+            case where_is_file(PathFiles, atom_to_list(Module) ++ code:objfile_extension()) of
+                non_existing -> removed;
+                Path -> case Loaded =:= cover_compiled orelse module_changed_on_disk(Module, Path) of
+                            true -> modified;
+                            false -> loaded
+                        end
+            end
+    end.
+
+where_is_file([], _) -> non_existing;
+where_is_file([{D, Files}|T], File) -> where_is_file(T, File, D, Files);
+where_is_file([D|T], File) ->
+    case erl_prim_loader:list_dir(D) of
+        {ok, Files} -> where_is_file(T, File, D, Files);
+        _Error -> where_is_file(T, File)
+    end.
+
+where_is_file(T, File, D, Files) ->
+    case lists:member(File, Files) of
+        true -> filename:append(D, File);
+        _false -> where_is_file(T, File)
+    end.
+
+-compile({inline, [module_changed_on_disk/2]}).
+module_changed_on_disk(Module, Path) ->
+    Arch = erlang:system_info(hipe_architecture),
+    case Arch =/= undefined andalso code:is_module_native(Module) of
+        true ->
+            try beam_lib:chunks(Path, [hipe_unified_loader:chunk_name(Arch)]) of
+                {ok, {_, [{_, NativeCode}]}} when is_binary(NativeCode) -> erlang:md5(NativeCode);
+                _ -> undefined
+            catch
+                _:_ -> undefined
+            end;
+        _false ->
+            case beam_lib:md5(Path) of
+                {ok, {_, MD5}} -> MD5;
+                _ -> undefined
+            end
+    end =/= erlang:get_module_info(Module, md5).
 -endif.
 
 -ifndef(HAVE_code__is_module_native_1).
@@ -204,63 +220,4 @@ lib_dir(Name, SubDir) ->
         {error, _bad_name} = E -> E;
         Path -> filename:join(Path, SubDir)
     end.
--endif.
-
--ifdef(NEED_path_files_0).
-path_files() ->
-    lists:filtermap(fun(Path) ->
-                        case erl_prim_loader:list_dir(Path) of
-                            {ok, Files} -> {true, {Path, Files}};
-                            _Error -> false
-                        end
-                    end,
-                    code:get_path()).
--endif.
-
--ifdef(NEED_module_status_2).
-module_status(Module, PathFiles) ->
-    case code:is_loaded(Module) of
-        false -> not_loaded;
-        {file, Loaded} when Loaded =:= preloaded; Loaded =:= [] -> loaded;
-        {file, Loaded} when Loaded =:= cover_compiled; is_list(Loaded) ->
-            case where_is_file(PathFiles, atom_to_list(Module) ++ code:objfile_extension()) of
-                non_existing -> removed;
-                Path -> case Loaded =:= cover_compiled orelse module_changed_on_disk(Module, Path) of
-                            true -> modified;
-                            false -> loaded
-                        end
-            end
-    end.
-
-where_is_file([], _) -> non_existing;
-where_is_file([{D, Files}|T], File) -> where_is_file(T, File, D, Files);
-where_is_file([D|T], File) ->
-    case erl_prim_loader:list_dir(D) of
-        {ok, Files} -> where_is_file(T, File, D, Files);
-        _Error -> where_is_file(T, File)
-    end.
-
-where_is_file(T, File, D, Files) ->
-    case lists:member(File, Files) of
-        true -> filename:append(D, File);
-        _false -> where_is_file(T, File)
-    end.
-
--compile({inline, [module_changed_on_disk/2]}).
-module_changed_on_disk(Module, Path) ->
-    Arch = erlang:system_info(hipe_architecture),
-    case Arch =/= undefined andalso code:is_module_native(Module) of
-        true ->
-            try beam_lib:chunks(Path, [hipe_unified_loader:chunk_name(Arch)]) of
-                {ok, {_, [{_, NativeCode}]}} when is_binary(NativeCode) -> erlang:md5(NativeCode);
-                _ -> undefined
-            catch
-                _:_ -> undefined
-            end;
-        _false ->
-            case beam_lib:md5(Path) of
-                {ok, {_, MD5}} -> MD5;
-                _ -> undefined
-            end
-    end =/= erlang:get_module_info(Module, md5).
 -endif.

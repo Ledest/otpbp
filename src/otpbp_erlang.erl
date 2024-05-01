@@ -1,13 +1,5 @@
 -module(otpbp_erlang).
 
--ifndef(HAVE_erlang__ceil_1).
-% OTP 20.0
--export([ceil/1]).
--endif.
--ifndef(HAVE_erlang__floor_1).
-% OTP 20.0
--export([floor/1]).
--endif.
 -ifndef(HAVE_erlang__iolist_to_iovec_1).
 % OTP 20.1
 -export([iolist_to_iovec/1]).
@@ -47,22 +39,6 @@
 -ifndef(HAVE_erlang__set_cookie_1).
 % OTP 24.1
 -export([set_cookie/1]).
--endif.
-
--ifndef(HAVE_erlang__ceil_1).
--ifdef(HAVE_math__ceil_1).
-ceil(X) -> round(math:ceil(X)).
--else.
-ceil(X) -> round(X + 0.5).
--endif.
--endif.
-
--ifndef(HAVE_erlang__floor_1).
--ifdef(HAVE_math__floor_1).
-floor(X) -> round(math:floor(X)).
--else.
-floor(X) -> round(X - 0.5).
--endif.
 -endif.
 
 -ifndef(HAVE_erlang__iolist_to_iovec_1).

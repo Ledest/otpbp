@@ -1,22 +1,5 @@
 -module(otpbp_rand).
 
--ifndef(HAVE_rand__jump_0).
-% OTP 20.0
--export([jump/0]).
--endif.
--ifndef(HAVE_rand__jump_1).
-% OTP 20.0
--export([jump/1]).
--endif.
--ifndef(HAVE_rand__normal_2).
-% OTP 20.0
--export([normal/2]).
--endif.
--ifndef(HAVE_rand__normal_s_3).
-% OTP 20.0
--export([normal_s/3]).
--endif.
-
 -ifndef(HAVE_rand__uniform_real_0).
 % OTP 21.0
 -export([uniform_real/0]).
@@ -80,18 +63,6 @@
 -export([bytes_s/2]).
 -endif.
 
--ifndef(HAVE_rand__jump_0).
--ifdef(HAVE_rand__jump_1).
--import(rand, [jump/1]).
--endif.
--endif.
-
--ifndef(HAVE_rand__normal_2).
--ifdef(HAVE_rand__normal_s_3).
--import(rand, [normal_s/3]).
--endif.
--endif.
-
 -ifndef(HAVE_rand__uniform_real_0).
 -ifdef(HAVE_rand__uniform_real_s_1).
 -import(rand, [uniform_real_s/1]).
@@ -112,32 +83,6 @@
 
 -define(MWC59_XS1, 4).
 -define(MWC59_XS2, 27).
-
--ifndef(HAVE_rand__jump_1).
-jump({#{jump := Jump}, _} = State) -> Jump(State);
-jump({#{}, _}) -> error(not_implemented).
--endif.
-
--ifndef(HAVE_rand__jump_0).
-jump() -> seed_put(jump(seed_get())).
-
--ifndef(NEED_seed_get_0).
--define(NEED_seed_get_0, true).
--endif.
--ifndef(NEED_seed_put_1).
--define(NEED_seed_put_1, true).
--endif.
--endif.
-
--ifndef(HAVE_rand__normal_2).
-normal(Mean, Variance) -> Mean + math:sqrt(Variance) * rand:normal().
--endif.
-
--ifndef(HAVE_rand__normal_s_3).
-normal_s(Mean, Variance, State0) when Variance > 0 ->
-    {X, State} = rand:normal_s(State0),
-    {Mean + math:sqrt(Variance) * X, State}.
--endif.
 
 -ifndef(HAVE_rand__bytes_1).
 bytes(N) ->
