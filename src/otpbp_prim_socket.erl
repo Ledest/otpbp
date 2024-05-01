@@ -1,6 +1,7 @@
 -module(otpbp_prim_socket).
 
 -ifndef(HAVE_prim_socket__enc_sockaddr_1).
+% OTP 24.0
 -export([enc_sockaddr/1]).
 -endif.
 
