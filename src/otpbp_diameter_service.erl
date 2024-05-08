@@ -76,11 +76,7 @@ which_connections([SvcName|Services], Acc) ->
 which_connections(SvcName) ->
     case ets:lookup(diameter_service, SvcName) of
         [S] when element(1, S) =:= state ->
-            case element(case element(8, S) of
-                             M when not M; is_pid(M) -> 6;
-                             _ -> 9 % OTP < 20.0
-                         end,
-                         S) of
+            case element(6, S) of
                 {PT, _, _} -> connections_info(element(5, S), PT);
                 _ -> []
             end;
