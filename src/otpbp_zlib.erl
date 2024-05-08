@@ -1,7 +1,5 @@
 -module(otpbp_zlib).
 
--compile([{parse_transform, otpbp_pt}]).
-
 -ifndef(HAVE_zlib__compress_2).
 -export([compress/2]).
 -endif.

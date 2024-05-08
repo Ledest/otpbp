@@ -1,7 +1,5 @@
 -module(otpbp_uri_string).
 
--compile({parse_transform, otpbp_pt}).
-
 -ifndef(HAVE_uri_string__is_host_1).
 % OTP 21.0
 -export([is_host/1]).

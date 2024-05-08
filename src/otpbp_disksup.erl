@@ -1,7 +1,5 @@
 -module(otpbp_disksup).
 
--compile({parse_transform, otpbp_pt}).
-
 -ifndef(HAVE_disksup__parse_df_2).
 % OTP 21.0
 -export([parse_df/2]).

@@ -1,7 +1,5 @@
 -module(otpbp_c).
 
--compile([{parse_transform, otpbp_pt}]).
-
 -ifndef(HAVE_c__erlangrc_1).
 % OTP 21.0
 -export([erlangrc/1]).
