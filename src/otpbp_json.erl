@@ -597,12 +597,12 @@ do_encode_map(Map, Encode) when is_function(Encode, 2) ->
 -endif.
 
 -ifdef(NEED_do_encode_checked_2).
-do_encode_checked(List, Encode) when is_function(Encode, 2) -> do_encode_checked(List, Encode, #{}).
+do_encode_checked(List, Encode) when is_function(Encode, 2) -> encode_object(do_encode_checked(List, Encode, #{})).
 
 do_encode_checked([{Key, Value}|Rest], Encode, Visited) ->
     EncodedKey = iolist_to_binary(key(Key, Encode)),
     maps:is_key(EncodedKey, Visited) andalso error({duplicate_key, Key}),
-    [$,, EncodedKey, $:, Encode(Value, Encode)|do_encode_checked(Rest, Encode, Visited#{EncodedKey => true})];
+    [[$,, EncodedKey, $:|Encode(Value, Encode)]|do_encode_checked(Rest, Encode, Visited#{EncodedKey => true})];
 do_encode_checked([], _, _) -> [].
 
 -ifndef(NEED_key_2).
