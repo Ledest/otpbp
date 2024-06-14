@@ -715,10 +715,10 @@ number_zero(<<$., Rest/bits>>, Original, Skip, Acc, Stack, Decode, Len) ->
     number_frac(Rest, Original, Skip, Acc, Stack, Decode, Len + 1);
 number_zero(<<E, Rest/bits>>, Original, Skip, Acc, Stack, Decode, Len) when E =:= $E; E =:= $e ->
     number_exp_copy(Rest, Original, Skip, Acc, Stack, Decode, Len + 1, <<"0">>);
-number_zero(<<>>, Original, Skip, Acc, Stack, Decode, Len) ->
-    unexpected(Original, Skip, Acc, Stack, Decode, Len, 0, {number, 0});
-number_zero(Rest, Original, Skip, Acc, Stack, Decode, Len) ->
-    continue(Rest, Original, Skip + Len, Acc, Stack, Decode, 0).
+number_zero(<<>>, Original, Skip, Acc, Stack, #decode{integer = Integer} = Decode, Len) ->
+    unexpected(Original, Skip, Acc, Stack, Decode, Len, 0, {number, Integer(<<"0">>)});
+number_zero(Rest, Original, Skip, Acc, Stack, #decode{integer = Integer} = Decode, Len) ->
+    continue(Rest, Original, Skip + Len, Acc, Stack, Decode, Integer(<<"0">>)).
 
 number(<<Num, Rest/bits>>, Original, Skip, Acc, Stack, Decode, Len) when ?is_0_to_9(Num) ->
     number(Rest, Original, Skip, Acc, Stack, Decode, Len + 1);
