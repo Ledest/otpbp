@@ -316,10 +316,10 @@ byte_loop(<<>>, State, _Bytes) -> json:decode_continue(end_of_input, State).
 
 decode_api_test() ->
     put(history, []),
-    ?assertEqual({#{a => [[], #{}, true, false, nil, #{foo => baz}], b => [1, 2.0, three]},
-                  {[], 24},
+    ?assertEqual({#{a => [[], #{}, true, false, nil, #{foo => baz}], b => [1, 2.0, three, 0]},
+                  {[], 25},
                   <<>>},
-                 json:decode(<<"{\"a\": [[], {}, true, false, null, {\"foo\": \"baz\"}], \"b\": [1, 2.0, \"three\"]}">>,
+                 json:decode(<<"{\"a\": [[], {}, true, false, null, {\"foo\": \"baz\"}], \"b\": [1, 2.0, \"three\", 0]}">>,
                              {[], 0},
                              #{array_start => set_history1(array_start, fun({_, Int}) -> {[], Int + 1} end),
                                array_push => set_history2(array_push, fun(Val, {Acc, Int}) -> {[Val|Acc], Int + 1} end),
@@ -374,15 +374,17 @@ decode_api_test() ->
                   {array_push, {2.0, {[1], 19}}, {[2.0, 1], 20}},
                   {string, <<"three">>, three},
                   {array_push, {three, {[2.0, 1], 20}}, {[three, 2.0, 1], 21}},
+                  {integer, <<"0">>, 0},
+                  {array_push, {0, {[three, 2.0, 1], 21}}, {[0, three, 2.0, 1], 22}},
                   {array_finish,
-                   {{[three, 2.0, 1], 21}, {[{a, [[], #{}, true, false, nil, #{foo => baz}]}], 17}},
-                   {[1, 2.0, three], {[{a, [[], #{}, true, false, nil, #{foo => baz}]}], 22}}},
+                   {{[0, three, 2.0, 1], 22}, {[{a, [[], #{}, true, false, nil, #{foo => baz}]}], 17}},
+                   {[1, 2.0, three, 0], {[{a, [[], #{}, true, false, nil, #{foo => baz}]}], 23}}},
                   {object_push,
-                   {b, [1, 2.0, three], {[{a, [[], #{}, true, false, nil, #{foo => baz}]}], 22}},
-                   {[{b, [1, 2.0, three]}, {a, [[], #{}, true, false, nil, #{foo => baz}]}], 23}},
+                   {b, [1, 2.0, three, 0], {[{a, [[], #{}, true, false, nil, #{foo => baz}]}], 23}},
+                   {[{b, [1, 2.0, three, 0]}, {a, [[], #{}, true, false, nil, #{foo => baz}]}], 24}},
                   {object_finish,
-                   {{[{b, [1, 2.0, three]}, {a, [[], #{}, true, false, nil, #{foo => baz}]}], 23}, {[], 0}},
-                   {#{a => [[], #{}, true, false, nil, #{foo => baz}], b => [1, 2.0, three]}, {[], 24}}}],
+                   {{[{b, [1, 2.0, three, 0]}, {a, [[], #{}, true, false, nil, #{foo => baz}]}], 24}, {[], 0}},
+                   {#{a => [[], #{}, true, false, nil, #{foo => baz}], b => [1, 2.0, three, 0]}, {[], 25}}}],
                  lists:reverse(get(history))).
 
 set_history1(Ty, Fun) -> fun(Arg) -> set_history(Ty, Arg, Fun(Arg)) end.
