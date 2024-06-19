@@ -1,5 +1,7 @@
 -module(json_tests).
 
+-ifdef(OTP_RELEASE).
+-if(?OTP_RELEASE < 27).
 -compile({parse_transform, otpbp_pt}).
 
 -include_lib("eunit/include/eunit.hrl").
@@ -424,3 +426,5 @@ multi_stream_decode(Strs) ->
             io:fwrite("~p '~ts'~n~p~n", [R1, ContBin, Other]),
             error
     end.
+-endif.
+-endif.
