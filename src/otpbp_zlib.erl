@@ -86,7 +86,7 @@ compress(Data, Level) ->
 zip(Data, Level) -> z(Data, Level, -?MAX_WBITS).
 -endif.
 
--ifndef(HAVE_zlib__gzip2_1).
+-ifndef(HAVE_zlib__gzip_2).
 -ifndef(NEED_zlib__z_3).
 -define(NEED_zlib__z_3, true).
 -endif.
