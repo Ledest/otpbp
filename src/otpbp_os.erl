@@ -13,6 +13,12 @@
 -export([list_env_vars/0]).
 -endif.
 
+-ifndef(HAVE_os__list_env_vars_0).
+-ifdef(HAVE_os__env_0).
+-import(os, [env/0]).
+-endif.
+-endif.
+
 -ifndef(HAVE_os__cmd_2).
 cmd(Cmd, Opts) when is_atom(Cmd) -> cmd_(atom_to_list(Cmd), Opts);
 cmd(Cmd, Opts) ->
@@ -89,12 +95,9 @@ flush_until_down(Port, MonRef) ->
 -endif.
 
 -ifndef(HAVE_os__list_env_vars_0).
--ifdef(HAVE_os__env_0).
-list_env_vars() -> os:env().
--else.
 list_env_vars() -> env().
 -endif.
--endif.
+
 -ifndef(HAVE_os__env_0).
 -ifdef(HAVE_os__list_env_vars_0).
 env() -> os:list_env_vars().
