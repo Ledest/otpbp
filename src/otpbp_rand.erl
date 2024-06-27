@@ -8,7 +8,6 @@
 % OTP 21.0
 -export([uniform_real_s/1]).
 -endif.
-
 -ifndef(HAVE_rand__splitmix64_next_1).
 % OTP 25.0
 -export([splitmix64_next/1]).
@@ -45,20 +44,11 @@
 % OTP 25.0
 -export([mwc59_seed/1]).
 -endif.
-
 -ifndef(HAVE_rand__bytes_1).
--ifndef(HAVE_rand__bytes_s_2).
--ifndef(NEED_rand__bytes_s_2).
--define(NEED_rand__bytes_s_2, true).
--endif.
--endif.
 % OTP 24.0
 -export([bytes/1]).
 -endif.
 -ifndef(HAVE_rand__bytes_s_2).
--ifndef(NEED_rand__bytes_s_2).
--define(NEED_rand__bytes_s_2, true).
--endif.
 % OTP 24.0
 -export([bytes_s/2]).
 -endif.
@@ -68,10 +58,14 @@
 -import(rand, [uniform_real_s/1]).
 -endif.
 -endif.
-
 -ifndef(HAVE_rand__exsp_jump_1).
 -ifdef(HAVE_rand__exsp_next_1).
 -import(rand, [exsp_next/1]).
+-endif.
+-endif.
+-ifndef(HAVE_rand__bytes_1).
+-ifdef(HAVE_rand__bytes_s_2).
+-import(rand, [bytes_s/2]).
 -endif.
 -endif.
 
@@ -98,7 +92,7 @@ bytes(N) ->
 -endif.
 -endif.
 
--ifdef(NEED_rand__bytes_s_2).
+-ifndef(HAVE_rand__bytes_s_2).
 bytes_s(N, {#{bits := Bits, next := Next} = AlgHandler, R}) when is_integer(N), 0 =< N ->
     bytes_r(N, AlgHandler, Next, R, Bits, maps:get(weak_low_bits, AlgHandler, 0));
 bytes_s(N, {#{max := Mask, next := Next} = AlgHandler, R}) when is_integer(N), 0 =< N, ?MASK(58) =< Mask ->
