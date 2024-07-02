@@ -54,6 +54,7 @@
                               {{code, is_module_native, 1}, otpbp_code},
                               {{compile, env_compiler_options, 0}, otpbp_compile},
                               {{compile, iofile, 1}, otpbp_compile},
+                              {{crypto, [start, stop], 0}, otpbp_crypto},
                               {{crypto, [block_encrypt, block_decrypt], [3, 4]}, otpbp_crypto},
                               {{crypto, [cipher_info, hash_info], 1}, otpbp_crypto},
                               {{crypto, crypto_one_time, [4, 5]}, otpbp_crypto},
