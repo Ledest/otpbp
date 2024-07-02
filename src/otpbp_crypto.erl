@@ -220,6 +220,13 @@
 -export([hash_equals/2]).
 -endif.
 
+-ifndef(HAVE_crypto__start_0).
+-export([start/0]).
+-endif.
+-ifndef(HAVE_crypto__stop_0).
+-export([stop/0]).
+-endif.
+
 -ifndef(HAVE_crypto__mac_3).
 -ifdef(HAVE_crypto__mac_4).
 -import(crypto, [mac/4]).
@@ -789,6 +796,14 @@ stream_encrypt({_Cipher, Ref} = State, Data) ->
         error:{error, {_File, _Line}, _Reason} -> error(badarg);
         error:{E, {_File, _Line}, _Reason} when E =:= notsup; E =:= badarg -> error(E)
     end.
+-endif.
+
+-ifndef(HAVE_crypto__start_0).
+start() -> application:start(crypto).
+-endif.
+
+-ifndef(HAVE_crypto__stop_0).
+stop() -> application:stop(crypto).
 -endif.
 
 -ifdef(NEED_ALIAS_2).
