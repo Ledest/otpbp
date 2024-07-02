@@ -469,12 +469,10 @@ escape_binary_ascii(Binary, Acc, Orig, Skip, Len) -> escape_binary(Binary, Acc, 
 
 escape_binary(<<Byte, Rest/binary>>, Acc, Orig, Skip, Len) when ?is_ascii_plain(Byte) ->
     escape_binary(Rest, Acc, Orig, Skip, Len + 1);
+escape_binary(<<Byte, Rest/binary>>, Acc, Orig, Skip, 0) when ?is_ascii_escape(Byte) ->
+    escape_binary_ascii(Rest, [Acc|escape(Byte)], Orig, Skip + 1, 0);
 escape_binary(<<Byte, Rest/binary>>, Acc, Orig, Skip, Len) when ?is_ascii_escape(Byte) ->
-    Escape = escape(Byte),
-    if
-        Len =:= 0 -> escape_binary_ascii(Rest, [Acc|Escape], Orig, Skip + 1, 0);
-        true -> escape_binary_ascii(Rest, [Acc, binary_part(Orig, Skip, Len)|Escape], Orig, Skip + Len + 1, 0)
-    end;
+    escape_binary_ascii(Rest, [Acc, binary_part(Orig, Skip, Len)|escape(Byte)], Orig, Skip + Len + 1, 0);
 escape_binary(<<Byte, Rest/binary>>, Acc, Orig, Skip, Len) ->
     case element(Byte - 127, utf8s0()) of
         ?UTF8_REJECT -> invalid_byte(Orig, Skip + Len);
@@ -529,12 +527,10 @@ escape_all_ascii(Binary, Acc, Orig, Skip, Len) -> escape_all(Binary, Acc, Orig, 
 -ifdef(NEED_escape_all_5).
 escape_all(<<Byte, Rest/binary>>, Acc, Orig, Skip, Len) when ?is_ascii_plain(Byte) ->
     escape_all(Rest, Acc, Orig, Skip, Len + 1);
+escape_all(<<Byte, Rest/bits>>, Acc, Orig, Skip, 0) when ?is_ascii_escape(Byte) ->
+    escape_all(Rest, [Acc|escape(Byte)], Orig, Skip + 1, 0);
 escape_all(<<Byte, Rest/bits>>, Acc, Orig, Skip, Len) when ?is_ascii_escape(Byte) ->
-    Escape = escape(Byte),
-    if
-        Len =:= 0 -> escape_all(Rest, [Acc|Escape], Orig, Skip + 1, 0);
-        true -> escape_all(Rest, [Acc, binary_part(Orig, Skip, Len)|Escape], Orig, Skip + Len + 1, 0)
-    end;
+    escape_all(Rest, [Acc, binary_part(Orig, Skip, Len)|escape(Byte)], Orig, Skip + Len + 1, 0);
 escape_all(<<Char/utf8, Rest/bits>>, Acc, Orig, Skip, 0) -> escape_char(Rest, Acc, Orig, Skip, Char);
 escape_all(<<Char/utf8, Rest/bits>>, Acc, Orig, Skip, Len) ->
     escape_char(Rest, [Acc|binary_part(Orig, Skip, Len)], Orig, Skip + Len, Char);
