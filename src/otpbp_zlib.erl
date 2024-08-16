@@ -12,14 +12,6 @@
 -export([gzip/2]).
 -endif.
 
--ifndef(HAVE_zlib__safeInflate_2).
-% OTP 20.1
--export([safeInflate/2]).
--endif.
--ifndef(HAVE_zlib__inflate_3).
-% OTP 20.1
--export([inflate/3]).
--endif.
 -ifndef(HAVE_zlib__adler32_2).
 % OTP < 27.0
 -export([adler32/2]).
@@ -105,39 +97,6 @@ z(Data, Level, WindowBits) ->
                      after
                          zlib:close(Z)
                      end).
--endif.
-
--ifndef(HAVE_zlib__safeInflate_2).
-safeInflate(Z, []) ->
-    try zlib:inflateChunk(Z) of
-        {more, Output} -> {continue, Output};
-        Output -> {finished, Output}
-    catch
-        error:{need_dictionary, Adler} -> {need_dictionary, Adler, []};
-        C:R:S -> erlang:raise(C, R, S)
-    end;
-safeInflate(Z, Data) ->
-    try zlib:inflateChunk(Z, Data) of
-        {more, Output} -> {continue, Output};
-        Output -> {finished, Output}
-    catch
-        error:{need_dictionary, Adler} -> {need_dictionary, Adler, []};
-        C:R:S -> erlang:raise(C, R, S)
-    end.
--endif.
-
--ifndef(HAVE_zlib__inflate_3).
-inflate(Z, Data, Options) ->
-    case lists:keyfind(exception_on_need_dict, 1, Options) of
-        {_, false} ->
-            try
-                zlib:inflate(Z, Data)
-            catch
-                error:{need_dictionary, Adler} -> {need_dictionary, Adler, []};
-                C:R:S -> erlang:raise(C, R, S)
-            end;
-        _ -> zlib:inflate(Z, Data)
-    end.
 -endif.
 
 -ifndef(HAVE_zlib__adler32_2).

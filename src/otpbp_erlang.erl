@@ -1,9 +1,5 @@
 -module(otpbp_erlang).
 
--ifndef(HAVE_erlang__iolist_to_iovec_1).
-% OTP 20.1
--export([iolist_to_iovec/1]).
--endif.
 -ifndef(HAVE_erlang__atom_to_binary_1).
 % OTP 23.0
 -export([atom_to_binary/1]).
@@ -39,11 +35,6 @@
 -ifndef(HAVE_erlang__set_cookie_1).
 % OTP 24.1
 -export([set_cookie/1]).
--endif.
-
--ifndef(HAVE_erlang__iolist_to_iovec_1).
-iolist_to_iovec(B) when is_binary(B) -> [B];
-iolist_to_iovec(L) -> [list_to_binary(L)].
 -endif.
 
 -ifndef(HAVE_erlang__atom_to_binary_1).
