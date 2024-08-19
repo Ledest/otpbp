@@ -173,6 +173,8 @@
                               {{json, [encode_atom, encode_list, encode_map, encode_map_checked, encode_value], 2},
                                otpbp_json},
                               {{json, [encode_key_value_list, encode_key_value_list_checked], 2}, otpbp_json},
+                              {{json, format, [1, 2, 3]}, otpbp_json},
+                              {{json, format_value, 3}, otpbp_json},
                               {{lib, [flush_receive, progname], 0}, otpbp_lib},
                               {{lib, nonl, 1}, otpbp_lib},
                               {{lib, [error_message, send, sendw], 2}, otpbp_lib},

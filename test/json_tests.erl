@@ -424,3 +424,162 @@ multi_stream_decode(Strs) ->
             io:fwrite("~p '~ts'~n~p~n", [R1, ContBin, Other]),
             error
     end.
+
+format(Term) -> iolist_to_binary(json:format(Term)).
+format(Term, Arg) -> iolist_to_binary(json:format(Term, Arg)).
+
+format_list_test() ->
+    ?assertEqual(<<"[]\n">>, format([])),
+    List10 = <<"[1,2,3,4,5,6,7,8,9,10]\n">>,
+    ?assertEqual(List10, format(lists:seq(1, 10))),
+    ListWithLists = <<
+    "[\n"
+    "  [1,2],\n"
+    "  [3,4]\n"
+    "]\n"
+    >>,
+    ?assertEqual(ListWithLists, format([[1, 2], [3, 4]])),
+    ListWithListWithList = <<
+    "[\n"
+    "  [\n"
+    "    []\n"
+    "  ],\n"
+    "  [\n"
+    "    [3,4]\n"
+    "  ]\n"
+    "]\n"
+    >>,
+    ?assertEqual(ListWithListWithList, format([[[]],[[3,4]]])),
+    ListWithMap = <<
+    "[\n"
+    "  { \"key\": 1 }\n"
+    "]\n"
+    >>,
+    ?assertEqual(ListWithMap, format([#{key => 1}])),
+    ListList10 = <<
+    "[\n"
+    "    [1,2,3,4,5,\n"
+    "        6,7,8,9,\n"
+    "        10]\n"
+    "]\n"
+    >>,
+    ?assertEqual(ListList10, format([lists:seq(1,10)], #{indent => 4, max => 14})),
+    ListString = <<
+    "[\n"
+    "   \"foo\",\n"
+    "   \"bar\",\n"
+    "   \"baz\"\n"
+    "]\n"
+    >>,
+    ?assertEqual(ListString, format([<<"foo">>, <<"bar">>, <<"baz">>], #{indent => 3})),
+    ok.
+
+format_map_test() ->
+    ?assertEqual(<<"{}\n">>, format(#{})),
+    ?assertEqual(<<"{ \"key\": \"val\" }\n">>, format(#{key => val})),
+    MapSingleMap = <<
+    "{\n"
+    "  \"key1\": { \"key3\": \"val3\" },\n"
+    "  \"key2\": 42\n"
+    "}\n"
+    >>,
+    ?assertEqual(MapSingleMap, format(#{key1 => #{key3 => val3}, key2 => 42})),
+    MapNestedMap = <<
+    "{\n"
+    "  \"key1\": {\n"
+    "    \"key3\": true,\n"
+    "    \"key4\": {\n"
+    "      \"deep1\": 4711,\n"
+    "      \"deep2\": \"string\"\n"
+    "    }\n"
+    "  },\n"
+    "  \"key2\": 42\n"
+    "}\n"
+    >>,
+    ?assertEqual(MapNestedMap,
+                 format(#{key1 => #{key3 => true, key4 => #{deep1 => 4711, deep2 => <<"string">>}}, key2 => 42})),
+    MapIntList = <<
+    "{\n"
+    "  \"key1\": [1,2,3,4,5],\n"
+    "  \"key2\": 42\n"
+    "}\n"
+    >>,
+    ?assertEqual(MapIntList, format(#{key1 => lists:seq(1, 5), key2 => 42})),
+    MapObjList = <<
+    "{\n"
+    "  \"key1\": [\n"
+    "    {\n"
+    "      \"key3\": true,\n"
+    "      \"key4\": [1,2,3,4,5]\n"
+    "    },\n"
+    "    {\n"
+    "      \"key3\": true,\n"
+    "      \"key4\": [1,2,3,4,5]\n"
+    "    }\n"
+    "  ],\n"
+    "  \"key2\": 42\n"
+    "}\n"
+    >>,
+    ?assertEqual(MapObjList,
+                 format(#{key1 => [#{key3 => true, key4 => lists:seq(1, 5)}, #{key3 => true, key4 => lists:seq(1, 5)}],
+                          key2 => 42})),
+    MapObjList2 = <<
+    "{\n"
+    " \"key1\": [\n"
+    "  {\n"
+    "   \"key3\": true,\n"
+    "   \"key4\": [1,2,\n"
+    "    3,4,5,6,7,8,\n"
+    "    9,10]\n"
+    "  },\n"
+    "  {\n"
+    "   \"key3\": true,\n"
+    "   \"key_longer_name\": [\n"
+    "    1,\n"
+    "    2,\n"
+    "    3\n"
+    "   ]\n"
+    "  }\n"
+    " ],\n"
+    " \"key2\": 42\n"
+    "}\n"
+    >>,
+    ?assertEqual(MapObjList2,
+                 format(#{key1 => [#{key3 => true, key4 => lists:seq(1, 10)},
+                                   #{key3 => true, key_longer_name => lists:seq(1, 3)}],
+                          key2 => 42},
+                        #{indent => 1, max => 15})),
+    ok.
+
+-record(rec, {a,b,c}).
+
+format_fun_test() ->
+    All = #{types => [[], #{}, true, false, null, #{foo => <<"baz">>}],
+            numbers => [1, -10, 0.0, -0.1, 2.0, -2.0],
+            strings => [<<"three">>, <<"åäö"/utf8>>, <<"mixed_Ω"/utf8>>],
+            user_data => #rec{a = 1, b = 2, c = 3}},
+    Formatter = fun(#rec{a = A, b = B, c = C}, _Fun, _State) ->
+                        encode_proplist([{type, rec}, {a, A}, {b, B}, {c, C}]);
+                   (Other, Fun, State) -> json:format_value(Other, Fun, State)
+                end,
+    Formatted = <<
+    "{\n"
+    "  \"numbers\": [1,-10,0.0,-0.1,2.0,-2.0],\n"
+    "  \"strings\": [\n"
+    "    \"three\",\n"
+    "    \"åäö\",\n"
+    "    \"mixed_Ω\"\n"
+    "  ],\n"
+    "  \"types\": [\n"
+    "    [],\n"
+    "    {},\n"
+    "    true,\n"
+    "    false,\n"
+    "    null,\n"
+    "    { \"foo\": \"baz\" }\n"
+    "  ],\n"
+    "  \"user_data\": {\"type\":\"rec\",\"a\":1,\"b\":2,\"c\":3}\n"
+    "}\n"
+    /utf8>>,
+    ?assertEqual(Formatted, format(All, Formatter)),
+    ok.

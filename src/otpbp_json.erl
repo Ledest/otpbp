@@ -64,6 +64,22 @@
 % OTP 27.0
 -export([encode_value/2]).
 -endif.
+-ifndef(HAVE_json__format_1).
+% OTP 27.1
+-export([format/1]).
+-endif.
+-ifndef(HAVE_json__format_2).
+% OTP 27.1
+-export([format/2]).
+-endif.
+-ifndef(HAVE_json__format_3).
+% OTP 27.1
+-export([format/3]).
+-endif.
+-ifndef(HAVE_json__format_value_3).
+% OTP 27.1
+-export([format_value/3]).
+-endif.
 
 -ifndef(HAVE_json__encode_value_2).
 -ifdef(HAVE_json__encode_atom_2).
@@ -79,6 +95,27 @@
 -endif.
 -ifdef(HAVE_json__encode_atom_2).
 -import(json, [encode_atom/2]).
+-endif.
+-ifdef(HAVE_json__encode_float_1).
+-import(json, [encode_float/1]).
+-endif.
+-endif.
+-ifndef(HAVE_json__format_1).
+-ifdef(HAVE_json__format_3).
+-import(json, [format/3, format_value/3]).
+-endif.
+-endif.
+-ifndef(HAVE_json__format_2).
+-ifdef(HAVE_json__format_3).
+-import(json, [format/3, format_value/3]).
+-endif.
+-endif.
+-ifndef(HAVE_json__format_value_3).
+-ifdef(HAVE_json__encode_atom_2).
+-import(json, [encode_atom/2]).
+-endif.
+-ifdef(HAVE_json__encode_binary_1).
+-import(json, [encode_binary/1]).
 -endif.
 -ifdef(HAVE_json__encode_float_1).
 -import(json, [encode_float/1]).
@@ -292,6 +329,97 @@ encode_value(Value, Encode) -> do_encode(Value, Encode).
 
 -ifndef(NEED_do_encode_2).
 -define(NEED_do_encode_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_json__format_1).
+format(Term) -> format(Term, fun format_value/3, #{}).
+-endif.
+
+-ifndef(HAVE_json__format_2).
+format(Term, Options) when is_map(Options) -> format(Term, fun format_value/3, Options);
+format(Term, Encoder) when is_function(Encoder, 3) -> format(Term, Encoder, #{}).
+-endif.
+
+-ifndef(HAVE_json__format_3).
+format(Term, Encoder, Options) when is_function(Encoder, 3) ->
+    [Encoder(Term, Encoder, maps:merge(#{level => 0, col => 0, indent => 2, max => 100}, Options)), $\n].
+-endif.
+
+-ifndef(HAVE_json__format_value_3).
+format_value(Atom, UserEnc, State) when is_atom(Atom) ->
+    encode_atom(Atom, fun(Value, Enc) ->  UserEnc(Value, Enc, State) end);
+format_value(Bin, _Enc, _State) when is_binary(Bin) -> encode_binary(Bin);
+format_value(Int, _Enc, _State) when is_integer(Int) -> integer_to_binary(Int);
+format_value(Float, _Enc, _State) when is_float(Float) -> encode_float(Float);
+format_value(List, UserEnc, State) when is_list(List) -> format_list(List, UserEnc, State);
+format_value(Map, UserEnc, State) when is_map(Map) ->
+    %% Ensure order of maps are the same in each export
+    format_key_value_list(lists:keysort(1, maps:to_list(Map)), UserEnc, State);
+format_value(Other, _Enc, _State) -> error({unsupported_type, Other}).
+
+format_list([Head|Rest], UserEnc, #{level := Level, col := Col0, max := Max} = State0) ->
+    State1 = State0#{level := Level + 1},
+    {Len, IndentElement} = indent(State1),
+    if
+        is_list(Head);   %% Indent list in lists
+        is_map(Head);    %% Indent maps
+        is_binary(Head); %% Indent Strings
+        Col0 > Max ->    %% Throw in the towel
+            State = State1#{col := Len},
+            {_, IndLast} = indent(State0),
+            [$[, IndentElement, UserEnc(Head, UserEnc, State),
+             format_tail(Rest, UserEnc, State, IndentElement, IndentElement), IndLast, $]];
+       true ->
+            First = UserEnc(Head, UserEnc, State1),
+            [$[, First,
+             format_tail(Rest, UserEnc, State1#{col := Col0 + 1 + erlang:iolist_size(First)}, [], IndentElement), $]]
+    end;
+format_list([], _, _) -> <<"[]">>.
+
+format_tail([Head|Tail], Enc, #{max := Max, col := Col0} = State, [], IndentRow) when Col0 < Max ->
+    EncHead = Enc(Head, Enc, State),
+    [[$,|EncHead]|format_tail(Tail, Enc, State#{col := Col0 + 1 + erlang:iolist_size(EncHead)}, [], IndentRow)];
+format_tail([Head|Tail], Enc, State, [], IndentRow) ->
+    String = [[$,|IndentRow]|Enc(Head, Enc, State)],
+    [String|format_tail(Tail, Enc, State#{col := erlang:iolist_size(String) - 2}, [], IndentRow)];
+format_tail([Head|Tail], Enc, State, IndentAll, IndentRow) ->
+    %% These are handling their own indentation, so optimize away size calculation
+    [[[$,|IndentAll]|Enc(Head, Enc, State)]|format_tail(Tail, Enc, State, IndentAll, IndentRow)];
+format_tail([], _, _, _, _) -> [].
+
+format_key_value_list(KVList, UserEnc, #{level := Level} = State) ->
+    {_, Indent} = indent(State),
+    NextState = State#{level := Level+1},
+    {KISize, KeyIndent} = indent(NextState),
+    EncKeyFun = fun(KeyVal, _Fun) -> UserEnc(KeyVal, UserEnc, NextState) end,
+    format_object(lists:map(fun({Key, Value}) ->
+                                EncKey = key(Key, EncKeyFun),
+                                ValState = NextState#{col := KISize + 2 + erlang:iolist_size(EncKey)},
+                                [$,, KeyIndent, EncKey, ": "|UserEnc(Value, UserEnc, ValState)]
+                            end,
+                            KVList),
+                  Indent).
+
+format_object([], _) -> <<"{}">>;
+format_object([[_Comma, KeyIndent|Entry]], Indent) ->
+    [_Key, _Colon|Value] = Entry,
+    {_, Rest} = string:take(Value, [$\s, $\n]),
+    [CP|_] = string:next_codepoint(Rest),
+    if
+        CP =:= ${; CP =:= $[ -> [${, KeyIndent, Entry, Indent, $}];
+        true -> ["{ ", Entry, " }"]
+    end;
+format_object([[_Comma, KeyIndent|Entry]|Rest], Indent) -> [${, KeyIndent, Entry, Rest, Indent, $}].
+
+indent(#{level := Level, indent := Indent}) ->
+    Steps = Level * Indent,
+    {Steps, steps(Steps)}.
+
+steps(N) ->  [$\n|lists:duplicate(N, $\s)].
+
+-ifndef(NEED_key_2).
+-define(NEED_key_2, true).
 -endif.
 -endif.
 
