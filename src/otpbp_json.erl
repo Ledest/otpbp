@@ -1,5 +1,7 @@
 -module(otpbp_json).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_json__decode_1).
 % OTP 27.0
 -export([decode/1]).
@@ -405,7 +407,7 @@ format_object([], _) -> <<"{}">>;
 format_object([[_Comma, KeyIndent|Entry]], Indent) ->
     [_Key, _Colon|Value] = Entry,
     {_, Rest} = string:take(Value, [$\s, $\n]),
-    [CP|_] = string:next_codepoint(Rest),
+    [CP|_] = unicode_util:cp(Rest),
     if
         CP =:= ${; CP =:= $[ -> [${, KeyIndent, Entry, Indent, $}];
         true -> ["{ ", Entry, " }"]
