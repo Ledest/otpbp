@@ -5,11 +5,9 @@
 -ifndef(HAVE_zlib__compress_2).
 -export([compress/2]).
 -endif.
-
 -ifndef(HAVE_zlib__zip_2).
 -export([zip/2]).
 -endif.
-
 -ifndef(HAVE_zlib__gzip_2).
 -export([gzip/2]).
 -endif.
@@ -57,15 +55,20 @@
 -ifndef(HAVE_zlib__inflateChunk_2).
 % OTP < 27.0
 -export([inflateChunk/2]).
--ifndef(NEED_zlib__inflateChunk_2).
--define(NEED_zlib__inflateChunk_2, true).
--endif.
 -endif.
 -ifndef(HAVE_zlib__setBufSize_2).
+% OTP < 27.0
 -export([setBufSize/2]).
 -endif.
 -ifndef(HAVE_zlib__getBufSize_1).
+% OTP < 27.0
 -export([getBufSize/1]).
+-endif.
+
+-ifndef(HAVE_zlib__inflateChunk_1).
+-ifdef(NEED_zlib__inflateChunk_2).
+-import(zlib, [inflateChunk/2]).
+-endif.
 -endif.
 
 -define(MAX_WBITS, 15).
@@ -182,12 +185,9 @@ crc32_combine(_Z, _CRC1, _CRC2, _Size2) -> error(badarg).
 
 -ifndef(HAVE_zlib__inflateChunk_1).
 inflateChunk(Z) -> inflateChunk(Z, <<>>).
--ifndef(NEED_zlib__inflateChunk_2).
--define(NEED_zlib__inflateChunk_2, true).
--endif.
 -endif.
 
--ifdef(NEED_zlib__inflateChunk_2).
+-ifndef(HAVE_zlib__inflateChunk_2).
 inflateChunk(Z, Data) ->
     case zlib:safeInflate(Z, Data) of
         {finished, Output} -> Output;
