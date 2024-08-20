@@ -55,7 +55,7 @@ strip_release(Root, AdditionalChunks) -> catch strip_rel(Root, AdditionalChunks)
 -define(NEED_error_1, true).
 -endif.
 
--compile({inline, [strip_rel/2]}).
+-compile({inline, strip_rel/2}).
 strip_rel(Root, AdditionalChunks) ->
     filelib:is_dir(Root) orelse error({not_a_directory, Root}),
     strip_fils(filelib:wildcard(filename:join([Root, "lib", "*", "ebin", "*.beam"])), AdditionalChunks).
@@ -79,7 +79,7 @@ strip_file(File, AdditionalChunks) ->
     {ok, Stripped} = beam_lib:build_module(Chunks),
     strip_file(File, Mod, zlib:gzip(Stripped)).
 
--compile({inline, [strip_file/3]}).
+-compile({inline, strip_file/3}).
 strip_file(File, Mod, Stripped) when is_binary(File) -> {ok, {Mod, Stripped}};
 strip_file(File, Mod, Stripped) ->
     FileName = filename:rootname(File, ".beam") ++ ".beam",
@@ -92,7 +92,7 @@ strip_file(File, Mod, Stripped) ->
         Error -> file_error(FileName, Error)
     end.
 
--compile({inline, [read_significant_chunks/2]}).
+-compile({inline, read_significant_chunks/2}).
 read_significant_chunks(File, ChunkList) ->
     {ok, {Module, Chunks}} = beam_lib:chunks(File, ChunkList, [allow_missing_chunks]),
     {Module, lists:filter(fun({_, Data}) when is_binary(Data) -> true;
@@ -100,7 +100,7 @@ read_significant_chunks(File, ChunkList) ->
                               lists:member(Id, mandatory_chunks()) andalso error({missing_chunk, File, Id})
                           end, Chunks)}.
 
--compile({inline, [mandatory_chunks/0]}).
+-compile({inline, mandatory_chunks/0}).
 mandatory_chunks() -> ["Code", "ExpT", "ImpT", "StrT"].
 
 file_error(FileName, {error, Reason}) -> error({file_error, FileName, Reason}).
