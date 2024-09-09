@@ -90,7 +90,7 @@ sync_start_monitor({Pid, Ref}, Timeout) ->
             {{error, timeout}, Ref}
     end.
 
--compile({inline, [kill_flush/1]}).
+-compile({inline, kill_flush/1}).
 kill_flush(Pid) ->
     unlink(Pid),
     exit(Pid, kill),

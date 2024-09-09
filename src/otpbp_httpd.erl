@@ -48,7 +48,7 @@ do_serve(#{help := true}) ->
     halt(0);
 do_serve(#{address := Address, port := Port, directory := Path}) -> do_serve(Address, Port, Path).
 
--compile({inline, [do_serve/3]}).
+-compile({inline, do_serve/3}).
 do_serve({_, _, _, _} = Address, Port, Path) -> do_serve(Address, Port, Path, inet);
 do_serve(Address, Port, Path) -> do_serve(Address, Port, Path, inet6).
 
@@ -73,10 +73,10 @@ do_serve(Address, Port, Path, IpFamily) ->
             From ! done
     end.
 
--compile({inline, [default_mime_types/0]}).
+-compile({inline, default_mime_types/0}).
 default_mime_types() -> find_mime_types("/etc/mime.types").
 
--compile({inline, [find_mime_types/1]}).
+-compile({inline, find_mime_types/1}).
 find_mime_types(Path) ->
     case filelib:is_file(Path) of
         true -> Path;

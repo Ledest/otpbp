@@ -77,7 +77,7 @@ get() ->
         CaCerts -> CaCerts
     end.
 
--compile({inline, [get1/0]}).
+-compile({inline, get1/0}).
 -ifdef(HAVE_persistent_term__get_1).
 get1() -> persistent_term:get(pubkey_os_cacerts).
 -else.
@@ -87,7 +87,7 @@ get1() ->
     Value.
 -endif.
 
--compile({inline, [get2/0]}).
+-compile({inline, get2/0}).
 -ifdef(HAVE_persistent_term__get_2).
 get2() -> persistent_term:get(pubkey_os_cacerts, undefined).
 -else.
