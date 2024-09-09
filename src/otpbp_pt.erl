@@ -330,13 +330,13 @@ parse_transform(Forms, Options) ->
         _ -> Forms
     end.
 
--compile({inline, [get_no_auto_import/2]}).
+-compile({inline, get_no_auto_import/2}).
 get_no_auto_import(AF, Options) ->
     lists:usort(proplists:append_values(no_auto_import,
                                         proplists:append_values(compile,
                                                                 proplists:get_value(attributes, AF, [])) ++ Options)).
 
--compile({inline, [transform/3]}).
+-compile({inline, transform/3}).
 transform(Tree, P, function) -> {transform_function(Tree, P), P};
 transform(Tree, P, attribute) -> transform_attribute(Tree, P);
 transform(Tree, P, _) -> {Tree, P}.
@@ -407,7 +407,7 @@ store_func({_, {F, _}} = MFA, M, D) -> store_func(MFA, {M, F}, D);
 store_func({F, _} = FA, M, D) -> store_func(FA, {M, F}, D).
 
 transform_list() -> foldl(fun({F, D}, Acc) -> add_func(F, D, Acc) end, #{}, ?TRANSFORM_FUNCTIONS).
--compile({inline, [transform_list/0]}).
+-compile({inline, transform_list/0}).
 
 transform(conjunction, Tree) ->
     case erl_syntax_lib:mapfold(fun(E, F) ->
@@ -433,7 +433,7 @@ application_transform_guard(Node) ->
         _ -> false
     end.
 
--compile({inline, [application_transform_guard/1]}).
+-compile({inline, application_transform_guard/1}).
 
 application_guard(Node, otpbp_erlang, ceil) -> application_guard_ceil_floor(Node, '+');
 application_guard(Node, otpbp_erlang, floor) -> application_guard_ceil_floor(Node, '-');
@@ -517,7 +517,7 @@ implicit_fun_transform(#param{funs = L} = P, Node) ->
         throw:syntax_error -> false
     end.
 
--compile({inline, [implicit_fun_transform/2]}).
+-compile({inline, implicit_fun_transform/2}).
 
 try_expr_transform(_P, Node) ->
     case lists:mapfoldr(fun(H, A) ->

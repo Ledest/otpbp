@@ -68,7 +68,7 @@ limit_map([{K, V}|T], D, A) -> limit_map(T, D - 1, A#{K => V}).
 
 %% limit_map_assoc(K, V, D) ->
 %%     {limit(K, D-1), limit(V, D-1)}.
--compile({inline, [limit_tuple/2]}).
+-compile({inline, limit_tuple/2}).
 
 limit_bitstring(B, _D) -> B. %% Keeps all printable binaries.
 
@@ -118,7 +118,7 @@ test_limit_map(_Map, _D) -> ok.
 %% test_limit_map_assoc(K, V, D) ->
 %%     test_limit(K, D-1),
 %%     test_limit(V, D-1).
--compile({inline, [test_limit_tuple/2]}).
+-compile({inline, test_limit_tuple/2}).
 
 test_limit_bitstring(_, _) -> ok.
 -endif.
@@ -136,7 +136,7 @@ write_atom_as_latin1(Atom) ->
         false -> Chars
     end.
 
--compile({inline, [quote_atom/2]}).
+-compile({inline, quote_atom/2}).
 quote_atom(_Atom, []) -> true;
 quote_atom(Atom, [C|Cs]) when is_integer(C) ->
     if
@@ -147,7 +147,7 @@ quote_atom(Atom, [C|Cs]) when is_integer(C) ->
 name_chars([C|Cs]) when is_integer(C) -> name_char(C) andalso name_chars(Cs);
 name_chars([]) -> true.
 
--compile({inline, [name_char/1]}).
+-compile({inline, name_char/1}).
 name_char(C) ->
     C >= $0 andalso C =< $9 orelse
     C >= $a andalso C =< $z orelse
