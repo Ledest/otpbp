@@ -84,7 +84,7 @@ c(Module, Options, Filter) when is_atom(Module) ->
         Error -> {error, Error}
     end.
 
--compile({inline, [c/5]}).
+-compile({inline, c/5}).
 c(SrcFile, Options, Filter, BeamFile, Info) ->
     io:fwrite("Recompiling ~ts\n", [SrcFile]),
     %% Note that it's possible that because of options such as 'to_asm',
@@ -113,7 +113,7 @@ c(SrcFile, Options, Filter, BeamFile, Info) ->
 is_outdir_opt({outdir, _}) -> true;
 is_outdir_opt(_) -> false.
 
--compile({inline, [find_beam/1]}).
+-compile({inline, find_beam/1}).
 find_beam(Module) ->
     case code:which(Module) of
         [_|_] = Beam ->
@@ -131,7 +131,7 @@ find_beam(Module) ->
         Error -> Error
     end.
 
--compile({inline, [compile_info/2]}).
+-compile({inline, compile_info/2}).
 compile_info(Module, Beam) ->
     case module_loaded(Module) of
         true ->
@@ -149,7 +149,7 @@ compile_info(Module, Beam) ->
             end
     end.
 
--compile({inline, [find_source/2]}).
+-compile({inline, find_source/2}).
 find_source(BeamFile, Info) ->
     case lists:keyfind(source, 1, Info) of
         {_, SrcFile} ->
@@ -176,7 +176,7 @@ compile_and_load(File, Opts0) when is_list(Opts0) ->
     end;
 compile_and_load(File, Opt) -> compile_and_load(File, [Opt]).
 
--compile({inline, [ensure_from/2]}).
+-compile({inline, ensure_from/2}).
 ensure_from(Suffix, Opts0) ->
     case lists:partition(fun(O) -> O =:= from_core orelse O =:= from_asm end,
                          if

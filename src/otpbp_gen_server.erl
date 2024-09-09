@@ -21,7 +21,7 @@ start_monitor(Name, Module, Args, Options) ->
         Pid -> {error, {already_started, Pid}}
     end.
 
--compile({inline, [where/1]}).
+-compile({inline, where/1}).
 where({global, Name}) -> global:whereis_name(Name);
 where({via, Module, Name}) -> Module:whereis_name(Name);
 where({local, Name})  -> whereis(Name).
