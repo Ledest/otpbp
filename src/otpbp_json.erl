@@ -1059,8 +1059,11 @@ unescape_surrogate(_Rest, Original, Skip, Acc, Stack, Decode, Start, Len, _SAcc,
     unexpected(Original, Start, Acc, Stack, Decode, Len + 6 + Skip - Start, 5, value).
 
 terminate(<<Byte, Rest/bits>>, Original, Skip, Acc, Value) when ?is_ws(Byte) ->
-    terminate(Rest, Original, Skip + 1, Acc, Value);
-terminate(<<Rest/bits>>, _Original, _Skip, Acc, Value) -> {Value, Acc, Rest}.
+    terminate(Rest, Original, Skip, Acc, Value);
+terminate(<<>>, _, _Skip, Acc, Value) -> {Value, Acc, <<>>};
+terminate(<<_/bits>>, Original, Skip, Acc, Value) ->
+    <<_:Skip/binary, Rest/binary>> = Original,
+    {Value, Acc, Rest}.
 
 array_push(<<Byte, Rest/bits>>, Original, Skip, Acc, Stack, Decode, Value) when ?is_ws(Byte) ->
     array_push(Rest, Original, Skip + 1, Acc, Stack, Decode, Value);
