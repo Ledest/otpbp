@@ -299,18 +299,25 @@ decode(Bin) ->
             erlang:raise(Class, Reason, ST)
     end.
 
-ews(Str) -> unicode:characters_to_binary(string:replace(Str, <<" ">>, <<" \s\t\r\n">>)).
+ews(Str) -> unicode:characters_to_binary(string:replace(Str, <<" ">>, <<" \s\t\r\n">>, all)).
+
+-define(is_ws(X), X =:= $\s; X =:= $\t; X =:= $\r; X =:= $\n).
 
 byte_loop(Bin) ->
     {continue, State} = json:decode_start(<<>>, [], #{}),
     byte_loop(Bin, State, []).
 
-byte_loop(<<Byte, Rest/binary>>, State0, Bytes) ->
+byte_loop(<<Byte, Rest/binary>> = Orig, State0, Bytes) ->
     case json:decode_continue(<<Byte>>, State0) of
         {continue, State} -> byte_loop(Rest, State, [Byte|Bytes]);
         {Result, [], <<>>} ->
             %% trim to match the binary in return value
-            {Result, [], string:trim(Rest, leading)}
+            {Result, [],
+             case string:trim(Rest, leading) of
+                 <<>> -> <<>>;
+                 _ when ?is_ws(Byte) -> Orig;
+                 _ -> Rest
+             end}
     end;
 byte_loop(<<>>, State, _Bytes) -> json:decode_continue(end_of_input, State).
 
@@ -401,10 +408,14 @@ decode_api_stream_test() ->
     Types = <<"{\"types\": [[], {}, true, false, null, {\"foo\": \"baz\"}],\n               "
               "\"numbers\": [1, -10, 0.0, -0.0, 2.0, -2.0, 31e2, 31e-2, 0.31e2, -0.31e2, 0.13e-2],\n               "
               "\"strings\": [\"three\", \"åäö\", \"mixed_Ω\"],\n               "
-              "\"escaped\": [\"\\n\", \"\\u2603\", \"\\ud834\\uDD1E\", \"\\nÃ±\"]\n              }"/utf8>>,
+              "\"escaped\": [\"\\n\", \"\\u2603\", \"\\ud834\\uDD1E\", \"\\nÃ±\"]\n              }\n"/utf8>>,
     ?assertEqual(ok, stream_decode(Types)),
+    R = json:decode(ews(<<" 12345 \"foo\" ">>), ok, #{}),
+    ?assertMatch({12345, ok, <<" \s\t\r\n", _/binary>>}, R),
+    {_, _, <<" \s\t\r\n", _/binary>> = B1} = R,
+    ?assertEqual({<<"foo">>, ok, <<>>}, json:decode(B1, ok, #{})),
     list_to_integer(erlang:system_info(otp_release)) >= 20 andalso
-        ?assertEqual(ok, multi_stream_decode(<<"12345 1.30 \"String1\" -0.31e2\n[\"an array\"]12345">>)).
+        ?assertEqual(ok, multi_stream_decode(<<"12345 1.30 \"String1\" -0.31e2\n[\"an array\"]12345\n">>)).
 
 stream_decode(Str) ->
     {R1, [], <<>>} = byte_loop(Str),
@@ -421,7 +432,7 @@ multi_stream_decode(Strs) ->
     case json:decode(Strs, [], #{}) of
         {R1, [], ContBin} -> multi_stream_decode(ContBin);
         Other ->
-            io:fwrite("~p '~ts'~n~p~n", [R1, ContBin, Other]),
+            io:format("~p '~tp'~n~p~n", [R1, ContBin, Other]),
             error
     end.
 
