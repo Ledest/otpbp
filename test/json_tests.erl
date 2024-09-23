@@ -1,5 +1,12 @@
 -module(json_tests).
 
+-ifdef(OTP_RELEASE).
+-if(?OTP_RELEASE =:= 27).
+-define(OTP_RELEASE_27, true).
+-endif.
+-endif.
+
+-ifndef(OTP_RELEASE_27).
 -compile({parse_transform, otpbp_pt}).
 
 -include_lib("eunit/include/eunit.hrl").
@@ -594,3 +601,4 @@ format_fun_test() ->
     /utf8>>,
     ?assertEqual(Formatted, format(All, Formatter)),
     ok.
+-endif.
