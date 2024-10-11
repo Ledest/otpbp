@@ -91,12 +91,14 @@ system_time_to_rfc3339(Time, Options, Unit, OffsetOption) ->
     case AdjustedTime div Factor of
         Secs when Secs >= -?SECONDS_FROM_0_TO_1970, Secs < ?SECONDS_FROM_0_TO_10000 ->
             {{Year, Month, Day}, {Hour, Min, Sec}} = system_time_to_datetime(Secs),
-            lists:flatten(io_lib:format("~4..0B-~2..0B-~2..0B~c~2..0B:~2..0B:~2..0B~s~s",
-                                        [Year, Month, Day,
-                                         proplists:get_value(time_designator, Options, $T),
-                                         Hour, Min, Sec,
-                                         fraction_str(Factor, AdjustedTime),
-                                         offset(OffsetOption, AdjustmentSecs)]));
+            L = io_lib:format("~4..0B-~2..0B-~2..0B~c~2..0B:~2..0B:~2..0B~s~s",
+                              [Year, Month, Day, proplists:get_value(time_designator, Options, $T),
+                               Hour, Min, Sec, fraction_str(Factor, AdjustedTime),
+                               offset(OffsetOption, AdjustmentSecs)]),
+            case proplists:get_value(return, Options, string) of
+                string -> lists:flatten(L);
+                binary -> list_to_binary(L)
+            end;
         _ -> error({badarg, [Time, Options]})
     end.
 
