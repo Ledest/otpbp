@@ -229,13 +229,17 @@ offset_string_adjustment($+, Adjustment) -> Adjustment.
 -endif.
 -ifdef(NEED_datetime_str_1).
 datetime_str([Y1, Y2, Y3, Y4, $-, Mon1, Mon2, $-, D1, D2, _T, H1, H2, $:, Min1, Min2, $:, S1, S2|TimeStr]) ->
-    {calendar:datetime_to_gregorian_seconds({{list_to_integer([Y1, Y2, Y3, Y4]),
-                                              list_to_integer([Mon1, Mon2]),
-                                              list_to_integer([D1, D2])},
-                                             {list_to_integer([H1, H2]),
-                                              list_to_integer([Min1, Min2]),
-                                              list_to_integer([S1, S2])}}) - ?SECONDS_FROM_0_TO_1970,
-     TimeStr}.
+    {datetime_str(Y1, Y2, Y3, Y4, Mon1, Mon2, D1, D2, H1, H2,  Min1, Min2, S1, S2), TimeStr};
+datetime_str(<<Y1, Y2, Y3, Y4, $-, Mon1, Mon2, $-, D1, D2, _T, H1, H2, $:, Min1, Min2, $:, S1, S2, TimeStr/binary>>) ->
+    {datetime_str(Y1, Y2, Y3, Y4, Mon1, Mon2, D1, D2, H1, H2,  Min1, Min2, S1, S2), binary_to_list(TimeStr)}.
+
+datetime_str(Y1, Y2, Y3, Y4, Mon1, Mon2, D1, D2, H1, H2,  Min1, Min2, S1, S2) ->
+    calendar:datetime_to_gregorian_seconds({{(Y1 - $0) * 1000 + (Y2 - $0) * 100 + (Y3 - $0) * 10 + (Y4 - $0),
+                                             (Mon1 - $0) * 10 + (Mon2 - $0),
+                                             (D1 - $0) * 10 + (D2 - $0)},
+                                            {(H1 - $0) * 10 + (H2 - $0),
+                                             (Min1 - $0) * 10 + (Min2 - $0),
+                                             (S1 - $0) * 10 + (S2 - $0)}}) - ?SECONDS_FROM_0_TO_1970.
 -endif.
 -ifdef(NEED_is_fraction_char_1).
 is_fraction_char(C) -> C =:= $. orelse C >= $0 andalso C =< $9.
