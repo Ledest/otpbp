@@ -1109,7 +1109,7 @@ string_ascii(Binary, Original, Skip, Acc, Stack, Decode, Start, Len, SAcc) ->
     string(Binary, Original, Skip, Acc, Stack, Decode, Start, Len, SAcc).
 
 -define(hex_digit(C),
-        element(C - $0 + 1,
+        element(C - ($0 - 1),
                 {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, n, n, n, n, n, %% 0x30
                  n, n, 10,11,12,13,14,15,n, n, n, n, n, n, n, %% 0x40
                  n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, %% 0x50
