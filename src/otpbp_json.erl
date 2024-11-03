@@ -82,6 +82,18 @@
 % OTP 27.1
 -export([format_value/3]).
 -endif.
+-ifndef(HAVE_json__format_key_value_list_3).
+% OTP 27.2
+-export([format_key_value_list/3]).
+-endif.
+-ifndef(HAVE_json__format_key_value_list_checked_3).
+% OTP 27.2
+-export([format_key_value_list_checked/3]).
+-endif.
+-ifdef(HAVE_json__encode_float_1).
+-ifndef(HAVE_json__format_key_value_list_checked_3).
+-endif.
+-endif.
 
 -ifndef(HAVE_json__encode_value_2).
 -ifdef(HAVE_json__encode_atom_2).
@@ -119,6 +131,26 @@
 -ifdef(HAVE_json__encode_binary_1).
 -import(json, [encode_binary/1]).
 -endif.
+-ifdef(HAVE_json__encode_float_1).
+-import(json, [encode_float/1]).
+-endif.
+-endif.
+-ifndef(HAVE_json__format_value_3).
+-ifdef(HAVE_json__format_key_value_list_3).
+-import(json, [format_key_value_list/3]).
+-endif.
+-endif.
+-ifndef(HAVE_json__format_key_value_list_3).
+-ifndef(NEED_encode_float_1).
+-define(NEED_encode_float_1, true).
+-endif.
+-endif.
+-ifndef(HAVE_json__format_key_value_list_checked_3).
+-ifndef(NEED_encode_float_1).
+-define(NEED_encode_float_1, true).
+-endif.
+-endif.
+-ifdef(NEED_encode_float_1).
 -ifdef(HAVE_json__encode_float_1).
 -import(json, [encode_float/1]).
 -endif.
@@ -390,38 +422,63 @@ format_tail([Head|Tail], Enc, State, IndentAll, IndentRow) ->
     [[[$,|IndentAll]|Enc(Head, Enc, State)]|format_tail(Tail, Enc, State, IndentAll, IndentRow)];
 format_tail([], _, _, _, _) -> [].
 
+-ifndef(NEED_indent_1).
+-define(NEED_indent_1, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_json__format_key_value_list_3).
 format_key_value_list(KVList, UserEnc, #{level := Level} = State) ->
     {_, Indent} = indent(State),
-    NextState = State#{level := Level+1},
+    NextState = State#{level := Level + 1},
     {KISize, KeyIndent} = indent(NextState),
     EncKeyFun = fun(KeyVal, _Fun) -> UserEnc(KeyVal, UserEnc, NextState) end,
     format_object(lists:map(fun({Key, Value}) ->
                                 EncKey = key(Key, EncKeyFun),
-                                ValState = NextState#{col := KISize + 2 + erlang:iolist_size(EncKey)},
+                                ValState = NextState#{col := KISize + 2 + iolist_size(EncKey)},
                                 [$,, KeyIndent, EncKey, ": "|UserEnc(Value, UserEnc, ValState)]
                             end,
                             KVList),
                   Indent).
 
-format_object([], _) -> <<"{}">>;
-format_object([[_Comma, KeyIndent|Entry]], Indent) ->
-    [_Key, _Colon|Value] = Entry,
-    {_, Rest} = string:take(Value, [$\s, $\n]),
-    [CP|_] = unicode_util:cp(Rest),
-    if
-        CP =:= ${; CP =:= $[ -> [${, KeyIndent, Entry, Indent, $}];
-        true -> ["{ ", Entry, " }"]
-    end;
-format_object([[_Comma, KeyIndent|Entry]|Rest], Indent) -> [${, KeyIndent, Entry, Rest, Indent, $}].
-
-indent(#{level := Level, indent := Indent}) ->
-    Steps = Level * Indent,
-    {Steps, steps(Steps)}.
-
-steps(N) ->  [$\n|lists:duplicate(N, $\s)].
-
+-ifndef(NEED_indent_1).
+-define(NEED_indent_1, true).
+-endif.
 -ifndef(NEED_key_2).
 -define(NEED_key_2, true).
+-endif.
+-ifndef(NEED_format_object_2).
+-define(NEED_format_object_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_json__format_key_value_list_checked_3).
+format_key_value_list_checked([], UserEnc, State) when is_function(UserEnc, 3) ->
+    {_, Indent} = indent(State),
+    format_object([], Indent);
+format_key_value_list_checked(KVList, UserEnc, #{level := Level} = State) when is_function(UserEnc, 3) ->
+    {_, Indent} = indent(State),
+    NextState = State#{level := Level + 1},
+    {KISize, KeyIndent} = indent(NextState),
+    EncKeyFun = fun(KeyVal, _Fun) -> UserEnc(KeyVal, UserEnc, NextState) end,
+    {EncKVList, _} = lists:foldl(fun({Key, Value}, {Acc, Visited0}) ->
+                                     EncKey = iolist_to_binary(key(Key, EncKeyFun)),
+                                     maps:is_key(EncKey, Visited0) andalso error({duplicate_key, Key}),
+                                     ValState = NextState#{col := KISize + 2 + byte_size(EncKey)},
+                                     {[[$, , KeyIndent, EncKey, ": "|UserEnc(Value, UserEnc, ValState)]|Acc],
+                                      Visited0#{EncKey => true}}
+                                 end,
+                                 {[], #{}}, KVList),
+    format_object(lists:reverse(EncKVList), Indent).
+
+-ifndef(NEED_indent_1).
+-define(NEED_indent_1, true).
+-endif.
+-ifndef(NEED_key_2).
+-define(NEED_key_2, true).
+-endif.
+-ifndef(NEED_format_object_2).
+-define(NEED_format_object_2, true).
 -endif.
 -endif.
 
@@ -618,6 +675,25 @@ key(Key, Encode) when is_binary(Key) -> Encode(Key, Encode);
 key(Key, Encode) when is_atom(Key) -> Encode(atom_to_binary(Key, utf8), Encode);
 key(Key, _Encode) when is_integer(Key) -> [$", integer_to_binary(Key), $"];
 key(Key, _Encode) when is_float(Key) -> [$", encode_float(Key), $"].
+-endif.
+
+-ifdef(NEED_format_object_2).
+format_object([], _) -> <<"{}">>;
+format_object([[_Comma, KeyIndent|Entry]], Indent) ->
+    [_Key, _Colon|Value] = Entry,
+    {_, Rest} = string:take(Value, [$\s, $\n]),
+    [CP|_] = unicode_util:cp(Rest),
+    if
+        CP =:= ${; CP =:= $[ -> [${, KeyIndent, Entry, Indent, $}];
+        true -> ["{ ", Entry, " }"]
+    end;
+format_object([[_Comma, KeyIndent|Entry]|Rest], Indent) -> [${, KeyIndent, Entry, Rest, Indent, $}].
+-endif.
+
+-ifdef(NEED_indent_1).
+indent(#{level := Level, indent := Indent}) ->
+    Steps = Level * Indent,
+    {Steps, [$\n|lists:duplicate(Steps, $\s)]}.
 -endif.
 
 -ifdef(NEED_escape_1).
