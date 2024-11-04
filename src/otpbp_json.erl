@@ -807,11 +807,12 @@ number_frac_cont(Rest, Original, Skip, Acc, Stack, Decode, Len) ->
     float_decode(Rest, Original, Skip, Acc, Stack, Decode, Len, binary_part(Original, Skip, Len)).
 
 float_decode(<<>>, Original, Skip, Acc, Stack, #decode{float = Fun} = Decode, Len, Token) ->
-    try Fun(Token) of
-        Float -> unexpected(Original, Skip, Acc, Stack, Decode, Len, 0, {number, Float})
-    catch
-        _:_ -> unexpected(Original, Skip, Acc, Stack, Decode, Len, 0, {float_error, Token, Skip})
-    end;
+    unexpected(Original, Skip, Acc, Stack, Decode, Len, 0,
+               try Fun(Token) of
+                   Float -> {number, Float}
+               catch
+                   _:_ -> {float_error, Token, Skip}
+               end);
 float_decode(<<Rest/bits>>, Original, Skip, Acc, Stack, #decode{float = Fun} = Decode, Len, Token) ->
     try Fun(Token) of
         Float -> continue(Rest, Original, Skip + Len, Acc, Stack, Decode, Float)
