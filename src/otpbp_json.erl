@@ -680,10 +680,9 @@ format_object([], _) -> <<"{}">>;
 format_object([[_Comma, KeyIndent|Entry]], Indent) ->
     [_Key, _Colon|Value] = Entry,
     {_, Rest} = string:take(Value, [$\s, $\n]),
-    [CP|_] = string:next_codepoint(Rest),
-    if
-        CP =:= ${; CP =:= $[ -> [${, KeyIndent, Entry, Indent, $}];
-        true -> ["{ ", Entry, " }"]
+    case unicode_util:cp(Rest) of
+        [CP|_] when CP =:= ${; CP =:= $[ -> [${, KeyIndent, Entry, Indent, $}];
+        [_|_] -> ["{ ", Entry, " }"]
     end;
 format_object([[_Comma, KeyIndent|Entry]|Rest], Indent) -> [${, KeyIndent, Entry, Rest, Indent, $}].
 -endif.
