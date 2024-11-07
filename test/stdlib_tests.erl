@@ -524,6 +524,17 @@ binary_test() ->
     ?assertEqual(<<"fooba">>, binary:decode_hex(<<"666f6f6261">>)),
     ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666f6f626172">>)),
     ?assertEqual(<<"foobar">>, binary:decode_hex(<<"666f6F626172">>)),
+    % join/2
+    ?assertEqual(<<"a, b, c">>, binary:join([<<"a">>, <<"b">>, <<"c">>], <<", ">>)),
+    ?assertEqual(<<"a">>, binary:join([<<"a">>], <<", ">>)),
+    ?assertEqual(<<>>, binary:join([], <<", ">>)),
+    ?assertError(badarg, maps:merge_with(not_a_fun, #{}, #{})),
+    ?assertError(badarg, binary:join(<<"">>, ",")),
+    ?assertError(badarg, binary:join([""], <<",">>)),
+    ?assertError(badarg, binary:join([123], <<",">>)),
+    ?assertError(badarg, binary:join(123, <<",">>)),
+    ?assertError(badarg, binary:join(#{}, <<",">>)),
+    ?assertError(badarg, binary:join(foo, <<",">>)),
     ok.
 
 ets_test() ->
