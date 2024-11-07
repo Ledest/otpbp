@@ -12,6 +12,10 @@
 % OTP 25.3
 -export([encode_hex/2]).
 -endif.
+-ifndef(HAVE_binary__join_2).
+% OTP 28.0
+-export([join/2]).
+-endif.
 
 -ifndef(HAVE_binary__decode_hex_1).
 decode_hex(Bin) when byte_size(Bin) rem 2 =:= 0 ->
@@ -50,4 +54,20 @@ encode_hex_digit(Char, _) when Char =< 9 -> Char + $0;
 encode_hex_digit(Char, uppercase) -> Char + ($A - 10);
 encode_hex_digit(Char, _lowercase) -> Char + ($a - 10).
 -endif.
+-endif.
+
+-ifndef(HAVE_binary__join_2).
+join([], Separator) when is_binary(Separator) -> <<>>;
+join([H], Separator) when is_binary(H), is_binary(Separator) -> H;
+join([H|T] = List, Separator) when is_binary(Separator) ->
+    Acc = <<>>, %Enable private-append optimization
+    try
+        join(T, Separator, <<Acc/binary, H/binary>>)
+    catch
+        error:_ -> error(badarg, [List, Separator])
+    end;
+join(Arg, Separator) -> error(badarg, [Arg, Separator]).
+
+join([], _Separator, Acc) -> Acc;
+join([H|T], Separator, Acc) -> join(T, Separator, <<Acc/binary, Separator/binary, H/binary>>).
 -endif.
