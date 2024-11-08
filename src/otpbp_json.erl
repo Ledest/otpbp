@@ -153,6 +153,11 @@
 -import(json, [encode_float/1]).
 -endif.
 -endif.
+-ifndef(HAVE_json_decode_3).
+-ifdef(HAVE_json__decode_start_3).
+-import(json, [decode_start/3]).
+-endif.
+-endif.
 
 -ifndef(HAVE_json__decode_1).
 -ifndef(NEED_record__decode).
@@ -215,20 +220,13 @@ decode(Binary) when is_binary(Binary) ->
 -endif.
 
 -ifndef(HAVE_json__decode_3).
-decode(Binary, Acc0, Decoders) when is_binary(Binary) ->
-    case value(Binary, Binary, 0, Acc0, [], maps:fold(fun parse_decoder/3, #decode{}, Decoders)) of
+decode(Binary, Acc0, Decoders) ->
+    case decode_start(Binary, Acc0, Decoders) of
         {continue, {_Bin, Acc, [], _Decode, {number, Val}}} -> {Val, Acc, <<>>};
         {continue, {_, _, _, _, {float_error, Token, _Skip}}} -> unexpected_sequence(Token);
         {continue, _} -> error(unexpected_end);
         Result -> Result
     end.
-
--ifndef(NEED_value_6).
--define(NEED_value_6, true).
--endif.
--ifndef(NEED_parse_decoder_3).
--define(NEED_parse_decoder_3, true).
--endif.
 -endif.
 
 -ifndef(HAVE_json__decode_continue_2).
@@ -256,11 +254,19 @@ decode_continue(Cont, {Rest, Acc, Stack, #decode{} = Decode, FuncData}) when is_
 decode_start(Binary, Acc, Decoders) when is_binary(Binary) ->
     value(Binary, Binary, 0, Acc, [], maps:fold(fun parse_decoder/3, #decode{}, Decoders)).
 
+parse_decoder(array_start, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{array_start = Fun};
+parse_decoder(array_push, Fun, Decode) when is_function(Fun, 2) -> Decode#decode{array_push = Fun};
+parse_decoder(array_finish, Fun, Decode) when is_function(Fun, 2) -> Decode#decode{array_finish = Fun};
+parse_decoder(object_start, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{object_start = Fun};
+parse_decoder(object_push, Fun, Decode) when is_function(Fun, 3) -> Decode#decode{object_push = Fun};
+parse_decoder(object_finish, Fun, Decode) when is_function(Fun, 2) -> Decode#decode{object_finish = Fun};
+parse_decoder(float, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{float = Fun};
+parse_decoder(integer, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{integer = Fun};
+parse_decoder(string, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{string = Fun};
+parse_decoder(null, Null, Decode) -> Decode#decode{null = Null}.
+
 -ifndef(NEED_value_6).
 -define(NEED_value_6, true).
--endif.
--ifndef(NEED_parse_decoder_3).
--define(NEED_parse_decoder_3, true).
 -endif.
 -endif.
 
@@ -1101,19 +1107,6 @@ unexpected_sequence(Value) -> error({unexpected_sequence, Value}).
 -ifndef(NEED_utf8s_0).
 -define(NEED_utf8s_0, true).
 -endif.
--endif.
-
--ifdef(NEED_parse_decoder_3).
-parse_decoder(array_start, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{array_start = Fun};
-parse_decoder(array_push, Fun, Decode) when is_function(Fun, 2) -> Decode#decode{array_push = Fun};
-parse_decoder(array_finish, Fun, Decode) when is_function(Fun, 2) -> Decode#decode{array_finish = Fun};
-parse_decoder(object_start, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{object_start = Fun};
-parse_decoder(object_push, Fun, Decode) when is_function(Fun, 3) -> Decode#decode{object_push = Fun};
-parse_decoder(object_finish, Fun, Decode) when is_function(Fun, 2) -> Decode#decode{object_finish = Fun};
-parse_decoder(float, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{float = Fun};
-parse_decoder(integer, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{integer = Fun};
-parse_decoder(string, Fun, Decode) when is_function(Fun, 1) -> Decode#decode{string = Fun};
-parse_decoder(null, Null, Decode) -> Decode#decode{null = Null}.
 -endif.
 
 -ifdef(NEED_invalid_byte_2).
