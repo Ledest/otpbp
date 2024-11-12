@@ -98,6 +98,7 @@
          {{eldap, paged_result_cookie, 1}, otpbp_eldap},
          {{edlin, keymap, 0}, otpbp_edlin},
          {{epp, scan_file, [1, 2]}, otpbp_epp},
+         {{erl_anno, set_end_location, 2}, otpbp_erl_anno},
          {{erl_epmd, listen_port_please, 2}, otpbp_erl_epmd},
          {{erl_epmd, port_please, [2, 3]}, otpbp_erl_epmd},
          {{erl_error, format_fun, [1, 2]}, lib},
