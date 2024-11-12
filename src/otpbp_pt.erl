@@ -93,6 +93,7 @@
          {{disk_log, lclose, 2}, otpbp_disk_log},
          {{edlin, keymap, 0}, otpbp_edlin},
          {{epp, scan_file, [1, 2]}, otpbp_epp},
+         {{erl_anno, set_end_location, 2}, otpbp_erl_anno},
          {{erl_error, format_fun, [1, 2]}, lib},
          {{erl_error, [format_call, format_stacktrace], [4, 5]}, lib},
          {{erl_error, format_exception, [6, 7]}, lib},
