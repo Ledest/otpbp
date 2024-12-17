@@ -7,6 +7,9 @@
 -ifndef(HAVE_proplists__to_map_2).
 % OTP 24.0
 -export([to_map/2]).
+-endif.
+
+-ifndef(HAVE_proplists__to_map_2).
 -ifdef(HAVE_proplists__to_map_1).
 -import(proplists, [to_map/1]).
 -endif.
