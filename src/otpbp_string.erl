@@ -420,7 +420,7 @@ jaro_similarity(A0, B0) ->
         {{_, 0}, [_|0]} -> 1.0;
         {{_, ALen}, [_|BLen]} when ALen =:= 0; BLen =:= 0 -> 0.0;
         {{A, ALen}, [B|BLen]} ->
-            case jaro_match(A, B, max(ALen, BLen) div 2) of
+            case jaro_match(A, B, max(1, max(ALen, BLen) div 2)) of
                 {[], _} -> 0.0;
                 {AM, BM} ->
                     {M, T} = jaro_calc_mt(AM, BM, 0, 0),
