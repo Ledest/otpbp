@@ -26,6 +26,22 @@
 % OTP 21.0
 -export([rfc3339_to_system_time/2]).
 -endif.
+-ifndef(HAVE_calendar__local_time_to_system_time_1).
+% OTP 28.0
+-export([local_time_to_system_time/1]).
+-endif.
+-ifndef(HAVE_calendar__local_time_to_system_time_2).
+% OTP 28.0
+-export([local_time_to_system_time/2]).
+-endif.
+-ifndef(HAVE_calendar__universal_time_to_system_time_1).
+% OTP 28.0
+-export([universal_time_to_system_time/1]).
+-endif.
+-ifndef(HAVE_calendar__universal_time_to_system_time_2).
+% OTP 28.0
+-export([universal_time_to_system_time/2]).
+-endif.
 
 -ifdef(HAVE_NEW_TIME_UNITS).
 -import(erlang, [convert_time_unit/3]).
@@ -34,6 +50,21 @@
 -ifndef(HAVE_calendar__system_time_to_local_time_2).
 -ifdef(HAVE_calendar__system_time_to_universal_time_2).
 -import(calendar, [system_time_to_universal_time/2]).
+-endif.
+-endif.
+-ifndef(HAVE_calendar__universal_time_to_system_time_2).
+-ifdef(HAVE_calendar__universal_time_to_system_time_1).
+-import(calendar, [universal_time_to_system_time/1]).
+-endif.
+-endif.
+-ifndef(HAVE_calendar__local_time_to_system_time_1).
+-ifdef(HAVE_calendar__universal_time_to_system_time_1).
+-import(calendar, [universal_time_to_system_time/1]).
+-endif.
+-endif.
+-ifndef(HAVE_calendar__local_time_to_system_time_2).
+-ifdef(HAVE_calendar__universal_time_to_system_time_2).
+-import(calendar, [universal_time_to_system_time/2]).
 -endif.
 -endif.
 
@@ -142,6 +173,41 @@ offset_(Secs, Sign) -> io_lib:format("~c~2..0B:~2..0B", [Sign, Secs div 3600, (S
 
 fraction_str(1, _Time) -> "";
 fraction_str(Factor, Time) -> io_lib:format(".~*..0B", [byte_size(integer_to_binary(Factor)) - 1, abs(Time rem Factor)]).
+-endif.
+
+-ifndef(HAVE_calendar__local_time_to_system_time_1).
+local_time_to_system_time(LocalTime) ->
+    case calendar:local_time_to_universal_time_dst(LocalTime) of
+        [UniversalTime] -> universal_time_to_system_time(UniversalTime);
+        [] -> error({non_existing_local_time, LocalTime});
+        [_, _] -> error({ambiguous_local_time, LocalTime})
+    end.
+-endif.
+
+-ifndef(HAVE_calendar__local_time_to_system_time_2).
+local_time_to_system_time(LocalTime, Options) ->
+    case calendar:local_time_to_universal_time_dst(LocalTime) of
+        [UniversalTime] -> universal_time_to_system_time(UniversalTime, Options);
+        [] -> error({non_existing_local_time, LocalTime});
+        [_, _] -> error({ambiguous_local_time, LocalTime})
+    end.
+-endif.
+
+-ifndef(HAVE_calendar__universal_time_to_system_time_1).
+universal_time_to_system_time(DateTime) -> calendar:datetime_to_gregorian_seconds(DateTime) - ?SECONDS_FROM_0_TO_1970.
+
+-ifndef(NEED_factor_1).
+-define(NEED_factor_1, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_calendar__universal_time_to_system_time_2).
+universal_time_to_system_time(DateTime, Options) ->
+    universal_time_to_system_time(DateTime) * factor(proplists:get_value(unit, Options, second)).
+
+-ifndef(NEED_factor_1).
+-define(NEED_factor_1, true).
+-endif.
 -endif.
 
 -ifndef(HAVE_calendar__rfc3339_to_system_time_1).
