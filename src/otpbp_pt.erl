@@ -43,6 +43,7 @@
          {{c, [h, hcb, ht], [1, 2, 3]}, otpbp_c},
          {{c, lm, 0}, otpbp_c},
          {{c, mm, 0}, {otpbp_code, modified_modules}},
+         {{calendar, [local_time_to_system_time, universal_time_to_system_time], [1, 2]}, otpbp_calendar},
          {{calendar, [rfc3339_to_system_time, system_time_to_rfc3339], [1, 2]}, otpbp_calendar},
          {{calendar, [system_time_to_local_time, system_time_to_universal_time], 2}, otpbp_calendar},
          {{code, [all_available, clear_cache, modified_modules, rehash], 0}, otpbp_code},
