@@ -21,6 +21,8 @@ os_test() ->
     ?assertEqual(lists:map(fun({N, V}) -> N ++ [$=|V] end, Env), os:getenv()),
     ok.
 
+-ifdef(OTP_RELEASE).
+-if(?OTP_RELEASE >= 21).
 format_neg_zero_test() ->
     <<NegZero/float>> = <<16#8000000000000000:64>>,
     ?assertEqual("-0.000000", fmt("~f", [NegZero])),
@@ -28,6 +30,8 @@ format_neg_zero_test() ->
     ?assertEqual("-0.00000e+0", fmt("~e", [NegZero])),
     ?assertEqual("-0.0",  io_lib_format:fwrite_g(NegZero)),
     ok.
+-endif.
+-endif.
 
 float_g_test() ->
     ?assertEqual(["5.00000e-2",
