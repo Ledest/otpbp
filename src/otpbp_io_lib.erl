@@ -1,5 +1,9 @@
 -module(otpbp_io_lib).
 
+-ifndef(HAVE_io_lib__format_3).
+% OTP 21.0
+-export([format/3]).
+-endif.
 -ifndef(HAVE_io_lib__bformat_2).
 % OTP 28.0
 -export([bformat/2]).
@@ -35,6 +39,11 @@
 -export([write_string_bin/3]).
 -endif.
 
+-ifndef(HAVE_io_lib__bformat_3).
+-ifdef(HAVE_io_lib__format_3).
+-import(io_lib, [format/3]).
+-endif.
+-endif.
 -ifndef(HAVE_io_lib__bwrite_string_2).
 -ifdef(HAVE_io_lib__bwrite_string_3).
 -import(io_lib, [bwrite_string/3]).
@@ -51,12 +60,16 @@
 -endif.
 -endif.
 
+-ifndef(HAVE_io_lib__format_3).
+format(Format, Data, _Options) -> io_lib:format(Format, Data).
+-endif.
+
 -ifndef(HAVE_io_lib__bformat_2).
 bformat(Format, Data) -> unicode:characters_to_binary(io_lib:format(Format, Data)).
 -endif.
 
 -ifndef(HAVE_io_lib__bformat_3).
-bformat(Format, Data, Options) -> unicode:characters_to_binary(io_lib:format(Format, Data, Options)).
+bformat(Format, Data, Options) -> unicode:characters_to_binary(format(Format, Data, Options)).
 -endif.
 
 -ifndef(HAVE_io_lib__bwrite_1).

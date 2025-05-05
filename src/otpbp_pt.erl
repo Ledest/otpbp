@@ -147,6 +147,7 @@
          {{io_lib, bwrite, 2}, otpbp_io_lib},
          {{io_lib, bwrite_string, 2}, otpbp_io_lib},
          {{io_lib, bwrite_string, 3}, otpbp_io_lib},
+         {{io_lib, format, 3}, otpbp_io_lib},
          {{io_lib, [write, write_bin], 5}, otpbp_io_lib},
          {{json, decode, [1, 3]}, otpbp_json},
          {{json, decode_continue, 2}, otpbp_json},
