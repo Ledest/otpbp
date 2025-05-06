@@ -44,17 +44,22 @@
 -import(io_lib, [format/3]).
 -endif.
 -endif.
--ifndef(HAVE_io_lib__bwrite_string_2).
--ifdef(HAVE_io_lib__bwrite_string_3).
--import(io_lib, [bwrite_string/3]).
--endif.
--endif.
 -ifndef(HAVE_io_lib__write_bin_5).
 -ifdef(HAVE_io_lib__write_5).
 -import(io_lib, [write/5]).
 -endif.
 -endif.
+-ifndef(HAVE_io_lib__bwrite_string_2).
+-ifndef(NEED_IMPORT_io_lib__bwrite_string_3).
+-define(NEED_IMPORT_io_lib__bwrite_string_3, true).
+-endif.
+-endif.
 -ifndef(HAVE_io_lib__write_string_bin_3).
+-ifndef(NEED_IMPORT_io_lib__bwrite_string_3).
+-define(NEED_IMPORT_io_lib__bwrite_string_3, true).
+-endif.
+-endif.
+-ifdef(NEED_IMPORT_io_lib__bwrite_string_3).
 -ifdef(HAVE_io_lib__bwrite_string_3).
 -import(io_lib, [bwrite_string/3]).
 -endif.
