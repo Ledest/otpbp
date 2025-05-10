@@ -108,6 +108,8 @@ float_g_test() ->
                  float_g_1("~g", -4.9999950001, -2, 5)),
     ok.
 
+-ifdef(OTP_RELEASE).
+-if(?OTP_RELEASE >= 24).
 float_w_test() ->
     ?assertEqual("-9007199254740991.0", fmt("~w", [-float((1 bsl 53) -1)])),
     ?assertEqual("-9.007199254740992e15", fmt("~w", [-float(1 bsl 53)])),
@@ -116,6 +118,8 @@ float_w_test() ->
     ?assertEqual("9.007199254740992e15", fmt("~w", [float(1 bsl 53)])),
     ?assertEqual("9.007199254740992e15", fmt("~w", [float((1 bsl 53) + 1)])),
     ok.
+-endif.
+-endif.
 
 otp_5403_test() ->
     ?assertEqual("atom", fmt("~s", [atom])),
