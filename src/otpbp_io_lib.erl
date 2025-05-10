@@ -66,7 +66,8 @@
 -endif.
 
 -ifndef(HAVE_io_lib__format_3).
-format(Format, Data, _Options) -> io_lib:format(Format, Data).
+format(Format, Data, []) -> io_lib:format(Format, Data);
+format(Format, Data, [{chars_limit, L}]) when is_integer(L) -> io_lib:format(Format, Data).
 -endif.
 
 -ifndef(HAVE_io_lib__bformat_2).
