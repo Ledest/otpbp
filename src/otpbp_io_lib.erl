@@ -5,7 +5,7 @@
 -export([limit_term/2]).
 -endif.
 -ifndef(HAVE_io_lib__format_3).
-% OTP 20.0
+% OTP 21.0
 -export([format/3]).
 -endif.
 -ifndef(HAVE_io_lib__write_atom_as_latin1_1).
@@ -125,7 +125,7 @@ test_limit_bitstring(_, _) -> ok.
 
 -ifndef(HAVE_io_lib__format_3).
 format(Format, Data, []) -> io_lib:format(Format, Data);
-format(Format, Data, [{chars_limit, L}]) when is_integer(L), L >= -1 -> io_lib:format(Format, Data).
+format(Format, Data, [{chars_limit, L}]) when is_integer(L) -> io_lib:format(Format, Data).
 -endif.
 
 -ifndef(HAVE_io_lib__write_atom_as_latin1_1).
