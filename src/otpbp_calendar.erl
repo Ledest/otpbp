@@ -195,10 +195,6 @@ local_time_to_system_time(LocalTime, Options) ->
 
 -ifndef(HAVE_calendar__universal_time_to_system_time_1).
 universal_time_to_system_time(DateTime) -> calendar:datetime_to_gregorian_seconds(DateTime) - ?SECONDS_FROM_0_TO_1970.
-
--ifndef(NEED_factor_1).
--define(NEED_factor_1, true).
--endif.
 -endif.
 
 -ifndef(HAVE_calendar__universal_time_to_system_time_2).
