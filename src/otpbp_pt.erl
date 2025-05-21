@@ -105,6 +105,8 @@
          {{erl_pp, legalize_vars, 1}, otpbp_erl_pp},
          {{erlang, get_stacktrace, 0}, otpbp_erlang},
          {{erlang, [get_cookie, set_cookie], 1}, otpbp_erlang},
+         {{erlang, processes_iterator, 0}, otpbp_erlang},
+         {{erlang, processes_next, 1}, otpbp_erlang},
          {{erpc, reqids_new, 0}, {maps, new}},
          {{erpc, [reqids_size, reqids_to_list], 1}, otpbp_erpc},
          {{erpc, [check_response, receive_response, reqids_add, wait_response], 3}, otpbp_erpc},
