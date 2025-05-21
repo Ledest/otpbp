@@ -107,6 +107,8 @@
          {{erlang, get_stacktrace, 0}, otpbp_erlang},
          {{erlang, [get_cookie, set_cookie], 1}, otpbp_erlang},
          {{erlang, iolist_to_iovec, 1}, otpbp_erlang},
+         {{erlang, processes_iterator, 0}, otpbp_erlang},
+         {{erlang, processes_next, 1}, otpbp_erlang},
          {{error_logger, get_format_depth, 0}, otpbp_error_logger},
          {{error_logger, limit_term, 1}, otpbp_error_logger},
          {{erts_internal, [binary_to_integer, list_to_integer], 2}, otpbp_erts_internal},

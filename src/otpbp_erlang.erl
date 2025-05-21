@@ -48,6 +48,14 @@
 % OTP 24.1
 -export([set_cookie/1]).
 -endif.
+-ifndef(HAVE_erlang__processes_iterator_0).
+% OTP 28.0
+-export([processes_iterator/0]).
+-endif.
+-ifndef(HAVE_erlang__processes_next_1).
+% OTP 28.0
+-export([processes_next/1]).
+-endif.
 
 -ifndef(HAVE_erlang__ceil_1).
 -ifdef(HAVE_math__ceil_1).
@@ -103,4 +111,27 @@ get_cookie(Node) -> error(badarg, [Node]).
 -ifndef(HAVE_erlang__set_cookie_1).
 set_cookie(C) when is_atom(C) -> auth:set_cookie(C);
 set_cookie(C) -> error(badarg, [C]).
+-endif.
+
+-ifndef(HAVE_erlang__processes_iterator_0).
+processes_iterator() -> {0, processes()}.
+-endif.
+
+-ifndef(HAVE_erlang__processes_next_1).
+-ifdef(HAVE_erts_internal__processes_next_1).
+processes_next({I, [Pid|Pids]}) -> {Pid, {I, Pids}};
+processes_next({I0, []} = A) ->
+    try erts_internal:processes_next(I0) of
+        none -> none;
+        {I, [Pid|Pids]} -> {Pid, {I, Pids}};
+        {_, []} = I -> processes_next(I)
+    catch
+        error:badarg -> error(badarg, [A])
+    end;
+processes_next(A) -> error(badarg, [A]).
+-else.
+processes_next({I, [Pid|Pids]}) -> {Pid, {I, Pids}};
+processes_next({_, []}) -> none;
+processes_next(A) -> error(badarg, [A]).
+-endif.
 -endif.
