@@ -4,13 +4,17 @@
 % OTP 20.0
 -export([limit_term/2]).
 -endif.
+-ifndef(HAVE_io_lib__write_atom_as_latin1_1).
+% OTP 20.0
+-export([write_atom_as_latin1/1]).
+-endif.
 -ifndef(HAVE_io_lib__format_3).
 % OTP 21.0
 -export([format/3]).
 -endif.
--ifndef(HAVE_io_lib__write_atom_as_latin1_1).
-% OTP 20.0
--export([write_atom_as_latin1/1]).
+-ifndef(HAVE_io_lib__fwrite_3).
+% OTP 21.0
+-export([fwrite/3]).
 -endif.
 -ifndef(HAVE_io_lib__bformat_2).
 % OTP 28.0
@@ -48,8 +52,13 @@
 -endif.
 
 -ifndef(HAVE_io_lib__bformat_3).
--ifdef(HAVE_io_lib__format_3).
--import(io_lib, [format/3]).
+-ifndef(NEED_IMPORT_io_lib__format_3).
+-define(NEED_IMPORT_io_lib__format_3, true).
+-endif.
+-endif.
+-ifndef(HAVE_io_lib__fwrite_3).
+-ifndef(NEED_IMPORT_io_lib__format_3).
+-define(NEED_IMPORT_io_lib__format_3, true).
 -endif.
 -endif.
 -ifndef(HAVE_io_lib__write_bin_5).
@@ -65,6 +74,11 @@
 -ifndef(HAVE_io_lib__write_string_bin_3).
 -ifndef(NEED_IMPORT_io_lib__bwrite_string_3).
 -define(NEED_IMPORT_io_lib__bwrite_string_3, true).
+-endif.
+-endif.
+-ifdef(NEED_IMPORT_io_lib__format_3).
+-ifdef(HAVE_io_lib__format_3).
+-import(io_lib, [format/3]).
 -endif.
 -endif.
 -ifdef(NEED_IMPORT_io_lib__bwrite_string_3).
@@ -186,6 +200,10 @@ test_limit_bitstring(_, _) -> ok.
 -ifndef(HAVE_io_lib__format_3).
 format(Format, Data, []) -> io_lib:format(Format, Data);
 format(Format, Data, [{chars_limit, L}]) when is_integer(L) -> io_lib:format(Format, Data).
+-endif.
+
+-ifndef(HAVE_io_lib__fwrite_3).
+fwrite(Format, Data, Opts) -> format(Format, Data, Opts).
 -endif.
 
 -ifndef(HAVE_io_lib__write_atom_as_latin1_1).
