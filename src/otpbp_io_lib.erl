@@ -4,6 +4,10 @@
 % OTP 21.0
 -export([format/3]).
 -endif.
+-ifndef(HAVE_io_lib__fwrite_3).
+% OTP 21.0
+-export([fwrite/3]).
+-endif.
 -ifndef(HAVE_io_lib__bformat_2).
 % OTP 28.0
 -export([bformat/2]).
@@ -40,8 +44,13 @@
 -endif.
 
 -ifndef(HAVE_io_lib__bformat_3).
--ifdef(HAVE_io_lib__format_3).
--import(io_lib, [format/3]).
+-ifndef(NEED_IMPORT_io_lib__format_3).
+-define(NEED_IMPORT_io_lib__format_3, true).
+-endif.
+-endif.
+-ifndef(HAVE_io_lib__fwrite_3).
+-ifndef(NEED_IMPORT_io_lib__format_3).
+-define(NEED_IMPORT_io_lib__format_3, true).
 -endif.
 -endif.
 -ifndef(HAVE_io_lib__write_bin_5).
@@ -59,6 +68,11 @@
 -define(NEED_IMPORT_io_lib__bwrite_string_3, true).
 -endif.
 -endif.
+-ifdef(NEED_IMPORT_io_lib__format_3).
+-ifdef(HAVE_io_lib__format_3).
+-import(io_lib, [format/3]).
+-endif.
+-endif.
 -ifdef(NEED_IMPORT_io_lib__bwrite_string_3).
 -ifdef(HAVE_io_lib__bwrite_string_3).
 -import(io_lib, [bwrite_string/3]).
@@ -68,6 +82,10 @@
 -ifndef(HAVE_io_lib__format_3).
 format(Format, Data, []) -> io_lib:format(Format, Data);
 format(Format, Data, [{chars_limit, L}]) when is_integer(L) -> io_lib:format(Format, Data).
+-endif.
+
+-ifndef(HAVE_io_lib__fwrite_3).
+fwrite(Format, Data, Opts) -> format(Format, Data, Opts).
 -endif.
 
 -ifndef(HAVE_io_lib__bformat_2).
