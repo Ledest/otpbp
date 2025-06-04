@@ -1,5 +1,4 @@
 - erlang:system_info/1
 - transform types
 - more modules/functions backport
-- forwardport modules/functions
 - replace erlang:get_stacktrace/0 to new try/catch syntax in Erlang/OTP >= 21
