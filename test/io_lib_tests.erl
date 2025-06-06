@@ -235,10 +235,7 @@ io_lib_width_too_small_test() ->
 
 float_g_1(Fmt, V, Min, Max) -> [fmt(Fmt, [V * math:pow(10, E)]) || E <- lists:seq(Min, Max)].
 
-fmt(Fmt, Args) ->
-    check_bin_fmt(lists:flatten(io_lib:build_text(io_lib:scan_format(Fmt, Args))), Fmt, Args, []).
-
-fmt(Fmt, Args, Opts) -> check_bin_fmt(lists:flatten(io_lib:format(Fmt, Args, Opts)), Fmt, Args, Opts).
+fmt(Fmt, Args) -> check_bin_fmt(lists:flatten(io_lib:build_text(io_lib:scan_format(Fmt, Args))), Fmt, Args, []).
 
 check_bin_fmt(OrigRes, Fmt, Args, Opts) ->
     Res = unicode:characters_to_list(io_lib:bformat(Fmt, Args, Opts)),
