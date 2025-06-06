@@ -1,9 +1,7 @@
 -module(json_tests).
 
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE =:= 27).
 -define(OTP_RELEASE_27, true).
--endif.
 -endif.
 
 -ifndef(OTP_RELEASE_27).

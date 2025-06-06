@@ -415,10 +415,8 @@ proxy_arguments_test() ->
                  parse("node2.org status -a bcd", Cmd)),
     ?assertMatch({ok, #{args := ["-app", "key"], node := "node2.org"}, _, _}, parse("node2.org state -app key", Cmd)).
 
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE =:= 26).
 -define(OTP_RELEASE_26, true).
--endif.
 -endif.
 
 -ifndef(OTP_RELEASE_26).
