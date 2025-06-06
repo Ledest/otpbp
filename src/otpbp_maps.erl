@@ -1,7 +1,5 @@
 -module(otpbp_maps).
 
--compile([{parse_transform, otpbp_pt}]).
-
 -ifndef(HAVE_maps__merge_with_3).
 % OTP 24.0
 -export([merge_with/3]).
