@@ -1,9 +1,7 @@
 -module(otpbp_crypto).
 
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE =:= 23).
 -compile({nowarn_deprecated_function, [{crypto, hmac, 3}, {crypto, hmac, 4}]}).
--endif.
 -endif.
 
 -ifndef(HAVE_crypto__dss_sign_2).

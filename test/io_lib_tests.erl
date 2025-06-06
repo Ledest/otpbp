@@ -21,7 +21,6 @@ os_test() ->
     ?assertEqual(lists:map(fun({N, V}) -> N ++ [$=|V] end, Env), os:getenv()),
     ok.
 
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 24).
 format_neg_zero_test() ->
     <<NegZero/float>> = <<16#8000000000000000:64>>,
@@ -30,7 +29,6 @@ format_neg_zero_test() ->
     ?assertEqual("-0.00000e+0", fmt("~e", [NegZero])),
     ?assertEqual("-0.0",  io_lib_format:fwrite_g(NegZero)),
     ok.
--endif.
 -endif.
 
 float_g_test() ->
@@ -108,7 +106,6 @@ float_g_test() ->
                  float_g_1("~g", -4.9999950001, -2, 5)),
     ok.
 
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 24).
 float_w_test() ->
     ?assertEqual("-9007199254740991.0", fmt("~w", [-float((1 bsl 53) -1)])),
@@ -118,7 +115,6 @@ float_w_test() ->
     ?assertEqual("9.007199254740992e15", fmt("~w", [float(1 bsl 53)])),
     ?assertEqual("9.007199254740992e15", fmt("~w", [float((1 bsl 53) + 1)])),
     ok.
--endif.
 -endif.
 
 otp_5403_test() ->

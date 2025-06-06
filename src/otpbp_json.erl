@@ -306,10 +306,8 @@ encode_binary_escape_all(Bin) when is_binary(Bin) -> escape_all_ascii(Bin, [$"],
 -endif.
 
 -ifndef(HAVE_json__encode_float_1).
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 25).
 -define(HAVE_float_to_binary_2__short, true).
--endif.
 -endif.
 -ifdef(HAVE_float_to_binary_2__short).
 encode_float(Float) -> float_to_binary(Float, [short]).
@@ -634,10 +632,8 @@ list_loop([], _Encode) -> "]".
 -endif.
 
 -ifdef(NEED_do_encode_map_2).
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 26).
 -define(HAVE_MAP_COMPREHENTION, true).
--endif.
 -endif.
 -ifdef(HAVE_MAP_COMPREHENTION).
 do_encode_map(Map, Encode) when is_function(Encode, 2) ->
