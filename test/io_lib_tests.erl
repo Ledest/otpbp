@@ -22,7 +22,7 @@ os_test() ->
     ok.
 
 -ifdef(OTP_RELEASE).
--if(?OTP_RELEASE >= 21).
+-if(?OTP_RELEASE >= 24).
 format_neg_zero_test() ->
     <<NegZero/float>> = <<16#8000000000000000:64>>,
     ?assertEqual("-0.000000", fmt("~f", [NegZero])),
