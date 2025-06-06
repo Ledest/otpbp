@@ -388,7 +388,6 @@ function_transform(Node, #param{} = P) ->
     case type(Node) of
         application -> application_transform(Node, P);
         implicit_fun -> implicit_fun_transform(Node, P);
-        try_expr -> try_expr_transform(Node);
         _ -> false
     end.
 
@@ -464,96 +463,6 @@ implicit_fun_transform(Node, #param{funs = L} = P) ->
     catch
         throw:syntax_error -> false
     end.
-
--compile({inline, try_expr_transform/1}).
-try_expr_transform(Node) ->
-    case lists:mapfoldr(fun(H, A) ->
-                            case try_expr_handler_transform(H) of
-                                false -> {H, A};
-                                NH -> {NH, true}
-                            end
-                        end, false, erl_syntax:try_expr_handlers(Node)) of
-        {_, false} -> false;
-        {Hs, _} ->
-            cp(Node,
-               erl_syntax:try_expr(erl_syntax:try_expr_body(Node), erl_syntax:try_expr_clauses(Node),
-                                   Hs, erl_syntax:try_expr_after(Node)))
-    end.
-
--compile({inline, try_expr_handler_transform/1}).
-try_expr_handler_transform(Node) ->
-    case type(Node) =:= clause andalso try_expr_clause_patterns_transform(erl_syntax:clause_patterns(Node)) of
-        {P, {true, B}} ->
-            cp(Node, erl_syntax:clause(P, erl_syntax:clause_guard(Node), B ++ erl_syntax:clause_body(Node)));
-        _ -> false
-    end.
-
--compile({inline, try_expr_clause_patterns_transform/1}).
-try_expr_clause_patterns_transform(Ps) ->
-    lists:mapfoldr(fun(P, {_, L} = A) ->
-                       case type(P) of
-                           class_qualifier ->
-                               B = erl_syntax:class_qualifier_body(P),
-                               case type(B) of
-                                   module_qualifier ->
-                                       M = mqb(B),
-                                       case type(M) of
-                                           variable -> {class_qualifier(P, B), {true, match_expr_list(M, L)}};
-                                           underscore -> {class_qualifier(P, B), {true, L}};
-                                           _ -> {P, A}
-                                       end;
-                                   match_expr ->
-                                       E = erl_syntax:match_expr_body(B),
-                                       case type(E) of
-                                           module_qualifier ->
-                                               M = mqb(E),
-                                               case type(M) of
-                                                   variable ->
-                                                       {class_qualifier_match(P, B, E), {true, match_expr_list(M, L)}};
-                                                   underscore -> {class_qualifier_match(P, B, E), {true, L}};
-                                                   _ -> {P, A}
-                                               end;
-                                           _ -> {P, A}
-                                       end;
-                                   _ -> {P, A}
-                               end;
-                           module_qualifier ->
-                               M = mqb(P),
-                               case type(M) of
-                                   variable -> {class_qualifier(P), {true, match_expr_list(M, L)}};
-                                   underscore -> {class_qualifier(P), {true, L}};
-                                   _ -> {P, A}
-                               end;
-                           match_expr ->
-                               E = erl_syntax:match_expr_body(P),
-                               case type(E) of
-                                   module_qualifier ->
-                                       M = mqb(E),
-                                       case type(M) of
-                                           variable -> {class_qualifier_match(P, E), {true, match_expr_list(M, L)}};
-                                           underscore -> {class_qualifier_match(P, E), {true, L}};
-                                           _ -> {P, A}
-                                       end;
-                                   _ -> {P, A}
-                               end;
-                           _ -> {P, A}
-                       end
-                   end, {false, []}, Ps).
-
-class_qualifier(P) -> class_qualifier(P, P, erl_syntax:atom('throw')).
-
-class_qualifier(P, B) -> class_qualifier(P, B, erl_syntax:class_qualifier_argument(P)).
-
-class_qualifier(P, B, C) -> cp(P, erl_syntax:class_qualifier(C, mqa(B))).
-
-class_qualifier_match(B, E) -> class_qualifier_match(B, B, E, cp(B, erl_syntax:atom('throw'))).
-
-class_qualifier_match(P, B, E) -> class_qualifier_match(P, B, E, erl_syntax:class_qualifier_argument(P)).
-
-class_qualifier_match(P, B, E, C) ->
-   cp(P, erl_syntax:class_qualifier(C, cp(B, erl_syntax:match_expr(erl_syntax:match_expr_pattern(B), mqa(E))))).
-
-match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, application(local, M, [], erlang, get_stacktrace))))|L].
 
 atom(P, A) when is_tuple(P), is_atom(A) -> cp(P, erl_syntax:atom(A)).
 
