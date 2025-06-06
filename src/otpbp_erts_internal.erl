@@ -1,9 +1,5 @@
 -module(otpbp_erts_internal).
 
--ifndef(HAVE_erts_internal__map_next_3).
-% OTP 21.0
--export([map_next/3]).
--endif.
 -ifndef(HAVE_erts_internal__binary_to_integer_2).
 % OTP 26.1
 -export([binary_to_integer/2]).
@@ -11,13 +7,6 @@
 -ifndef(HAVE_erts_internal__list_to_integer_2).
 % OTP 26.1
 -export([list_to_integer/2]).
--endif.
-
--ifndef(HAVE_erts_internal__map_next_3).
-% OTP 21.0
-map_next(0, M, iterator) when is_map(M) -> lists:foldr(fun({K, V}, A) -> {K, V, A} end, none, maps:to_list(M));
-map_next(L, M, iterator) when is_list(L), is_map(M) -> lists:foldl(fun(K, A) -> {K, maps:get(K, M), A} end, none, L);
-map_next(0, M, L) when is_list(L) -> lists:reverse(maps:fold(fun(K, V, A) -> [{K, V}|A] end, [], M), L).
 -endif.
 
 -define(DIGITS_PER_SINT,

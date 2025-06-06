@@ -27,7 +27,7 @@ normalize_test() ->
     ?assertEqual(<<"/foo/%2F/bar">>, uri_string:normalize(<<"/foo/%2f/%62ar">>)),
     ?assertEqual(<<"https://localhost/">>, uri_string:normalize(<<"https://localhost">>)),
     ?assertEqual(<<"https://localhost/">>, uri_string:normalize(<<"https://localhost/">>)),
-    (OTPRelease >= 25 orelse OTPRelease < 21) andalso
+    OTPRelease >= 25 andalso
     begin
     ?assertEqual(<<"https://localhost/">>, uri_string:normalize(<<"https://localhost:/">>)),
     ?assertEqual(<<"https://localhost/">>, uri_string:normalize(<<"https://localhost:">>)),
@@ -56,7 +56,7 @@ normalize_test() ->
     ?assertEqual(<<"tftp://localhost">>,
                  uri_string:normalize(#{scheme => <<"tftp">>, port => 69, path => <<>>, host => <<"localhost">>})),
     ?assertEqual("/foo/%2F/bar", uri_string:normalize(#{path => "/foo/%2f/%62ar"})),
-    (OTPRelease >= 25 orelse OTPRelease < 21) andalso
+    OTPRelease >= 25 andalso
     begin
     ?assertEqual(<<"https://localhost/">>,
                  uri_string:normalize(#{scheme => <<"https">>, port => undefined, path => <<>>,
@@ -81,7 +81,7 @@ normalize_test() ->
     ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize(<<"http://local>host">>)),
     ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize("http://[192.168.0.1]", [return_map])),
     ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize(<<"http://[192.168.0.1]">>, [return_map])),
-    (OTPRelease >= 24 orelse OTPRelease < 21) andalso
+    OTPRelease >= 24 andalso
     ?assertEqual({error, invalid_utf8, <<47, 47, 0, 0, 0, 246>>},
                  uri_string:percent_decode(uri_string:normalize("//%00%00%00%F6"))),
     %
@@ -158,7 +158,7 @@ normalize_test() ->
                  uri_string:percent_decode(uri_string:normalize("//example.com/#%E5%90%88%E6%B0%97%E9%81%93",
                                                                 [return_map]))),
     %
-    (OTPRelease >= 24 orelse OTPRelease < 21) andalso
+    OTPRelease >= 24 andalso
     begin
     ?assertEqual({error, {invalid, {host, {invalid_utf8, <<0, 0, 0, 246>>}}}},
                  uri_string:percent_decode(uri_string:normalize(#{host => "%00%00%00%F6", path => ""}, [return_map]))),
@@ -650,7 +650,7 @@ recompose_test() ->
     ?assertEqual("FOo://%C3%B6", uri_string:recompose(#{host => "%C3%B6",path => [],scheme => "FOo"})),
     ?assertEqual("FOo://%C3%B6", uri_string:recompose(#{host => "ö",path => [],scheme => "FOo"})),
     %
-    (OTPRelease >= 23 orelse OTPRelease < 21) andalso
+    OTPRelease >= 23 andalso
     begin
     ?assertEqual("//example.com/.foo", uri_string:recompose(#{host => "example.com", path => ".foo"})),
     ?assertEqual(<<"//example.com/foo">>, uri_string:recompose(#{host => <<"example.com">>, path => <<"foo">>}))

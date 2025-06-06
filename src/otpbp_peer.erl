@@ -42,14 +42,6 @@
 -ifndef(HAVE_peer__start_1).
 -author("maximfca@gmail.com").
 
--ifndef(OTP_RELEASE).
--compile([{parse_transform, otpbp_pt}]).
--else.
--if(?OTP_RELEASE < 21).
--compile([{parse_transform, otpbp_pt}]).
--endif.
--endif.
-
 %% API
 -export([
          start_link/0,

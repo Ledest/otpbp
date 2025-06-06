@@ -2,14 +2,6 @@
 
 -compile([{parse_transform, otpbp_pt}]).
 
--ifndef(HAVE_maps__iterator_1).
-% OTP 21.0
--export([iterator/1]).
--endif.
--ifndef(HAVE_maps__next_1).
-% OTP 21.0
--export([next/1]).
--endif.
 -ifndef(HAVE_maps__merge_with_3).
 % OTP 24.0
 -export([merge_with/3]).
@@ -43,18 +35,6 @@
 -export([groups_from_list/3]).
 -endif.
 
--ifndef(HAVE_maps__iterator_1).
-iterator(M) when is_map(M) -> [0|M];
-iterator(M) -> error({badmap, M}, [M]).
--endif.
-
--ifndef(HAVE_maps__next_1).
-next({_K, _V, _I} = KVI) -> KVI;
-next([0|Map]) when is_map(Map) -> erts_internal:map_next(0, Map, iterator);
-next(none) -> none;
-next(Iter) -> error(badarg, [Iter]).
--endif.
-
 -ifndef(HAVE_maps__merge_with_3).
 merge_with(C, M1, M2) ->
     is_function(C, 3) orelse error(badarg, [C, M1, M2]),
@@ -85,7 +65,6 @@ intersect(M1, M2) ->
 -endif.
 
 -ifndef(HAVE_maps__filtermap_2).
--ifdef(HAVE_maps__iterator_1).
 filtermap(Fun, Map) when is_function(Fun, 2) ->
     case Map of
         #{} -> filtermap_map(Fun, Map);
@@ -106,28 +85,7 @@ filtermap_iterator(Pred, Iter) ->
                                  end
                              end,
                              [], Iter)).
--else.
-filtermap(Fun, Map) when is_function(Fun, 2) ->
-    case Map of
-        #{} -> filtermap_map(Fun, Map);
-        [P|M] when is_map(M), is_integer(P) orelse is_list(P) -> filtermap_map(Fun, M);
-        {_, _, _} -> filtermap_iterator(Fun, Map);
-        none -> #{};
-        _ -> error({badmap, Map}, [Fun, Map])
-    end;
-filtermap(Fun, Map) -> error(badarg, [Fun, Map]).
 
-filtermap_iterator(Pred, KVI) -> filtermap_iterator(Pred, KVI, []).
-
-filtermap_iterator(Pred, {K, V, I}, A) ->
-    filtermap_iterator(Pred, I,
-                       case Pred(K, V) of
-                           true -> [{K, V}|A];
-                           {true, NewV} -> [{K, NewV}|A];
-                           false -> A
-                       end);
-filtermap_iterator(_Pred, none, A) -> maps:from_list(A).
--endif.
 filtermap_map(Pred, Map) ->
     maps:fold(fun(K, V, A) ->
                   case Pred(K, V) of
