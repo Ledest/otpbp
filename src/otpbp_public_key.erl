@@ -36,10 +36,6 @@
 % OTP 23.1
 -export([pkix_subject_id/1]).
 -endif.
--ifndef(HAVE_public_key__pkix_verify_hostname_match_fun_1).
-% OTP 21.0
--export([pkix_verify_hostname_match_fun/1]).
--endif.
 
 -ifndef(HAVE_public_key__cacerts_clear_0).
 cacerts_clear() -> pubkey_os_cacerts:clear().
@@ -98,34 +94,6 @@ pkix_hash_type('id-md5') -> md5.
 -ifndef(HAVE_public_key__pkix_subject_id_1).
 pkix_subject_id(#'OTPCertificate'{} = OtpCert) -> pubkey_cert:subject_id(OtpCert);
 pkix_subject_id(Cert) when is_binary(Cert) -> pubkey_cert:subject_id(public_key:pkix_decode_cert(Cert, otp)).
--endif.
-
--ifndef(HAVE_public_key__pkix_verify_hostname_match_fun_1).
-pkix_verify_hostname_match_fun(https) ->
-    fun({dns_id, [_|_] = FQDN}, {dNSName, [_|_] = Name}) -> verify_hostname_match_wildcard(FQDN, Name);
-       (_, _) -> default
-    end.
-
--compile({inline, verify_hostname_match_wildcard/2}).
-verify_hostname_match_wildcard(FQDN, Name) ->
-    [[F1|Fs], [N1|Ns]] = [string:tokens(to_lower_ascii(S), ".") || S <- [FQDN, Name]],
-    match_wild(F1, N1) andalso Fs =:= Ns.
-
-to_lower_ascii(S) when is_list(S) -> lists:map(fun to_lower_ascii/1, S);
-to_lower_ascii({T, _} = X) when T =:= ip; T =:= iPAddress -> X;
-to_lower_ascii({T, S}) -> {T, to_lower_ascii(S)};
-to_lower_ascii(C) when C >= $A, C =< $Z -> C + ($a - $A);
-to_lower_ascii(C) -> C.
-
-match_wild(A, [$*|B]) -> match_wild_sfx(lists:reverse(A), lists:reverse(B));
-match_wild([C|A], [C|B]) -> match_wild(A, B);
-match_wild(A, B) -> A =:= [] andalso B =:= [].
-
-match_wild_sfx([$*|_], _) -> false; % Bad name (no wildcards allowed)
-match_wild_sfx(_, [$*|_]) -> false; % Bad pattern (no more wildcards allowed)
-match_wild_sfx([A|Ar], [A|Br]) -> match_wild_sfx(Ar, Br);
-match_wild_sfx(Ar, []) -> not lists:member($*, Ar); % Chk for bad name (= wildcards)
-match_wild_sfx(_, _) -> false.
 -endif.
 
 -ifdef(NEED_default_options_1).

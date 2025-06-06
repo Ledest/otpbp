@@ -1,9 +1,5 @@
 -module(otpbp_lists).
 
--ifndef(HAVE_lists__search_2).
-% OTP 21.0
--export([search/2]).
--endif.
 -ifndef(HAVE_lists__enumerate_1).
 % OTP 25.0
 -export([enumerate/1]).
@@ -50,15 +46,6 @@
 -ifdef(HAVE_lists__enumerate_3).
 -import(lists, [enumerate/3]).
 -endif.
--endif.
-
--ifndef(HAVE_lists__search_2).
-search(F, [H|T]) ->
-    case F(H) of
-        true -> {value, H};
-        false -> search(F, T)
-    end;
-search(F, []) when is_function(F, 1) -> false.
 -endif.
 
 -ifndef(HAVE_lists__enumerate_1).
