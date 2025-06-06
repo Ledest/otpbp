@@ -1,7 +1,5 @@
 -module(otpbp_calendar).
 
--compile([{parse_transform, otpbp_pt}]).
-
 -ifndef(HAVE_calendar__local_time_to_system_time_1).
 % OTP 28.0
 -export([local_time_to_system_time/1]).

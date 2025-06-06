@@ -1,7 +1,5 @@
 -module(otpbp_eldap).
 
--compile([{parse_transform, otpbp_pt}]).
-
 -ifndef(HAVE_eldap__paged_result_control_1).
 % OTP 24.3
 -export([paged_result_control/1]).
