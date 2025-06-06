@@ -2,10 +2,8 @@
 
 -compile({parse_transform, otpbp_pt}).
 
--ifdef(OTP_RELEASE).
 -if(?OTP_RELEASE >= 23).
 -compile({nowarn_deprecated_function, [{http_uri, decode, 1}, {http_uri, encode, 1}]}).
--endif.
 -endif.
 
 -include_lib("eunit/include/eunit.hrl").

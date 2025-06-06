@@ -1,7 +1,5 @@
 -module(inets_tests).
 
--ifdef(OTP_RELEASE).
--if(?OTP_RELEASE >= 21).
 -compile({parse_transform, otpbp_pt}).
 
 -if(?OTP_RELEASE >= 23).
@@ -173,5 +171,3 @@ http_uri_test() ->
     ?assertEqual("foo\r\n", http_uri:decode("foo%0D%0A")),
     ?assertEqual(<<"foo\r\n">>, http_uri:decode(<<"foo%0D%0A">>)),
     ok.
--endif.
--endif.

@@ -4,14 +4,10 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--ifdef(OTP_RELEASE).
--if(?OTP_RELEASE >= 21).
 -if(?OTP_RELEASE >= 23).
 -define(OTP_RELEASE_23, true).
 -else.
 -compile({nowarn_deprecated_function, {erlang, get_stacktrace, 0}}).
--endif.
--endif.
 -endif.
 
 -ifndef(OTP_RELEASE_23).
