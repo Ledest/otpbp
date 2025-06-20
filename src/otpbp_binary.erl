@@ -9,7 +9,7 @@
 -export([encode_hex/1]).
 -endif.
 -ifndef(HAVE_binary__encode_hex_2).
-% OTP 25.3
+% OTP 26.0
 -export([encode_hex/2]).
 -endif.
 -ifndef(HAVE_binary__join_2).
