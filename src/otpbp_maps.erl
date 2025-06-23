@@ -129,41 +129,55 @@ intersect(M1, M2) ->
 -ifdef(HAVE_maps__iterator_1).
 filtermap(Fun, Map) when is_function(Fun, 2) ->
     case Map of
-        #{} -> filter_map(Fun, Map);
-        [0|M] when is_map(M) -> filter_map(Fun, M);
-        [I|M] when is_integer(I), is_map(M) -> filter_iterator(Fun, Map);
-        {_, _, _} -> filter_iterator(Fun, Map);
+        #{} -> filtermap_map(Fun, Map);
+        [0|M] when is_map(M) -> filtermap_map(Fun, M);
+        [P|M] when is_map(M), is_integer(P) orelse is_list(P) -> filtermap_iterator(Fun, Map);
+        {_, _, _} -> filtermap_iterator(Fun, Map);
         none -> #{};
         _ -> error({badmap, Map}, [Fun, Map])
     end;
 filtermap(Fun, Map) -> error(badarg, [Fun, Map]).
 
-filter_iterator(Pred, Iter) ->
+filtermap_iterator(Pred, Iter) ->
     maps:from_list(maps:fold(fun(K, V, A) ->
                                  case Pred(K, V) of
                                      true -> [{K, V}|A];
                                      {true, NewV} -> [{K, NewV}|A];
                                      false -> A
                                  end
-                             end, [], Iter)).
+                             end,
+                             [], Iter)).
 -else.
 filtermap(Fun, Map) when is_function(Fun, 2) ->
     case Map of
-        #{} -> filter_map(Fun, Map);
-        [0|M] when is_map(M) -> filter_map(Fun, M);
+        #{} -> filtermap_map(Fun, Map);
+        [P|M] when is_map(M), is_integer(P) orelse is_list(P) -> filtermap_map(Fun, M);
+        {_, _, _} -> filtermap_iterator(Fun, Map);
         none -> #{};
         _ -> error({badmap, Map}, [Fun, Map])
     end;
 filtermap(Fun, Map) -> error(badarg, [Fun, Map]).
+
+filtermap_iterator(Pred, KVI) -> filtermap_iterator(Pred, KVI, []).
+
+filtermap_iterator(Pred, {K, V, I}, A) ->
+    filtermap_iterator(Pred, I,
+                       case Pred(K, V) of
+                           true -> [{K, V}|A];
+                           {true, NewV} -> [{K, NewV}|A];
+                           false -> A
+                       end);
+filtermap_iterator(_Pred, none, A) -> maps:from_list(A).
 -endif.
-filter_map(Pred, Map) ->
+filtermap_map(Pred, Map) ->
     maps:fold(fun(K, V, A) ->
                   case Pred(K, V) of
                       true -> A;
                       {true, NewV} -> A#{K := NewV};
                       false -> maps:remove(K, A)
                   end
-              end, Map, Map).
+              end,
+              Map, Map).
 -endif.
 -ifndef(HAVE_maps__from_keys_2).
 from_keys(Keys, Value) when is_list(Keys) ->
@@ -177,13 +191,32 @@ from_keys(Keys, Value) -> error(badarg, [Keys, Value]).
 -endif.
 
 -ifndef(HAVE_maps__foreach_2).
+-ifdef(HAVE_maps__iterator_1).
+foreach(Fun, MapOrIter) when is_function(Fun, 2) -> foreach_map(Fun, MapOrIter);
+foreach(Fun, MapOrIter) -> error(badarg, [Fun, MapOrIter]).
+-compile({inline, [foreach_map/2]}).
+-else.
 foreach(Fun, MapOrIter) when is_function(Fun, 2) ->
+    case MapOrIter of
+        #{} -> foreach_map(Fun, MapOrIter);
+        [P|M] when is_map(M), is_integer(P) orelse is_list(P) -> foreach_map(Fun, M);
+        {_, _, _} -> foreach_iterator(Fun, MapOrIter);
+        none -> ok;
+        _ -> error({badmap, MapOrIter}, [Fun, MapOrIter])
+    end;
+foreach(Fun, MapOrIter) -> error(badarg, [Fun, MapOrIter]).
+
+foreach_iterator(Fun, {K, V, I}) ->
+    Fun(K, V),
+    foreach_iterator(Fun, I);
+foreach_iterator(_Fun, none) -> ok.
+-endif.
+foreach_map(Fun, Map) ->
     maps:fold(fun(K, V, _) ->
                   Fun(K, V),
                   ok
               end,
-              ok, MapOrIter);
-foreach(Fun, MapOrIter) -> error(badarg, [Fun, MapOrIter]).
+              ok, Map).
 -endif.
 
 -ifndef(HAVE_maps__groups_from_list_2).
