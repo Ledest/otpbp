@@ -22,53 +22,6 @@ iterator_1_test() ->
     ?assertEqual(lists:sort(iter_kv(maps:iterator(M3))), lists:sort(maps:to_list(maps:iterator(M3)))),
     ok.
 
-iterator_2_test() ->
-    AOrdCmpFun = fun(A, B) -> A =< B end,
-    ARevCmpFun = fun(A, B) -> B =< A end,
-    %% Small map test
-    M0 = #{a => 1, b => 2},
-    TOrdI0 = maps:iterator(M0, ordered),
-    {_, _, TOrdI1} = maps:next(TOrdI0),
-    {_, _, TOrdI2} = maps:next(TOrdI1),
-    ?assertMatch({a, 1, _}, maps:next(TOrdI0)),
-    ?assertMatch({b, 2, _}, maps:next(TOrdI1)),
-    ?assertEqual(none, maps:next(TOrdI2)),
-    TRevI0 = maps:iterator(M0, reversed),
-    {_, _, TRevI1} = maps:next(TRevI0),
-    {_, _, TRevI2} = maps:next(TRevI1),
-    ?assertMatch({b, 2, _}, maps:next(TRevI0)),
-    ?assertMatch({a, 1, _}, maps:next(TRevI1)),
-    ?assertEqual(none, maps:next(TRevI2)),
-    AOrdI0 = maps:iterator(M0, AOrdCmpFun),
-    {_, _, AOrdI1} = maps:next(AOrdI0),
-    {_, _, AOrdI2} = maps:next(AOrdI1),
-    ?assertMatch({a, 1, _}, maps:next(AOrdI0)),
-    ?assertMatch({b, 2, _}, maps:next(AOrdI1)),
-    ?assertEqual(none, maps:next(AOrdI2)),
-    ARevI0 = maps:iterator(M0, ARevCmpFun),
-    {_, _, ARevI1} = maps:next(ARevI0),
-    {_, _, ARevI2} = maps:next(ARevI1),
-    ?assertMatch({b, 2, ARevI1}, maps:next(ARevI0)),
-    ?assertMatch({a, 1, ARevI2}, maps:next(ARevI1)),
-    ?assertEqual(none, maps:next(ARevI2)),
-    ?assertEqual([{a, 1}, {b, 2}], maps:to_list(TOrdI0)),
-    ?assertEqual([{a, 1}, {b, 2}], maps:to_list(AOrdI0)),
-    ?assertEqual([{b, 2}, {a, 1}], maps:to_list(TRevI0)),
-    ?assertEqual([{b, 2}, {a, 1}], maps:to_list(ARevI0)),
-    %% Large map test
-    M2 = maps:from_list([{{k, I}, I} || I <- lists:seq(1, 200)]),
-    iterator_2_check_order(M2, ordered, reversed),
-    iterator_2_check_order(M2, AOrdCmpFun, ARevCmpFun),
-    %% Larger map test
-    M3 = maps:from_list([{{k, I}, I} || I <- lists:seq(1, 10000)]),
-    iterator_2_check_order(M3, ordered, reversed),
-    iterator_2_check_order(M3, AOrdCmpFun, ARevCmpFun),
-    %% Float and integer keys
-    M4 = #{-1.0 => a, +0.0 => b, -1 => c, 0 => d},
-    ?assertEqual([{-1, c}, {0, d}, {-1.0, a}, {+0.0, b}], maps:to_list(maps:iterator(M4, ordered))),
-    iterator_2_check_order(M4, ordered, reversed),
-    ok.
-
 maps_test() ->
     %% merge_with/3
     Small = #{1 => 1, 2 => 3},
@@ -240,26 +193,6 @@ random_map({SizeConstant, _, _} = InitSeed) ->
                            {#{}, rand:seed_s(exsplus, InitSeed)},
                            lists:seq(1, SizeConstant)),
     Ret.
-
-iterator_2_check_order(M, OrdOption, RevOption) ->
-    OrdCmpFun = iterator_2_option_to_fun(OrdOption),
-    RevCmpFun = iterator_2_option_to_fun(RevOption),
-    OrdKVCmpFun = fun({A, _}, {B, _}) -> OrdCmpFun(A, B) end,
-    ?assertEqual(lists:sort(fun({A, _}, {B, _}) -> RevCmpFun(A, B) end, maps:to_list(M)),
-                 lists:reverse(lists:sort(OrdKVCmpFun, maps:to_list(M)))),
-    Iter = maps:iterator(M, undefined),
-    OrdIter = maps:iterator(M, OrdOption),
-    RevIter = maps:iterator(M, RevOption),
-    ?assertEqual(lists:sort(OrdKVCmpFun, iter_kv(Iter)), lists:sort(OrdKVCmpFun, maps:to_list(Iter))),
-    ?assertEqual(lists:sort(OrdKVCmpFun, iter_kv(Iter)), iter_kv(OrdIter)),
-    ?assertEqual(lists:sort(OrdKVCmpFun, iter_kv(Iter)), maps:to_list(OrdIter)),
-    ?assertEqual(iter_kv(OrdIter), maps:to_list(OrdIter)),
-    ?assertEqual(iter_kv(RevIter), maps:to_list(RevIter)),
-    ok.
-
-iterator_2_option_to_fun(ordered) -> fun(A, B) -> erts_internal:cmp_term(A, B) =< 0 end;
-iterator_2_option_to_fun(reversed) -> fun(A, B) -> erts_internal:cmp_term(B, A) =< 0 end;
-iterator_2_option_to_fun(F) when is_function(F, 2) -> F.
 
 iter_kv(I) ->
     case maps:next(I) of

@@ -18,10 +18,6 @@
 % OTP 21.0
 -export([iterator/1]).
 -endif.
--ifndef(HAVE_maps__iterator_2).
-% OTP 26.0
--export([iterator/2]).
--endif.
 -ifndef(HAVE_maps__next_1).
 % OTP 21.0
 -export([next/1]).
@@ -93,18 +89,9 @@ iterator(M) when is_map(M) -> [0|M];
 iterator(M) -> error({badmap, M}, [M]).
 -endif.
 
--ifndef(HAVE_maps__iterator_2).
-iterator(M, undefined) when is_map(M) -> [0|M];
-iterator(M, ordered) when is_map(M) -> [lists:sort(fun(A, B) -> erts_internal:cmp_term(A, B) =< 0 end, maps:keys(M))|M];
-iterator(M, reversed) when is_map(M) -> [lists:sort(fun(A, B) -> erts_internal:cmp_term(A, B) >= 0 end, maps:keys(M))|M];
-iterator(M, F) when is_map(M), is_function(F, 2) -> [lists:sort(F, maps:keys(M))|M];
-iterator(M, O) -> error(badarg, [M, O]).
--endif.
-
 -ifndef(HAVE_maps__next_1).
 next({_K, _V, _I} = KVI) -> KVI;
 next([0|Map]) when is_map(Map) -> erts_internal:map_next(0, Map, iterator);
-next([L|Map]) when is_list(L), is_map(Map) -> lists:foldl(fun(K, A) -> {K, maps:get(K, Map), A} end, none, L);
 next(none) -> none;
 next(Iter) -> error(badarg, [Iter]).
 -endif.
