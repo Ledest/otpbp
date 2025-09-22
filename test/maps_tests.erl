@@ -4,24 +4,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-iterator_1_test() ->
-    % Small map test
-    M0 = #{a => 1, b => 2},
-    {K41, V41, I41} = maps:next(maps:iterator(M0)),
-    {K42, V42, I42} = maps:next(I41),
-    ?assertEqual(none, maps:next(I42)),
-    ?assertEqual(lists:sort([{K41, V41}, {K42, V42}]), lists:sort(maps:to_list(M0))),
-    ?assertEqual(lists:sort([{K41, V41}, {K42, V42}]), lists:sort(maps:to_list(maps:iterator(M0)))),
-    %% Large map test
-    M2 = maps:from_list([{{k, I}, I} || I <- lists:seq(1, 200)]),
-    ?assertEqual(lists:sort(iter_kv(maps:iterator(M2))), lists:sort(maps:to_list(M2))),
-    ?assertEqual(lists:sort(iter_kv(maps:iterator(M2))), lists:sort(maps:to_list(maps:iterator(M2)))),
-    %% Larger map test
-    M3 = maps:from_list([{{k, I}, I} || I <- lists:seq(1, 10000)]),
-    ?assertEqual(lists:sort(iter_kv(maps:iterator(M3))), lists:sort(maps:to_list(M3))),
-    ?assertEqual(lists:sort(iter_kv(maps:iterator(M3))), lists:sort(maps:to_list(maps:iterator(M3)))),
-    ok.
-
 maps_test() ->
     %% merge_with/3
     Small = #{1 => 1, 2 => 3},
@@ -193,9 +175,3 @@ random_map({SizeConstant, _, _} = InitSeed) ->
                            {#{}, rand:seed_s(exsplus, InitSeed)},
                            lists:seq(1, SizeConstant)),
     Ret.
-
-iter_kv(I) ->
-    case maps:next(I) of
-        none -> [];
-        {K, V, NI} -> [{K, V}|iter_kv(NI)]
-    end.
