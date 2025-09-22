@@ -173,6 +173,7 @@
          {{lists, enumerate, [1, 2, 3]}, otpbp_lists},
          {{lists, search, 2}, otpbp_lists},
          {{lists, uniq, [1, 2]}, otpbp_lists},
+         {{lists, zf, 2}, {lists, filtermap}},
          {{lists, zip, 3}, otpbp_lists},
          {{lists, [zip3, zipwith], 4}, otpbp_lists},
          {{lists, zipwith3, 5}, otpbp_lists},
