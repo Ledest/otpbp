@@ -44,6 +44,10 @@
 % OTP 28.0
 -export([processes_next/1]).
 -endif.
+-ifndef(HAVE_erlang__is_integer_3).
+% OTP 29.0
+-export([is_integer/3]).
+-endif.
 
 -ifndef(HAVE_erlang__atom_to_binary_1).
 atom_to_binary(A) -> atom_to_binary(A, utf8).
@@ -82,6 +86,12 @@ set_cookie(C) -> error(badarg, [C]).
 
 -ifndef(HAVE_erlang__processes_iterator_0).
 processes_iterator() -> {0, processes()}.
+-endif.
+
+-ifndef(HAVE_erlang__is_integer_3).
+is_integer(T, L, U) ->
+    is_integer(L) andalso is_integer(U) orelse error(badarg, [T, L, U]),
+    is_integer(T) andalso T >= L andalso T =< U.
 -endif.
 
 -ifndef(HAVE_erlang__processes_next_1).
