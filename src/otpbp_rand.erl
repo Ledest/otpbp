@@ -52,6 +52,18 @@
 % OTP 24.0
 -export([bytes_s/2]).
 -endif.
+-ifndef(HAVE_rand__bytes_s_2).
+% OTP 24.0
+-export([bytes_s/2]).
+-endif.
+-ifndef(HAVE_rand__shuffle_1).
+% OTP 29.0
+-export([shuffle/1]).
+-endif.
+-ifndef(HAVE_rand__shuffle_s_2).
+% OTP 29.0
+-export([shuffle_s/2]).
+-endif.
 
 -ifndef(HAVE_rand__uniform_real_0).
 -ifdef(HAVE_rand__uniform_real_s_1).
@@ -67,6 +79,9 @@
 -ifdef(HAVE_rand__bytes_s_2).
 -import(rand, [bytes_s/2]).
 -endif.
+-endif.
+-ifdef(HAVE_rand__shuffle_s_2).
+-import(rand, [shuffle_s/2]).
 -endif.
 
 -define(SEED_DICT, rand_seed).
@@ -304,6 +319,100 @@ mwc59_seed(S) when is_integer(S), 0 =< S, S =< ?MASK(58) -> hash58(S) + 1.
 -ifndef(NEED_hash58_1).
 -define(NEED_hash58_1, true).
 -endif.
+-endif.
+
+-ifndef(HAVE_rand__shuffle_1).
+shuffle(List) ->
+    {ShuffledList, State} = shuffle_s(List, seed_get()),
+    seed_put(State),
+    ShuffledList.
+
+-ifndef(NEED_seed_get_0).
+-define(NEED_seed_get_0, true).
+-endif.
+-ifndef(NEED_seed_put_1).
+-define(NEED_seed_put_1, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_rand__shuffle_s_2).
+shuffle_s(List, {#{next := Next} = AlgHandler, R0}) when is_list(List) ->
+    [P0|S0] = shuffle_init_bitstream(R0, Next,
+                                     case AlgHandler of
+                                         #{bits := _} -> maps:get(weak_low_bits, AlgHandler, 0);
+                                         #{max := _} -> 2 % Old spec - assume 2 weak low bits
+                                     end),
+    {ShuffledList, _P1, [R1|_]} = shuffle_r(List, [], P0, S0),
+    {ShuffledList, {AlgHandler, R1}}.
+
+-dialyzer({no_improper_lists, shuffle_init_bitstream/3}).
+-compile({inline, shuffle_init_bitstream/3}).
+shuffle_init_bitstream(R, Next, WeakLowBits) -> [1|[R|{Next, WeakLowBits}]].
+
+-dialyzer({no_improper_lists, shuffle_new_bits/1}).
+shuffle_new_bits([R0|{Next, WeakLowBits} = W]) ->
+    {V, R1} = Next(R0),
+    %% Setting the top bit M here provides the marker for when we are out of random bits: P =:= 1
+    M = 1 bsl 56,
+    [((V bsr WeakLowBits) band (M - 1)) bor M|[R1|W]].
+
+%% Leaf cases - random permutations for 0..3 elements
+shuffle_r([], Acc, P, S) -> {Acc, P, S};
+shuffle_r([X], Acc, P, S) -> {[X|Acc], P, S};
+shuffle_r([X, Y], Acc, P, S) -> shuffle_r(X, Acc, P, S, Y);
+shuffle_r([X, Y, Z], Acc, P, S) -> shuffle_r(X, Acc, P, S, Y, Z);
+%% General case - split and recursive shuffle
+shuffle_r([_, _, _|_] = List, Acc, P, S) ->
+    %% P and S is bitstream cache and state
+    shuffle_r(List, Acc, P, S, [], [], [], []).
+%% Split L into 4 random subsets
+shuffle_r([], Acc0, P0, S0, Zero, One, Two, Three) ->
+    %% Split done, recursively shuffle the splitted lists onto Acc
+    {Acc1, P1, S1} = shuffle_r(Zero, Acc0, P0, S0),
+    {Acc2, P2, S2} = shuffle_r(One, Acc1, P1, S1),
+    {Acc3, P3, S3} = shuffle_r(Two, Acc2, P2, S2),
+    shuffle_r(Three, Acc3, P3, S3);
+shuffle_r([X|L], Acc, P0, S, Zero, One, Two, Three) when is_integer(P0), 3 < P0, P0 < 1 bsl 57 ->
+    P1 = P0 bsr 2,
+    case P0 band 3 of
+        0 -> shuffle_r(L, Acc, P1, S, [X|Zero], One, Two, Three);
+        1 -> shuffle_r(L, Acc, P1, S, Zero, [X|One], Two, Three);
+        2 -> shuffle_r(L, Acc, P1, S, Zero, One, [X|Two], Three);
+        3 -> shuffle_r(L, Acc, P1, S, Zero, One, Two, [X|Three])
+    end;
+shuffle_r([_|_] = L, Acc, _P, S0, Zero, One, Two, Three) ->
+    [P|S1] = shuffle_new_bits(S0),
+    shuffle_r(L, Acc, P, S1, Zero, One, Two, Three).
+
+%% Permute 2 elements
+shuffle_r(X, Acc, P, S, Y) when is_integer(P), 1 < P, P < 1 bsl 57 ->
+    {case P band 1 of
+         0 -> [Y, X|Acc];
+         1 -> [X, Y|Acc]
+     end,
+     P bsr 1,
+     S};
+shuffle_r(X, Acc, _P, S0, Y) ->
+    [P|S1] = shuffle_new_bits(S0),
+    shuffle_r(X, Acc, P, S1, Y).
+
+%% Permute 3 elements
+%% Uses 3 random bits per iteration with a probability of 1/4 to reject and retry,
+%% which on average is 3 * 4/3 (infinite sum of (1/4)^k) = 4 bits per permutation
+shuffle_r(X, Acc, P0, S, Y, Z) when is_integer(P0), 7 < P0, P0 < 1 bsl 57 ->
+    P1 = P0 bsr 3,
+    case P0 band 7 of
+        0 -> {[Z, Y, X|Acc], P1, S};
+        1 -> {[Y, Z, X|Acc], P1, S};
+        2 -> {[Z, X, Y|Acc], P1, S};
+        3 -> {[X, Z, Y|Acc], P1, S};
+        4 -> {[Y, X, Z|Acc], P1, S};
+        5 -> {[X, Y, Z|Acc], P1, S};
+        _ -> shuffle_r(X, Acc, P1, S, Y, Z) % Reject and retry
+    end;
+shuffle_r(X, Acc, _P, S0, Y, Z) ->
+    [P|S1] = shuffle_new_bits(S0),
+    shuffle_r(X, Acc, P, S1, Y, Z).
 -endif.
 
 -ifdef(NEED_seed_get_0).
