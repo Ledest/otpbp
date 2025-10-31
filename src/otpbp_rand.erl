@@ -80,8 +80,10 @@
 -import(rand, [bytes_s/2]).
 -endif.
 -endif.
+-ifndef(HAVE_rand__shuffle_1).
 -ifdef(HAVE_rand__shuffle_s_2).
 -import(rand, [shuffle_s/2]).
+-endif.
 -endif.
 
 -define(SEED_DICT, rand_seed).
