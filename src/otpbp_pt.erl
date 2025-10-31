@@ -34,6 +34,7 @@
          {{argparse, parse, [2, 3]}, otpbp_argparse},
          {{argparse, run, 3}, otpbp_argparse},
          {{argparse, validate, [1, 2]}, otpbp_argparse},
+         {{array, from, [2, 3]}, otpbp_array},
          {{beam_lib, significant_chunks, 0}, otpbp_beam_lib},
          {{beam_lib, [strip, strip_files, strip_release], 2}, otpbp_beam_lib},
          {{binary, decode_hex, 1}, otpbp_binary},
