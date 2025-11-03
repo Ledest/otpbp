@@ -411,6 +411,7 @@ function_transform(Node, #param{} = P) ->
         application -> application_transform(Node, P);
         implicit_fun -> implicit_fun_transform(Node, P);
         try_expr -> try_expr_transform(Node);
+        conjunction -> conjunction_transform(Node);
         _ -> false
     end.
 
@@ -577,7 +578,39 @@ class_qualifier_match(P, B, E, C) ->
 
 match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, application(local, M, [], erlang, get_stacktrace))))|L].
 
+-compile({inline, conjunction_transform/1}).
+conjunction_transform(Node) ->
+    case erl_syntax_lib:mapfold(fun(E, F) ->
+                                    case type(E) =:= application andalso guard_transform(E) of
+                                        false -> {E, F};
+                                        N -> {N, true}
+                                    end
+                                end,
+                                false, Node) of
+        {T, true} -> T;
+        _ -> false
+    end.
+
+-compile({inline, guard_transform/1}).
+guard_transform(Node) -> guard_transform(Node, erl_syntax_lib:analyze_application(Node)).
+
+-compile({inline, guard_transform/2}).
+guard_transform(Node, {otpbp_erlang, {is_integer, 3}}) ->
+    O = erl_syntax:application_operator(Node),
+    [A, G, L] = erl_syntax:application_arguments(Node),
+    infix_expr(cp(Node, erl_syntax:application(cp(O, erl_syntax:module_qualifier(atom(erlang, mqa(O)), mqb(O))), [A])),
+               operator('andalso', G),
+               infix_expr(condition('>=', G, A), operator('andalso', L), condition('=<', L, A), G),
+               Node);
+guard_transform(_Node, _) -> false.
+
+condition(O, B, A) -> infix_expr(A, operator(O, B), B, B).
+
 atom(A, P) -> cp(P, erl_syntax:atom(A)).
+
+operator(O, P) -> cp(P, erl_syntax:operator(O)).
+
+infix_expr(L, O, R, P) -> cp(P, erl_syntax:infix_expr(L, O, R)).
 
 -compile({inline, otp_release/0}).
 otp_release() -> list_to_integer(erlang:system_info(otp_release)).
