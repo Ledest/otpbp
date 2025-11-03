@@ -534,7 +534,7 @@ apply_transform(Node, #param{apply = AL} = P, A) ->
                             #{AA := {M, F}} ->
                                 replace_message(Node, P, AA, M, F),
                                 erl_syntax:application(erl_syntax:application_operator(Node),
-                                                       [atom(MT, M), atom(FT, F)|T]);
+                                                       [atom(M, MT), atom(F, FT)|T]);
                             #{} -> false
                         end;
                     _false -> false
@@ -545,7 +545,7 @@ apply_transform(Node, #param{apply = AL} = P, A) ->
 application(local, O, As, M, N) -> application_(O, O, As, M, N);
 application(remote, O, As, M, N) -> application_(mqa(O), mqb(O), As, M, N).
 
-application_(O1, O2, As, M, N) -> application_(atom(O1, M), atom(O2, N), As).
+application_(O1, O2, As, M, N) -> application_(atom(M, O1), atom(N, O2), As).
 
 -compile({inline, application_/3}).
 application_(M, N, As) -> erl_syntax:application(cp(M, erl_syntax:module_qualifier(M, N)), As).
@@ -562,7 +562,7 @@ implicit_fun_transform(Node, #param{funs = L} = P) ->
                                 end,
                      replace_message(Node, P, F, M, N),
                      cp(Node,
-                        erl_syntax:implicit_fun(atom(MP, M), atom(erl_syntax:arity_qualifier_body(AQ), N),
+                        erl_syntax:implicit_fun(atom(M, MP), atom(N, erl_syntax:arity_qualifier_body(AQ)),
                                                 erl_syntax:arity_qualifier_argument(AQ)));
                  #{} -> false
              end
@@ -660,7 +660,7 @@ class_qualifier_match(P, B, E, C) ->
 
 match_expr_list(M, L) -> [cp(M, erl_syntax:match_expr(M, cp(M, application(local, M, [], erlang, get_stacktrace))))|L].
 
-atom(P, A) when is_tuple(P), is_atom(A) -> cp(P, erl_syntax:atom(A)).
+atom(A, P) -> cp(P, erl_syntax:atom(A)).
 
 -compile({inline, otp_release/0}).
 otp_release() -> list_to_integer(erlang:system_info(otp_release)).
