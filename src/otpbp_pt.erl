@@ -199,6 +199,7 @@
          {{peer, [get_state, start, stop], 1}, otpbp_peer},
          {{peer, [random_name, start_link], [0, 1]}, otpbp_peer},
          {{peer, send,  3}, otpbp_peer},
+         {{persistent_term, put_new, 2}, otpbp_persistent_term},
          {{pg2, [start, start_link, which_groups], 0}, otpbp_pg2},
          {{pg2, init, 1}, otpbp_pg2},
          {{pg2, [create, delete, get_closest_pid, get_local_members, get_members], 1}, otpbp_pg2},
