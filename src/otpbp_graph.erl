@@ -238,7 +238,7 @@ has_vertex(#graph{vs = Vs}, V) -> maps:is_key(V, Vs).
 
 -spec has_path(G::graph(), From::vertex(), To::vertex()) -> boolean().
 has_path(G, From, To) ->
-    Seen = sets:new(),
+    Seen = sets_new(),
     L = [From],
     try has_path(L, To, G, Seen) of
         _ -> false
@@ -425,7 +425,7 @@ preorder(G) -> preorder(G, roots(G)).
 
 -spec preorder(G::graph(), Vs::[vertex()]) -> [vertex()].
 preorder(G, Vs) ->
-    {_, Acc} = pretraverse_(Vs, fun out/3, G, sets:new(), [], []),
+    {_, Acc} = pretraverse_(Vs, fun out/3, G, sets_new(), [], []),
     lists:reverse(lists:append(Acc)).
 
 -spec postorder(G::graph()) -> [vertex()].
@@ -433,7 +433,7 @@ postorder(G) -> postorder(G, roots(G)).
 
 -spec postorder(G::graph(), Vs::[vertex()]) -> [vertex()].
 postorder(G, Vs) ->
-    {Acc, _} = posttraverse(Vs, G, sets:new(), []),
+    {Acc, _} = posttraverse(Vs, G, sets_new(), []),
     lists:reverse(Acc).
 
 -spec reverse_postorder(G::graph()) -> [vertex()].
@@ -441,7 +441,7 @@ reverse_postorder(G) -> reverse_postorder(G, roots(G)).
 
 -spec reverse_postorder(G::graph(), Vs::[vertex()]) -> [vertex()].
 reverse_postorder(G, Vs) ->
-    {L, _} = posttraverse(Vs, G, sets:new(), []),
+    {L, _} = posttraverse(Vs, G, sets_new(), []),
     L.
 
 %%
@@ -455,7 +455,7 @@ revpreorders(G, SF, Vs) -> revpreorders(G, SF, Vs, first).
 %% returns a list of reverse preorder traversals using the given Vs as starting points
 %% (if a starting point V has already become visited by a previous traversal it will not be included again)
 revpreorders(G, SF, Vs, HandleFirst) ->
-    {_, LL} = lists:foldl(fun(V, {T0, LL}) -> pretraverse(HandleFirst, V, SF, G, T0, LL) end, {sets:new(), []}, Vs),
+    {_, LL} = lists:foldl(fun(V, {T0, LL}) -> pretraverse(HandleFirst, V, SF, G, T0, LL) end, {sets_new(), []}, Vs),
     LL.
 
 pretraverse(first, V, SF, G, T, LL) -> pretraverse_([V], SF, G, T, [], LL);
@@ -555,4 +555,11 @@ condense(SC, G, SCG, V2I, I2C) ->
                                           T, out_neighbours(G, V))
                           end,
                           #{}, SC)).
+
+-compile({inline, sets_new/0}).
+-if(defined(HAVE_sets__new_1) andalso ?OTP_RELEASE < 28).
+sets_new() -> sets:new([{version, 2}]).
+-else.
+sets_new() -> sets:new().
+-endif.
 -endif.
