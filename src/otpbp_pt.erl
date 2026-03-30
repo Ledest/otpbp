@@ -26,6 +26,8 @@
          {{[ceil, floor], 1}, otpbp_erlang},
          {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
          {{error, 3}, otpbp_erlang},
+         {{exit_signal, 2}, {erlang, exit}},
+         {{[exit, exit_signal], 3}, otpbp_erlang},
          {{term_to_iovec, [1, 2]}, otpbp_erlang},
          {{is_integer, 3}, otpbp_erlang},
          {{application, get_supervisor, 1}, otpbp_application},
