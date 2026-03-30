@@ -1,7 +1,7 @@
 -module(otpbp_persistent_term).
 
 -ifndef(HAVE_persistent_term__put_new_2).
-% OTP >= 29.0
+% OTP >= 28.4
 -ifdef(HAVE_persistent_term__get_1).
 -ifdef(HAVE_persistent_term__put_2).
 -export([put_new/2]).
