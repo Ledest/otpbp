@@ -48,6 +48,14 @@
 % OTP 29.0
 -export([is_integer/3]).
 -endif.
+-ifndef(HAVE_erlang__exit_3).
+% OTP 29.0
+-export([exit/3]).
+-endif.
+-ifndef(HAVE_erlang__exit_signal_3).
+% OTP 29.0
+-export([exit_signal/3]).
+-endif.
 
 -ifndef(HAVE_erlang__atom_to_binary_1).
 atom_to_binary(A) -> atom_to_binary(A, utf8).
@@ -92,6 +100,18 @@ processes_iterator() -> {0, processes()}.
 is_integer(T, L, U) ->
     is_integer(L) andalso is_integer(U) orelse error(badarg, [T, L, U]),
     is_integer(T) andalso T >= L andalso T =< U.
+-endif.
+
+-ifndef(HAVE_erlang__exit_3).
+exit(Dest, Reason, OptList) when OptList =:= []; OptList =:= [priority] -> exit(Dest, Reason).
+-endif.
+
+-ifndef(HAVE_erlang__exit_signal_3).
+-ifdef(HAVE_erlang__exit_signal_3).
+exit_signal(Dest, Reason, OptList) -> exit(Dest, Reason, OptList).
+-else.
+exit_signal(Dest, Reason, OptList) when OptList =:= []; OptList =:= [priority] -> exit(Dest, Reason).
+-endif.
 -endif.
 
 -ifndef(HAVE_erlang__processes_next_1).
