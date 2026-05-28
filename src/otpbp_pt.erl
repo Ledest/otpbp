@@ -139,6 +139,7 @@
          {{gb_sets, foreach, 2}, otp_gb_sets},
          {{gb_trees, new, 0}, {gb_trees, empty}},
          {{gb_trees, foreach, 2}, otpbp_gb_trees},
+         {{gb_trees, from_list, 1}, otpbp_gb_trees},
          {{gen, debug_options, 2}, otpbp_gen},
          {{gen_event, start_monitor, [0, 1, 2]}, otpbp_gen_event},
          {{geb_sctp, [connect, connect_init], 3}, otpbp_gen_sctp},
