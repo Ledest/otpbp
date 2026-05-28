@@ -154,6 +154,7 @@
          {{gb_trees, new, 0}, {gb_trees, empty}},
          {{gb_trees, [take, take_any], 2}, otpbp_gb_trees},
          {{gb_trees, foreach, 2}, otpbp_gb_trees},
+         {{gb_trees, from_list, 1}, otpbp_gb_trees},
          {{gen, debug_options, 2}, otpbp_gen},
          {{gen_event, [start, start_link], 2}, otpbp_gen_event},
          {{gen_event, start_monitor, [0, 1, 2]}, otpbp_gen_event},
