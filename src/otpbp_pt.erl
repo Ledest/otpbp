@@ -141,6 +141,7 @@
          {{gb_sets, foreach, 2}, otp_gb_sets},
          {{gb_trees, [take, take_any], 2}, otpbp_gb_trees},
          {{gb_trees, foreach, 2}, otpbp_gb_trees},
+         {{gb_trees, from_list, 1}, otpbp_gb_trees},
          {{gen, get_parent, 0}, otpbp_gen},
          {{gen, [debug_options, get_proc_name, name, unregister_name], 1}, otpbp_gen},
          {{gen, debug_options, 2}, otpbp_gen},
