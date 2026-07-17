@@ -257,7 +257,7 @@
          {{string, [equal, replace], [3, 4]}, otpbp_string},
          {{string, [pad, take], [2, 3, 4]}, otpbp_string},
          {{string, trim, [1, 2, 3]}, otpbp_string},
-         {{supervisor, [check_childspecs, format_status], 2}, otpbp_supervisor},
+         {{supervisor, [check_childspecs, format_status, which_child], 2}, otpbp_supervisor},
          {{supervisor, stop, [1, 3]}, gen_server},
          {{sys, get_log, 1}, otpbp_sys},
          {{timer, [apply_after, apply_interval], [2, 3]}, otpbp_timer},
