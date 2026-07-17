@@ -287,7 +287,7 @@
          {{ssl, [handshake, ssl_accept], [1, 2, 3]}, otpbp_ssl},
          {{ssl, prf, 5}, otpbp_ssl},
          {{string, jaro_similarity, 2}, otpbp_string},
-         {{supervisor, check_childspecs, 2}, otpbp_supervisor},
+         {{supervisor, [check_childspecs, which_child], 2}, otpbp_supervisor},
          {{supervisor, stop, [1, 3]}, gen_server},
          {{sys, get_log, 1}, otpbp_sys},
          {{timer, [apply_after, apply_interval], [2, 3]}, otpbp_timer},
