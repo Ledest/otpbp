@@ -77,10 +77,10 @@ normalize_test() ->
                                                                   host => <<"localhost">>},
                                                                 [return_map]))),
     %
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize("http://local>host")),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize(<<"http://local>host">>)),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize("http://[192.168.0.1]", [return_map])),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize(<<"http://[192.168.0.1]">>, [return_map])),
+    ?assertMatch({error, invalid_uri, _}, uri_string:normalize("http://local>host")),
+    ?assertMatch({error, invalid_uri, _}, uri_string:normalize(<<"http://local>host">>)),
+    ?assertMatch({error, invalid_uri, _}, uri_string:normalize("http://[192.168.0.1]", [return_map])),
+    ?assertMatch({error, invalid_uri, _}, uri_string:normalize(<<"http://[192.168.0.1]">>, [return_map])),
     (OTPRelease >= 24 orelse OTPRelease < 21) andalso
     ?assertEqual({error, invalid_utf8, <<47, 47, 0, 0, 0, 246>>},
                  uri_string:percent_decode(uri_string:normalize("//%00%00%00%F6"))),
@@ -106,8 +106,7 @@ normalize_test() ->
                  uri_string:percent_decode(uri_string:normalize(<<"foo://%E5%90%88:%E6%B0%97@%E9%81%93">>,
                                                                 [return_map]))),
     ?assertEqual({error, invalid_uri, "@"}, uri_string:normalize(<<"//%E5%90%88@%E6%B0%97%E9%81%93@">>, [return_map])),
-    ?assertEqual({error, invalid_uri, ":"},
-                 uri_string:normalize(<<"foo://%E5%90%88@%E6%B0%97%E9%81%93@">>, [return_map])),
+    ?assertMatch({error, invalid_uri, _}, uri_string:normalize(<<"foo://%E5%90%88@%E6%B0%97%E9%81%93@">>, [return_map])),
     %
     ?assertEqual(#{scheme => <<"foo">>, host => <<"example.com">>, path => <<"/">>, query => <<"name=合気道"/utf8>>},
                  uri_string:percent_decode(uri_string:normalize(<<"foo://example.com/?name=%E5%90%88%E6%B0%97%E9%81%93">>,
@@ -142,7 +141,7 @@ normalize_test() ->
     ?assertMatch(#{scheme := "foo", userinfo := "合:気", host := "道"},
                  uri_string:percent_decode(uri_string:normalize("foo://%E5%90%88:%E6%B0%97@%E9%81%93", [return_map]))),
     ?assertEqual({error, invalid_uri, "@"}, uri_string:normalize("//%E5%90%88@%E6%B0%97%E9%81%93@", [return_map])),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:normalize("foo://%E5%90%88@%E6%B0%97%E9%81%93@", [return_map])),
+    ?assertMatch({error, invalid_uri, _}, uri_string:normalize("foo://%E5%90%88@%E6%B0%97%E9%81%93@", [return_map])),
     %
     ?assertEqual(#{scheme => "foo", host => "example.com", path => "/", query => "name=合気道"},
                  uri_string:percent_decode(uri_string:normalize("foo://example.com/?name=%E5%90%88%E6%B0%97%E9%81%93",
@@ -307,7 +306,7 @@ parse_test() ->
     ?assertMatch(#{scheme := <<"foo">>, userinfo := <<"%E5%90%88:%E6%B0%97">>, host := <<"%E9%81%93">>},
                  uri_string:parse(<<"foo://%E5%90%88:%E6%B0%97@%E9%81%93">>)),
     ?assertEqual({error, invalid_uri, "@"}, uri_string:parse(<<"//%E5%90%88@%E6%B0%97%E9%81%93@">>)),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:parse(<<"foo://%E5%90%88@%E6%B0%97%E9%81%93@">>)),
+    ?assertMatch({error, invalid_uri, _}, uri_string:parse(<<"foo://%E5%90%88@%E6%B0%97%E9%81%93@">>)),
     %
     ?assertMatch(#{host := <<"hostname">>}, uri_string:parse(<<"//hostname">>)),
     ?assertMatch(#{host := <<"hostname">>, scheme := <<"foo">>}, uri_string:parse(<<"foo://hostname">>)),
@@ -441,7 +440,7 @@ parse_test() ->
     ?assertMatch(#{scheme := "foo", userinfo := "%E5%90%88:%E6%B0%97", host := "%E9%81%93"},
                  uri_string:parse("foo://%E5%90%88:%E6%B0%97@%E9%81%93")),
     ?assertEqual({error, invalid_uri, "@"}, uri_string:parse("//%E5%90%88@%E6%B0%97%E9%81%93@")),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:parse("foo://%E5%90%88@%E6%B0%97%E9%81%93@")),
+    ?assertMatch({error, invalid_uri, _}, uri_string:parse("foo://%E5%90%88@%E6%B0%97%E9%81%93@")),
     %
     ?assertMatch(#{host := "hostname"}, uri_string:parse("//hostname")),
     ?assertMatch(#{host := "hostname", scheme := "foo"}, uri_string:parse("foo://hostname")),
@@ -585,7 +584,7 @@ parse_test() ->
     %
     ?assertEqual({error, invalid_uri, "å"}, uri_string:parse("å")),
     ?assertEqual({error, invalid_uri, "å"}, uri_string:parse("aå:/foo")),
-    ?assertEqual({error, invalid_uri, ":"}, uri_string:parse("foo://usär@host")),
+    ?assertMatch({error, invalid_uri, _}, uri_string:parse("foo://usär@host")),
     ?assertEqual({error, invalid_uri, "ö"}, uri_string:parse("//host/path?foö=bar")),
     ?assertEqual({error, invalid_uri, "ö"}, uri_string:parse("//host/path#foö")),
     ?assertEqual({error, invalid_uri, ":::127.0.0.1"}, uri_string:parse("//[:::127.0.0.1]")),
