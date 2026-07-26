@@ -79,10 +79,6 @@
 % OTP 24.0
 -export([bytes_s/2]).
 -endif.
--ifndef(HAVE_rand__bytes_s_2).
-% OTP 24.0
--export([bytes_s/2]).
--endif.
 -ifndef(HAVE_rand__shuffle_1).
 % OTP 29.0
 -export([shuffle/1]).
