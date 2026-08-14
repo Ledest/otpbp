@@ -435,7 +435,7 @@ jaro_match([A|As], B, Min, Max, AM, BM) ->
     Min1 = Min + 1,
     Max1 = Max + 1,
     case jaro_detect(maps:get(A, B, []), Min, Max) of
-        false -> jaro_match(As, B, Min1, Max1, AM, BM);
+        {false, Remain} -> jaro_match(As, B#{A => Remain}, Min1, Max1, AM, BM);
         {J, Remain} -> jaro_match(As, B#{A => Remain}, Min1, Max1, [A|AM], add_rsorted({J, A}, BM))
     end;
 jaro_match(_A, _B, _Min, _Max, AM, BM) -> {AM, BM}.
@@ -445,7 +445,7 @@ jaro_detect([Idx|Rest], Min, Max) when Idx < Max ->
         Min < Idx -> {Idx, Rest};
         true -> jaro_detect(Rest, Min, Max)
     end;
-jaro_detect(_, _, _) -> false.
+jaro_detect(Remain, _, _) -> {false, Remain}.
 
 jaro_calc_mt([Char|AM], [{_, Char}|BM], M, T) -> jaro_calc_mt(AM, BM, M + 1, T);
 jaro_calc_mt([_|AM], [_|BM], M, T) -> jaro_calc_mt(AM, BM, M + 1, T + 1);
