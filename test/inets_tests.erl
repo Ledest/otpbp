@@ -6,6 +6,9 @@
 
 -if(?OTP_RELEASE >= 23).
 -compile({nowarn_deprecated_function, [{http_uri, decode, 1}, {http_uri, encode, 1}]}).
+-if(?OTP_RELEASE < 25).
+-compile({nowarn_deprecated_function, [{http_uri, parse, 1}, {http_uri, parse, 2}]}).
+-endif.
 -endif.
 
 -include_lib("eunit/include/eunit.hrl").
