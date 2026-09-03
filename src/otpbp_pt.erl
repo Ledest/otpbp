@@ -280,6 +280,8 @@
          {{uri_string, quote, [1, 2]}, otpbp_uri_string},
          {{uri_string, resolve, [2, 3]}, otpbp_uri_string},
          {{user, interfaces, 1}, otpbp_user},
+         {{versions, [branch, branch_base, check, list_check, list_to_string, string_to_list], 1}, otpbp_versions},
+         {{versions, [compare, list_compare], 2}, otpbp_versions},
          {{xmerl_xml_indent, '#root#', 4}, otpbp_xmerl_xml_indent},
          {{xmerl_xml_indent, '#element#', 5}, otpbp_xmerl_xml_indent},
          {{zlib, [adler32, crc32], [2, 3]}, otpbp_zlib},
