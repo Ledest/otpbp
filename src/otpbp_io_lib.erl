@@ -34,6 +34,22 @@
 % OTP 28.0
 -export([write_string_bin/3]).
 -endif.
+-ifndef(HAVE_io_lib__bwrite_atom_2).
+% OTP 30.0
+-export([bwrite_atom/2]).
+-endif.
+-ifndef(HAVE_io_lib__bwrite_atom_bin_2).
+% OTP 30.0
+-export([bwrite_atom_bin/2]).
+-endif.
+-ifndef(HAVE_io_lib__bprint_1).
+% OTP 30.0
+-export([bprint/1]).
+-endif.
+-ifndef(HAVE_io_lib__bprint_2).
+% OTP 30.0
+-export([bprint/2]).
+-endif.
 
 -ifndef(HAVE_io_lib__write_bin_5).
 -ifdef(HAVE_io_lib__write_5).
@@ -97,4 +113,28 @@ write_bin(Term, Depth, Encoding, MapsOrder, CharsLimit) ->
 write_string_bin(String, Qoute, InEnc) ->
     B = bwrite_string(String, Qoute, InEnc),
     {B, string:length(B)}.
+-endif.
+
+-ifndef(HAVE_io_lib__bwrite_atom_2).
+bwrite_atom(A, latin1) -> unicode:characters_to_binary(io_lib:write_atom_as_latin1(A), latin1);
+bwrite_atom(A, E) when E =:= unicode; E =:= utf8 -> unicode:characters_to_binary(io_lib:write_atom(A)).
+-endif.
+
+-ifndef(HAVE_io_lib__bwrite_atom_bin_2).
+bwrite_atom_bin(A, latin1) ->
+    S = io_lib:write_atom_as_latin1(A),
+    {unicode:characters_to_binary(S, latin1), io_lib:chars_length(S)};
+bwrite_atom_bin(A, E) when E =:= unicode; E =:= utf8 ->
+    S = io_lib:write_atom(A),
+    {unicode:characters_to_binary(S), io_lib:chars_length(S)}.
+-endif.
+
+-ifndef(HAVE_io_lib__bprint_1).
+bprint(T) -> unicode:characters_to_binary(io_lib_pretty:print(T)).
+-endif.
+
+-ifndef(HAVE_io_lib__bprint_2).
+bprint(T, O) ->
+    #{column := C, line_length := L, depth := D} = maps:merge(#{column => 1, line_length => 80, depth => -1},O),
+    unicode:characters_to_binary(io_lib_pretty:print(T, C, L, D)).
 -endif.
