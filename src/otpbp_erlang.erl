@@ -56,6 +56,18 @@
 % OTP 29.0
 -export([exit_signal/3]).
 -endif.
+-ifndef(HAVE_erlang__pid_to_binary_1).
+% OTP 30.0
+-export([pid_to_binary/1]).
+-endif.
+-ifndef(HAVE_erlang__port_to_binary_1).
+% OTP 30.0
+-export([port_to_binary/1]).
+-endif.
+-ifndef(HAVE_erlang__ref_to_binary_1).
+% OTP 30.0
+-export([ref_to_binary/1]).
+-endif.
 
 -ifndef(HAVE_erlang__atom_to_binary_1).
 atom_to_binary(A) -> atom_to_binary(A, utf8).
@@ -131,4 +143,16 @@ processes_next({I, [Pid|Pids]}) -> {Pid, {I, Pids}};
 processes_next({_, []}) -> none;
 processes_next(A) -> error(badarg, [A]).
 -endif.
+-endif.
+
+-ifndef(HAVE_erlang__pid_to_binary_1).
+pid_to_binary(Pid) -> list_to_binary(pid_to_list(Pid)).
+-endif.
+
+-ifndef(HAVE_erlang__port_to_binary_1).
+port_to_binary(Port) -> list_to_binary(port_to_list(Port)).
+-endif.
+
+-ifndef(HAVE_erlang__ref_to_binary_1).
+ref_to_binary(Ref) -> list_to_binary(ref_to_list(Ref)).
 -endif.
