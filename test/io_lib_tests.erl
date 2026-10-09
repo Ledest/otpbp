@@ -229,6 +229,17 @@ io_lib_width_too_small_test() ->
     ?assertEqual("**", fmt("~2.5w", [3.14])),
     ok.
 
+build_binary_test() ->
+    ?assertEqual(io_lib:bformat("~ts ~tp ~.2f", [<<"abc">>, #{key => value}, 1.25]),
+                 io_lib:build_binary(io_lib:scan_format("~ts ~tp ~.2f", [<<"abc">>, #{key => value}, 1.25]))),
+    ?assertEqual(io_lib:bformat("~p", [lists:seq(1, 100)], [{chars_limit, 20}]),
+                 io_lib:build_binary(io_lib:scan_format("~p", [lists:seq(1, 100)]), [{chars_limit, 20}])),
+
+    BadFormatList = io_lib:scan_format("~c", [not_a_character]),
+    ?assertError(badarg, io_lib:build_binary(BadFormatList)),
+    ?assertError(badarg, io_lib:build_binary(BadFormatList, [])),
+    ok.
+
 float_g_1(Fmt, V, Min, Max) -> [fmt(Fmt, [V * math:pow(10, E)]) || E <- lists:seq(Min, Max)].
 
 fmt(Fmt, Args) -> check_bin_fmt(lists:flatten(io_lib:build_text(io_lib:scan_format(Fmt, Args))), Fmt, Args, []).

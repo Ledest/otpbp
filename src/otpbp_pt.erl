@@ -171,7 +171,7 @@
          {{inet, [ensure_sockaddr, gen_tcp_module, gen_udp_module, info], 1}, otpbp_inet},
          {{inet, [is_ip_address, is_ipv4_address, is_ipv6_address], 1}, otpbp_inet},
          {{io_lib, [bformat, bfwrite], [2, 3]}, {otpbp_io_lib, bformat}},
-         {{io_lib, [bprint, bwrite], [1, 2]}, otpbp_io_lib},
+         {{io_lib, [bprint, build_binary, bwrite], [1, 2]}, otpbp_io_lib},
          {{io_lib, [bwrite_atom, bwrite_atom_bin], 2}, otpbp_io_lib},
          {{io_lib, bwrite_string, [2, 3]}, otpbp_io_lib},
          {{io_lib, [write, write_bin], 5}, otpbp_io_lib},
