@@ -1,5 +1,7 @@
 -module(otpbp_io_lib).
 
+-compile([{parse_transform, otpbp_pt}]).
+
 -ifndef(HAVE_io_lib__limit_term_2).
 % OTP 20.0
 -export([limit_term/2]).
@@ -65,6 +67,14 @@
 -ifndef(HAVE_io_lib__bprint_2).
 % OTP 30.0
 -export([bprint/2]).
+-endif.
+-ifndef(HAVE_io_lib__build_binary_1).
+% OTP 30.0
+-export([build_binary/1]).
+-endif.
+-ifndef(HAVE_io_lib__build_binary_2).
+% OTP 30.0
+-export([build_binary/2]).
 -endif.
 
 -ifndef(HAVE_io_lib__bformat_3).
@@ -317,4 +327,22 @@ bprint(T) -> unicode:characters_to_binary(io_lib_pretty:print(T)).
 bprint(T, O) ->
     #{column := C, line_length := L, depth := D} = maps:merge(#{column => 1, line_length => 80, depth => -1},O),
     unicode:characters_to_binary(io_lib_pretty:print(T, C, L, D)).
+-endif.
+
+-ifndef(HAVE_io_lib__build_binary_1).
+build_binary(FormatList) ->
+    try
+        io_lib_format:build_bin(FormatList)
+    catch
+        _:_ -> error(badarg, [FormatList])
+    end.
+-endif.
+
+-ifndef(HAVE_io_lib__build_binary_2).
+build_binary(FormatList, Options) ->
+    try
+        io_lib_format:build_bin(FormatList, Options)
+    catch
+        _:_ -> error(badarg, [FormatList, Options])
+    end.
 -endif.
