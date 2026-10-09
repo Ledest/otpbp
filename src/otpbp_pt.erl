@@ -151,7 +151,7 @@
          {{gen_server, start_monitor, [3, 4]}, otpbp_gen_server},
          {{inet, [info, ipv4_mapped_ipv6_address], 1}, otpbp_inet},
          {{io_lib, [bformat, bfwrite], [2, 3]}, {otpbp_io_lib, bformat}},
-         {{io_lib, [bprint, bwrite], [1, 2]}, otpbp_io_lib},
+         {{io_lib, [bprint, build_binary, bwrite], [1, 2]}, otpbp_io_lib},
          {{io_lib, [bwrite_atom, bwrite_atom_bin], 2}, otpbp_io_lib},
          {{io_lib, bwrite_string, [2, 3]}, otpbp_io_lib},
          {{io_lib, [format, fwrite], 3}, otpbp_io_lib},
