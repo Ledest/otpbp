@@ -176,6 +176,7 @@
          {{io_lib, write_atom_as_latin1, 1}, otpbp_io_lib},
          {{io_lib, [write, write_bin], 5}, otpbp_io_lib},
          {{io_lib, write_string_bin, 3}, otpbp_io_lib},
+         {{io_lib_format, build_bin, [1, 2]}, otpbp_io_lib_format},
          {{json, decode, [1, 3]}, otpbp_json},
          {{json, decode_continue, 2}, otpbp_json},
          {{json, decode_start, 3}, otpbp_json},
