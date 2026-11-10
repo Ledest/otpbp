@@ -68,6 +68,22 @@
 % OTP 30.0
 -export([ref_to_binary/1]).
 -endif.
+-ifndef(HAVE_erlang__integer_set_bits_1).
+% OTP 30.0
+-export([integer_set_bits/1]).
+-endif.
+-ifndef(HAVE_erlang__integer_signed_width_1).
+% OTP 30.0
+-export([integer_signed_width/1]).
+-endif.
+-ifndef(HAVE_erlang__integer_trailing_zeroes_1).
+% OTP 30.0
+-export([integer_trailing_zeroes/1]).
+-endif.
+-ifndef(HAVE_erlang__integer_unsigned_width_1).
+% OTP 30.0
+-export([integer_unsigned_width/1]).
+-endif.
 
 -ifndef(HAVE_erlang__atom_to_binary_1).
 atom_to_binary(A) -> atom_to_binary(A, utf8).
@@ -155,4 +171,48 @@ port_to_binary(Port) -> list_to_binary(port_to_list(Port)).
 
 -ifndef(HAVE_erlang__ref_to_binary_1).
 ref_to_binary(Ref) -> list_to_binary(ref_to_list(Ref)).
+-endif.
+
+-ifndef(HAVE_erlang__integer_set_bits_1).
+integer_set_bits(I) when is_integer(I), I >= 0 -> integer_set_bits(I, 0);
+integer_set_bits(I) -> error(badarg, [I]).
+
+integer_set_bits(0, A) -> A;
+integer_set_bits(I, A) -> integer_set_bits(I div 2, A + I rem 2).
+-endif.
+
+-ifndef(HAVE_erlang__integer_signed_width_1).
+integer_signed_width(I) when is_integer(I) ->
+    integer_unsigned_width(if
+                               I >= 0 -> I;
+                               true -> -I - 1
+                           end,
+                           1);
+integer_signed_width(I)  -> error(badarg, [I]).
+
+-ifndef(NEED_integer_unsigned_width_2).
+-define(NEED_integer_unsigned_width_2, true).
+-endif.
+-endif.
+
+-ifndef(HAVE_erlang__integer_trailing_zeroes_1).
+integer_trailing_zeroes(I) when is_integer(I), I =/= 0 -> integer_trailing_zeroes(I, 0);
+integer_trailing_zeroes(I) -> error(badarg, [I]).
+
+integer_trailing_zeroes(I, A) when I =/= 0, I rem 2 =:= 0 -> integer_trailing_zeroes(I div 2, A + 1);
+integer_trailing_zeroes(_, A) -> A.
+-endif.
+
+-ifndef(HAVE_erlang__integer_unsigned_width_1).
+integer_unsigned_width(I) when is_integer(I), I >= 0 -> integer_unsigned_width(I, 0);
+integer_unsigned_width(I)  -> error(badarg, [I]).
+
+-ifndef(NEED_integer_unsigned_width_2).
+-define(NEED_integer_unsigned_width_2, true).
+-endif.
+-endif.
+
+-ifdef(NEED_integer_unsigned_width_2).
+integer_unsigned_width(0, A) -> A;
+integer_unsigned_width(I, A) -> integer_unsigned_width(I div 2, A + 1).
 -endif.
