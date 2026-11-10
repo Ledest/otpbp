@@ -28,6 +28,7 @@
          {{error, 3}, otpbp_erlang},
          {{exit_signal, 2}, {erlang, exit}},
          {{[exit, exit_signal], 3}, otpbp_erlang},
+         {{[integer_set_bits, integer_signed_width, integer_trailing_zeroes, integer_unsigned_width], 1}, otpbp_erlang},
          {{is_integer, 3}, otpbp_erlang},
          {{[pid_to_binary, port_to_binary, ref_to_binary], 1}, otpbp_erlang},
          {{term_to_iovec, [1, 2]}, otpbp_erlang},
