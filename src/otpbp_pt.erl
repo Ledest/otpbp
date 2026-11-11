@@ -23,7 +23,7 @@
          {{map_get, 2}, {maps, get}},
          {{[atom_to_binary, binary_to_atom, binary_to_existing_atom], 1}, otpbp_erlang},
          {{error, 3}, otpbp_erlang},
-         {{exit_signal, 2}, {erlang, exit}},
+         {{exit_signal, 2}, erlang},
          {{[exit, exit_signal], 3}, otpbp_erlang},
          {{[integer_set_bits, integer_signed_width, integer_trailing_zeroes, integer_unsigned_width], 1}, otpbp_erlang},
          {{is_integer, 3}, otpbp_erlang},
